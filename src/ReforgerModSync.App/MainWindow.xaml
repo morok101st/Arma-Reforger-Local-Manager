@@ -293,10 +293,8 @@
 
                         <StackPanel Orientation="Horizontal" Margin="0,24,0,0"
                                     IsEnabled="{Binding DataContext.IsNotBusy, RelativeSource={RelativeSource AncestorType=Window}}">
-                            <Button Content="Speichern und Server prüfen" Click="OnSaveAndCheckClick"
+                            <Button Content="Speichern" Click="OnSaveClick"
                                     Style="{DynamicResource AccentButtonStyle}" FontWeight="SemiBold" Padding="20,8" />
-                            <Button Content="Nur speichern" Click="OnSaveOnlyClick" Margin="8,0,0,0" Padding="16,8"
-                                    ToolTip="Speichert ohne Verbindung zum Server, zum Beispiel wenn er gerade offline ist. Ein eingegebenes Passwort wird dabei nicht geprüft." />
                         </StackPanel>
                         <DockPanel Margin="0,12,0,0">
                             <local:BusyIndicator DockPanel.Dock="Left" Margin="0,1,10,0" VerticalAlignment="Top"

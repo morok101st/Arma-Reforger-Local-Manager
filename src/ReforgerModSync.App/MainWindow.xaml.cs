@@ -37,13 +37,7 @@ public partial class MainWindow : Window
     }
 
     // Das Passwort bleibt bewusst im PasswordBox-Steuerelement und wird nie an eine Bindung gehängt.
-    private async void OnSaveAndCheckClick(object sender, RoutedEventArgs e) =>
-        await SaveAsync((Button)sender, _viewModel.SaveSelectedProfileAsync);
-
-    private async void OnSaveOnlyClick(object sender, RoutedEventArgs e) =>
-        await SaveAsync((Button)sender, _viewModel.SaveSelectedProfileWithoutCheckAsync);
-
-    private async Task SaveAsync(Button button, Func<string, bool, Task<bool>> save)
+    private async void OnSaveClick(object sender, RoutedEventArgs e)
     {
         var keepPassword = false;
         if (_viewModel.NeedsPasswordTransferDecision(PasswordInput.Password))
@@ -52,16 +46,17 @@ public partial class MainWindow : Window
                 this,
                 "Server-Adresse geändert",
                 "Das gespeicherte Passwort gehört zur bisherigen Adresse. Soll es auch für die neue Adresse gelten? "
-                    + "Es wird dann beim Prüfen und Beitreten an diesen Server übermittelt. Ohne Übernahme wird es gelöscht.",
+                    + "Es wird dann an diesen Server übermittelt, sobald du ihn prüfst, synchronisierst oder ihm beitrittst. Ohne Übernahme wird es gelöscht.",
                 "Übernehmen",
                 cancelText: "Nicht übernehmen");
         }
 
+        var button = (Button)sender;
         button.IsEnabled = false;
         try
         {
             // Nach einem Fehlschlag bleibt die Eingabe stehen, damit sie nicht neu getippt werden muss.
-            var stored = await save(PasswordInput.Password, keepPassword);
+            var stored = await _viewModel.SaveSelectedProfileAsync(PasswordInput.Password, keepPassword);
             if (stored || _viewModel.SelectedProfile is { ShowPasswordInput: false })
             {
                 PasswordInput.Clear();

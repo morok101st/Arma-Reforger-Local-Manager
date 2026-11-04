@@ -43,11 +43,10 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         TotalTimeout,
     }
 
-    /// <summary>Holt nur die Liste und vergleicht. <paramref name="passwordOverride"/> gilt für neu eingetippte Passwörter.</summary>
+    /// <summary>Holt nur die Liste und vergleicht.</summary>
     public Task<SyncResult> CheckAsync(
         AppSettings settings,
         ServerProfile profile,
-        string? passwordOverride,
         IProgress<SyncStatus> progress,
         CancellationToken cancellationToken) =>
         RunExclusiveAsync(async () =>
@@ -57,7 +56,7 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
                 return Failed(problem);
             }
 
-            var required = await FetchListAsync(settings, profile, clientExe, passwordOverride, progress, cancellationToken);
+            var required = await FetchListAsync(settings, profile, clientExe, progress, cancellationToken);
             var comparison = await CompareAsync(required, AddonPaths.ResolveModsRoot(profile.DownloadDir), cancellationToken);
             return new SyncResult(SyncOutcome.Checked, $"Liste vom Server geholt: {comparison.Count} Mods.", comparison);
         }, cancellationToken);
@@ -76,7 +75,7 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
                 return Failed(problem);
             }
 
-            var required = await FetchListAsync(settings, profile, clientExe, null, progress, cancellationToken);
+            var required = await FetchListAsync(settings, profile, clientExe, progress, cancellationToken);
             return await DownloadAsync(settings, profile, clientExe, required, progress, cancellationToken);
         }, cancellationToken);
 
@@ -119,14 +118,13 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         AppSettings settings,
         ServerProfile profile,
         string clientExe,
-        string? passwordOverride,
         IProgress<SyncStatus> progress,
         CancellationToken cancellationToken)
     {
         progress.Report(new SyncStatus("Mod-Liste wird vom Server geholt …"));
         var address = profile.ServerAddress!.Trim();
         var (logsDir, profileDir) = PrepareRunFolders();
-        var passwordFile = await WritePasswordFileAsync(profile, passwordOverride, profileDir, cancellationToken);
+        var passwordFile = await WritePasswordFileAsync(profile, profileDir, cancellationToken);
 
         try
         {
@@ -153,11 +151,10 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
     /// <returns>Der Pfad, den der Aufrufer am Ende löscht. Die Hilfs-Mod löscht die Datei schon beim Lesen.</returns>
     private async Task<string> WritePasswordFileAsync(
         ServerProfile profile,
-        string? passwordOverride,
         string profileDir,
         CancellationToken cancellationToken)
     {
-        var password = passwordOverride ?? credentialStore.ReadPassword(profile.ServerAddress!.Trim(), profile.Id);
+        var password = credentialStore.ReadPassword(profile.ServerAddress!.Trim(), profile.Id);
         var profileData = Path.Combine(profileDir, "profile");
         Directory.CreateDirectory(profileData);
         var passwordFile = Path.Combine(profileData, PasswordFileName);
@@ -341,7 +338,7 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         var open = comparison.Where(mod => mod.State != ModState.Current).Select(mod => mod.Required).ToList();
         progress.Report(new SyncStatus($"Spielclient lädt {open.Count} Mods …"));
         var arguments = ClientArgsBuilder.BuildDownload(profile.ServerAddress!, open, profile.DownloadDir, settings.Client, logsDir, profileDir, AddonPaths.HelperRoot);
-        var passwordFile = await WritePasswordFileAsync(profile, null, profileDir, cancellationToken);
+        var passwordFile = await WritePasswordFileAsync(profile, profileDir, cancellationToken);
         try
         {
             using var session = ClientSession.Start(clientExe, arguments, settings.Client.HideWindow);

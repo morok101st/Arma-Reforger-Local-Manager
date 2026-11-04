@@ -20,8 +20,8 @@ EINRICHTUNG
 2. Zielordner wählen: Die Mods liegen darin im Unterordner "addons". Wähle den Ordner,
    der deinen vorhandenen Ordner "addons" enthält, sonst wird alles neu geladen. Ohne
    eigene Startoptionen in Steam lässt du das Feld einfach leer.
-3. "Speichern und Server prüfen" klicken. Das dauert rund 10 Sekunden. Ist der Server
-   gerade offline, mit "Nur speichern" ablegen und später mit "Neu prüfen" prüfen.
+3. "Speichern" klicken. Ob Adresse und Passwort stimmen, zeigt sich erst in der Übersicht
+   mit "Neu prüfen" oder "Jetzt synchronisieren". Beides braucht einen laufenden Server.
 
 BENUTZUNG
 - "Jetzt synchronisieren" lädt fehlende Mods und bringt alle auf die Version des Servers.
