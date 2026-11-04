@@ -92,7 +92,9 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
 
         try
         {
-            return await run();
+            // Nicht auf dem Thread des Aufrufers: Die Überwachung liest laufend große Mod-Ordner und würde die
+            // Oberfläche und damit auch das Abbrechen ausbremsen. Fortschritt meldet IProgress an die Oberfläche.
+            return await Task.Run(run, CancellationToken.None);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

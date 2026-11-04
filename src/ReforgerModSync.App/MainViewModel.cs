@@ -249,11 +249,17 @@ public sealed partial class MainViewModel(
 
     private bool CanRefresh() => !IsBusy && SelectedProfile is not null;
 
-    [RelayCommand]
+    // Während des Laufs dient derselbe Befehl zum Abbrechen und muss deshalb klickbar bleiben.
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task SyncAsync()
     {
         if (IsBusy)
         {
+            if (SelectedProfile is { } running)
+            {
+                SetStatus(running, "Wird abgebrochen, der Spielclient wird beendet …", isError: false);
+            }
+
             _runCancel?.Cancel();
             return;
         }
