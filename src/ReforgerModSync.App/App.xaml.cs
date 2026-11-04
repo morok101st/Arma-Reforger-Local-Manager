@@ -16,14 +16,14 @@ public partial class App : Application
     private Mutex? _instanceMutex;
     private EventWaitHandle? _showWindowEvent;
     private RegisteredWaitHandle? _showWindowWait;
-    private TrayIcon? _tray;
+    private MainViewModel? _viewModel;
     private bool _startupFinished;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
-        // Die App läuft versteckt im Infobereich weiter: Ein zweiter Start holt nur das Fenster nach vorn.
+        // Es läuft nur eine Instanz: Ein zweiter Start holt das vorhandene Fenster nach vorn.
         _instanceMutex = new Mutex(true, InstanceMutexName, out var isFirstInstance);
         if (!isFirstInstance)
         {
@@ -66,28 +66,14 @@ public partial class App : Application
 
         var credentials = new WindowsCredentialStore();
         var cache = new ModListCache(ModListCache.DefaultFolder);
-        var viewModel = new MainViewModel(
+        _viewModel = new MainViewModel(
             new SettingsStore(SettingsStore.DefaultFilePath),
             credentials,
             cache,
             new SyncOrchestrator(credentials, cache));
 
-        // Das Schließen des Fensters beendet die App nicht, das geht über das Symbol im Infobereich.
-        ShutdownMode = ShutdownMode.OnExplicitShutdown;
-        var window = new MainWindow(viewModel);
+        var window = new MainWindow(_viewModel);
         window.Show();
-
-        // Das Symbol ist verzichtbar: Lehnt Windows es ab, läuft die App ohne und endet mit dem Fenster.
-        try
-        {
-            _tray = new TrayIcon(viewModel, window);
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "Kein Symbol im Infobereich, die App endet mit dem Fenster");
-            window.ExitOnClose();
-            ShutdownMode = ShutdownMode.OnLastWindowClose;
-        }
 
         _showWindowEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ShowWindowEventName);
         _showWindowWait = ThreadPool.RegisterWaitForSingleObject(
@@ -103,7 +89,19 @@ public partial class App : Application
     {
         _showWindowWait?.Unregister(null);
         _showWindowEvent?.Dispose();
-        _tray?.Dispose();
+
+        var passwordWait = _viewModel?.PasswordCleanupWait ?? TimeSpan.Zero;
+        if (passwordWait > TimeSpan.Zero)
+        {
+            // Direkt nach dem Beitritt geschlossen: Das Spiel braucht die Datei noch, liegen bleiben darf sie aber
+            // nicht. Die Sperre muss ganz geschlossen sein, ein offenes Handle hielte einen neuen Start davon ab.
+            _instanceMutex?.ReleaseMutex();
+            _instanceMutex?.Dispose();
+            _instanceMutex = null;
+            GameLauncher.WaitUntilRemoved(GameLauncher.PasswordFile, passwordWait);
+            GameLauncher.DeletePasswordFile();
+        }
+
         _instanceMutex?.Dispose();
         Log.CloseAndFlush();
         base.OnExit(e);

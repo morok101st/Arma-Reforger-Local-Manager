@@ -9,8 +9,6 @@ namespace ReforgerModSync.App;
 public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
-    private bool _allowClose;
-    private bool _exitOnClose;
 
     public MainWindow(MainViewModel viewModel)
     {
@@ -131,9 +129,6 @@ public partial class MainWindow : Window
     private void OnLogChanged(object sender, TextChangedEventArgs e) =>
         ((TextBox)sender).ScrollToEnd();
 
-    /// <summary>Das Fenster wurde geschlossen, die App läuft im Infobereich weiter.</summary>
-    public event Action? HiddenToTray;
-
     public void BringToFront()
     {
         Show();
@@ -145,29 +140,21 @@ public partial class MainWindow : Window
         Activate();
     }
 
-    /// <summary>Ohne Symbol im Infobereich käme man an ein verstecktes Fenster nicht mehr heran.</summary>
-    public void ExitOnClose() => _exitOnClose = true;
-
-    /// <summary>Beim echten Beenden das Fenster schließen lassen, statt es nur zu verstecken.</summary>
-    public void AllowClose()
-    {
-        _allowClose = true;
-        // Das Job Object beendet den Client mit, spätestens wenn dieser Prozess endet.
-        _viewModel.RequestCancel();
-    }
-
+    /// <summary>Schließen beendet die App. Läuft ein Sync, fragt sie vorher nach, weil er sonst abbricht.</summary>
     protected override void OnClosing(CancelEventArgs e)
     {
-        if (_exitOnClose)
-        {
-            AllowClose();
-        }
-
-        if (!_allowClose)
+        if (_viewModel.IsBusy && !BrandDialog.Confirm(
+                this,
+                "Vorgang läuft noch",
+                "Beim Beenden wird der laufende Vorgang abgebrochen. Bereits geladene Mods bleiben erhalten.",
+                "Beenden"))
         {
             e.Cancel = true;
-            Hide();
-            HiddenToTray?.Invoke();
+        }
+        else
+        {
+            // Das Job Object beendet den Client mit, spätestens wenn dieser Prozess endet.
+            _viewModel.RequestCancel();
         }
 
         base.OnClosing(e);

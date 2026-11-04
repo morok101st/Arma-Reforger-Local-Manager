@@ -15,7 +15,7 @@ public static class GameLauncher
     private const string BattlEyeStarter = "ArmaReforger_BE.exe";
     private const string PasswordFileName = "rms_server_password.txt";
 
-    private static string PasswordFile => Path.Combine(AddonPaths.ClientDefaultFolder, "profile", PasswordFileName);
+    public static string PasswordFile => Path.Combine(AddonPaths.ClientDefaultFolder, "profile", PasswordFileName);
 
     /// <summary>Startet das Spiel und lässt die Hilfs-Mod dem Server beitreten.</summary>
     /// <returns><c>null</c> bei Erfolg, sonst eine Meldung für den Nutzer.</returns>
@@ -53,6 +53,24 @@ public static class GameLauncher
         {
             // Wird beim nächsten App-Start erneut versucht.
         }
+    }
+
+    /// <summary>Wartet, bis die Datei weg ist, längstens <paramref name="maxWait"/>. Blockiert, nur für das App-Ende gedacht.</summary>
+    /// <returns><c>true</c>, wenn die Datei nicht mehr existiert.</returns>
+    public static bool WaitUntilRemoved(string path, TimeSpan maxWait)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        while (File.Exists(path))
+        {
+            if (stopwatch.Elapsed >= maxWait)
+            {
+                return false;
+            }
+
+            Thread.Sleep(TimeSpan.FromMilliseconds(100));
+        }
+
+        return true;
     }
 
     private static string? Launch(AppSettings settings, IReadOnlyList<string> arguments)

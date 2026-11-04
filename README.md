@@ -57,7 +57,7 @@ Klicke danach auf **Speichern und Server prüfen**. Das dauert rund 10 Sekunden.
 2. In der **Übersicht** auf **Jetzt synchronisieren** klicken. Das erste Mal kann das lange dauern.
 3. Auf **Direkt beitreten** klicken, sobald alles aktuell ist.
 
-Beim Schließen des Fensters läuft die App im Infobereich neben der Uhr weiter. Zum Beenden das Symbol dort mit der rechten Maustaste anklicken und „Beenden“ wählen.
+Beim Schließen des Fensters wird die App beendet. Ein laufender Sync bricht dabei ab, vorher fragt die App nach. Das Spiel läuft nach „Direkt beitreten“ auch ohne die App weiter.
 
 ## Gut zu wissen
 

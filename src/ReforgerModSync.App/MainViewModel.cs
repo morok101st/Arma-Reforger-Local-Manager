@@ -16,10 +16,13 @@ public sealed partial class MainViewModel(
     ModListCache cache,
     SyncOrchestrator orchestrator) : ObservableObject
 {
+    private static readonly TimeSpan PasswordCleanupDelay = TimeSpan.FromMinutes(2);
+
     private readonly SemaphoreSlim _saveGate = new(1, 1);
     private AppSettings _settings = new();
     private CancellationTokenSource? _runCancel;
     private bool _initialized;
+    private DateTime? _passwordCleanupDue;
 
     [ObservableProperty] private int _selectedTab;
 
@@ -37,13 +40,10 @@ public sealed partial class MainViewModel(
     public string SyncButtonText => IsBusy ? "Abbrechen" : "Jetzt synchronisieren";
     public bool IsNotBusy => !IsBusy;
 
-    /// <summary>Text für das Symbol im Infobereich. Windows erlaubt dort nur kurze Texte.</summary>
-    public string TrayStatus => SelectedProfile is { } profile
-        ? $"Sync & Launch\n{profile.DisplayName}: {profile.ListStatus}"
-        : "Sync & Launch";
-
-    /// <summary>Ein Sync ist fertig: Titel, Meldung und ob es ein Fehler war.</summary>
-    public event Action<string, string, bool>? RunFinished;
+    /// <summary>Wie lange die App nach einem Beitritt noch auf das Löschen der Passwortdatei achten muss.</summary>
+    public TimeSpan PasswordCleanupWait => _passwordCleanupDue is { } due && due > DateTime.UtcNow
+        ? due - DateTime.UtcNow
+        : TimeSpan.Zero;
 
     /// <summary>Beim Start läuft kein Spielclient: Die Übersicht nutzt die zuletzt geholte Liste.</summary>
     public async Task InitializeAsync()
@@ -291,11 +291,6 @@ public sealed partial class MainViewModel(
             profile.ListStatus = result.Outcome == SyncOutcome.Failed ? "Fehler" : "abgebrochen";
         }
 
-        OnPropertyChanged(nameof(TrayStatus));
-        if (result.Outcome != SyncOutcome.Cancelled)
-        {
-            RunFinished?.Invoke(saved.Name, result.Message, result.Outcome is SyncOutcome.Failed or SyncOutcome.Incomplete);
-        }
     }
 
     /// <summary>Startet das Spiel und tritt dem gewählten Server direkt bei.</summary>
@@ -319,9 +314,11 @@ public sealed partial class MainViewModel(
         }
 
         string? problem;
+        var hasPassword = false;
         try
         {
             var password = credentialStore.ReadPassword(saved.ServerAddress!, profile.Id);
+            hasPassword = !string.IsNullOrEmpty(password);
             problem = GameLauncher.StartAndJoin(_settings, saved, password);
         }
         catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
@@ -338,8 +335,15 @@ public sealed partial class MainViewModel(
         Log.Information("Direkter Beitritt gestartet für Server {Name}", saved.Name);
         SetStatus(profile, "Das Spiel startet und tritt dem Server bei. Klappt das nicht, bleibt es im Hauptmenü, und du kannst selbst beitreten.", isError: false);
 
+        if (!hasPassword)
+        {
+            return;
+        }
+
         // Die Hilfs-Mod löscht die Passwortdatei beim Start. Das ist die Absicherung, falls sie nicht dazu kommt.
-        await Task.Delay(TimeSpan.FromMinutes(2));
+        // Wird die App vorher geschlossen, übernimmt das App-Ende diese Aufgabe.
+        _passwordCleanupDue = DateTime.UtcNow + PasswordCleanupDelay;
+        await Task.Delay(PasswordCleanupDelay);
         GameLauncher.DeletePasswordFile();
     }
 
@@ -348,7 +352,6 @@ public sealed partial class MainViewModel(
     private async Task<SyncResult> RunExclusiveAsync(Func<CancellationToken, Task<SyncResult>> run)
     {
         IsBusy = true;
-        OnPropertyChanged(nameof(TrayStatus));
         using var cancel = _runCancel = new CancellationTokenSource();
         try
         {
@@ -358,13 +361,11 @@ public sealed partial class MainViewModel(
         {
             _runCancel = null;
             IsBusy = false;
-            OnPropertyChanged(nameof(TrayStatus));
         }
     }
 
     partial void OnSelectedProfileChanged(ProfileViewModel? value)
     {
-        OnPropertyChanged(nameof(TrayStatus));
         if (_initialized)
         {
             _ = PersistAsync();
