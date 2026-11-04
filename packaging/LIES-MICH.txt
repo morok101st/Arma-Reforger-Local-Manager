@@ -35,7 +35,11 @@ WICHTIG
 - Ein Sync bringt Mods auf die Version des Servers, auch zurück auf eine ältere. Das gilt
   für den gewählten Zielordner. Wer auf anderen Servern andere Versionen braucht, nimmt
   einen eigenen Zielordner.
-- Das Passwort liegt verschlüsselt im Windows-Anmeldeinformationsspeicher.
+- Das Passwort liegt verschlüsselt im Windows-Anmeldeinformationsspeicher. Für den Abruf
+  beim Server steht es kurz in einer temporären Datei und wird danach sofort gelöscht.
+- Die Mods stammen aus dem Arma Reforger Workshop. Mit dem Download gelten für jede Mod
+  deren Lizenz und die Workshop-Bedingungen von Bohemia Interactive:
+  https://reforger.armaplatform.com/workshop-terms
 
 RÜCKMELDUNG BEI PROBLEMEN
 Bitte beschreiben, was du geklickt hast und was passiert ist, und diese beiden Ordner
