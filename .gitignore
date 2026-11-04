@@ -11,6 +11,16 @@ appsettings.Development.json
 spike/
 *.mdmp
 
-# Nur lokal: Projektnotizen und Doku
+# Nur lokal: Projektnotizen, Doku und Testwerkzeug
 /CLAUDE.md
 /docs/
+/scripts/helper-spike.ps1
+
+# Werkzeuge und Editoren
+.claude/
+.vscode/
+.idea/
+
+# Laufzeitdaten, die nie eingecheckt werden dürfen
+*.log
+rms_server_password.txt
