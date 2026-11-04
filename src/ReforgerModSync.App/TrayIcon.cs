@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using H.NotifyIcon;
 using H.NotifyIcon.Core;
+using Serilog;
 
 namespace ReforgerModSync.App;
 
@@ -44,22 +45,39 @@ public sealed class TrayIcon : IDisposable
             MenuActivation = PopupActivationMode.RightClick,
         };
         _icon.TrayLeftMouseDown += (_, _) => ShowWindow();
-        _icon.ForceCreate(enablesEfficiencyMode: false);
+        try
+        {
+            CreateIcon();
+        }
+        catch
+        {
+            _icon.Dispose();
+            throw;
+        }
 
         viewModel.PropertyChanged += OnViewModelChanged;
         viewModel.RunFinished += ShowNotification;
         window.HiddenToTray += OnHiddenToTray;
     }
 
-    public void ShowWindow()
-    {
-        _window.Show();
-        if (_window.WindowState == WindowState.Minimized)
-        {
-            _window.WindowState = WindowState.Normal;
-        }
+    public void ShowWindow() => _window.BringToFront();
 
-        _window.Activate();
+    /// <summary>
+    /// Windows bindet die ID eines Symbols an den Pfad der EXE und lehnt sie ohne Begründung ab, wenn dort etwas
+    /// nicht passt. Eine zweite, feste ID umgeht das, ohne bei jedem Start einen neuen Eintrag anzulegen.
+    /// </summary>
+    private void CreateIcon()
+    {
+        try
+        {
+            _icon.ForceCreate(enablesEfficiencyMode: false);
+        }
+        catch (InvalidOperationException ex)
+        {
+            Log.Warning("Symbol im Infobereich abgelehnt ({Message}), zweiter Versuch mit Ersatz-ID", ex.Message);
+            _icon.TrayIcon.UpdateId(H.NotifyIcon.Core.TrayIcon.CreateUniqueGuidForProcessPath("fallback"));
+            _icon.ForceCreate(enablesEfficiencyMode: false);
+        }
     }
 
     public void Dispose()
