@@ -50,7 +50,7 @@
                                 <Setter TargetName="Label" Property="TextElement.Foreground" Value="White" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Label" Property="TextElement.Foreground" Value="{StaticResource BrandGoldBrush}" />
+                                <Setter TargetName="Label" Property="TextElement.Foreground" Value="White" />
                                 <Setter TargetName="Tab" Property="BorderBrush" Value="{StaticResource BrandGoldBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
