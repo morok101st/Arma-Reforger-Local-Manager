@@ -105,14 +105,13 @@ public class AddonScannerTests
 
     [Fact]
     public void Download_folder_maps_to_mods_root() =>
-        Assert.Equal(@"D:\Mods\addons\addons", AddonPaths.ResolveModsRoot(@"D:\Mods"));
+        Assert.Equal(@"D:\Mods\addons", AddonPaths.ResolveModsRoot(@"D:\Mods"));
 
     [Theory]
     [InlineData(@"D:\Mods", @"D:\Mods")]
     [InlineData(@"D:\Mods\", @"D:\Mods")]
     [InlineData(@"D:\Mods\addons", @"D:\Mods")]
-    [InlineData(@"D:\Mods\addons\addons", @"D:\Mods")]
-    [InlineData(@"D:\Mods\ADDONS\addons\", @"D:\Mods")]
+    [InlineData(@"D:\Mods\ADDONS\", @"D:\Mods")]
     [InlineData(@"D:\addons", @"D:\")]
     [InlineData("  ", null)]
     [InlineData(null, null)]
@@ -121,7 +120,7 @@ public class AddonScannerTests
 
     [Fact]
     public void Folder_with_the_mods_maps_to_itself() =>
-        Assert.Equal(@"E:\Mods\addons\addons", AddonPaths.ResolveModsRoot(@"E:\Mods\addons\addons"));
+        Assert.Equal(@"E:\Mods\addons", AddonPaths.ResolveModsRoot(@"E:\Mods\addons"));
 
     [Fact]
     public void Without_download_folder_the_client_default_is_used() =>

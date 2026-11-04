@@ -93,7 +93,7 @@ public class ClientTests
         var args = Download(@"D:\Meine Mods");
 
         AssertValue(args, "-addonsDir", @"D:\Meine Mods,C:\app\helper");
-        AssertValue(args, "-addonDownloadDir", @"D:\Meine Mods\addons");
+        AssertValue(args, "-addonDownloadDir", @"D:\Meine Mods");
         AssertValue(args, "-addons", ClientArgsBuilder.HelperGuid);
         AssertValue(args, "-profile", @"C:\profil");
         AssertValue(args, "-logsDir", @"C:\logs");
@@ -130,8 +130,8 @@ public class ClientTests
     [Fact]
     public void Game_start_only_sets_the_mod_folder() =>
         Assert.Equal(
-            ["-addonsDir", @"D:\Meine Mods", "-addonDownloadDir", @"D:\Meine Mods\addons"],
-            ClientArgsBuilder.BuildGame(@"D:\Meine Mods\addons\addons"));
+            ["-addonsDir", @"D:\Meine Mods", "-addonDownloadDir", @"D:\Meine Mods"],
+            ClientArgsBuilder.BuildGame(@"D:\Meine Mods\addons"));
 
     [Fact]
     public void Game_start_without_folder_uses_the_games_own_default() =>
@@ -143,7 +143,7 @@ public class ClientTests
         var args = ClientArgsBuilder.BuildJoin("203.0.113.10:2001", @"D:\Meine Mods", @"C:\app\helper");
 
         AssertValue(args, "-addonsDir", @"D:\Meine Mods,C:\app\helper");
-        AssertValue(args, "-addonDownloadDir", @"D:\Meine Mods\addons");
+        AssertValue(args, "-addonDownloadDir", @"D:\Meine Mods");
         AssertValue(args, "-addons", ClientArgsBuilder.HelperGuid);
         AssertValue(args, "-rmsJoin", "203.0.113.10:2001");
         Assert.DoesNotContain("-profile", args);
@@ -168,7 +168,7 @@ public class ClientTests
     [Fact]
     public void Steam_launch_options_are_quoted_for_paths_with_spaces() =>
         Assert.Equal(
-            """-addonsDir "D:\Meine Mods" -addonDownloadDir "D:\Meine Mods\addons" """.TrimEnd(),
+            """-addonsDir "D:\Meine Mods" -addonDownloadDir "D:\Meine Mods" """.TrimEnd(),
             ClientArgsBuilder.SteamLaunchOptions(@"D:\Meine Mods"));
 
     [Fact]

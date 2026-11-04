@@ -37,7 +37,7 @@ public static partial class ClientArgsBuilder
     /// <summary>Startparameter zum Spielen: nur der Mod-Ordner. Ohne Zielordner gilt der Standard des Spiels.</summary>
     public static IReadOnlyList<string> BuildGame(string? downloadDir) =>
         AddonPaths.NormalizeDownloadDir(downloadDir) is { } folder
-            ? ["-addonsDir", folder, "-addonDownloadDir", Path.Combine(folder, "addons")]
+            ? ["-addonsDir", folder, "-addonDownloadDir", folder]
             : [];
 
     /// <summary>
@@ -50,7 +50,7 @@ public static partial class ClientArgsBuilder
         return
         [
             "-addonsDir", folder is null ? helperRoot : $"{folder},{helperRoot}",
-            .. folder is null ? Array.Empty<string>() : ["-addonDownloadDir", Path.Combine(folder, "addons")],
+            .. folder is null ? Array.Empty<string>() : ["-addonDownloadDir", folder],
             "-addons", HelperGuid,
             "-rmsJoin", serverAddress.Trim(),
         ];
@@ -63,7 +63,7 @@ public static partial class ClientArgsBuilder
     /// <summary>Text für die Steam-Startoptionen, damit das Spiel denselben Ordner nutzt.</summary>
     public static string SteamLaunchOptions(string? downloadDir) =>
         AddonPaths.NormalizeDownloadDir(downloadDir) is { } folder
-            ? $"-addonsDir \"{folder}\" -addonDownloadDir \"{Path.Combine(folder, "addons")}\""
+            ? $"-addonsDir \"{folder}\" -addonDownloadDir \"{folder}\""
             : "";
 
     /// <summary>Baut eine Befehlszeile, Werte mit Leerzeichen kommen in Anführungszeichen.</summary>
@@ -85,9 +85,7 @@ public static partial class ClientArgsBuilder
         string profileDir,
         string helperRoot)
     {
-        var folder = AddonPaths.NormalizeDownloadDir(downloadDir);
-        var addonsDir = folder ?? AddonPaths.ClientDefaultFolder;
-        var addonDownloadDir = folder is null ? AddonPaths.ClientDefaultFolder : Path.Combine(folder, "addons");
+        var folder = AddonPaths.NormalizeDownloadDir(downloadDir) ?? AddonPaths.ClientDefaultFolder;
 
         return
         [
@@ -98,8 +96,8 @@ public static partial class ClientArgsBuilder
             "-noSplash",
             "-noFocus",
             "-maxFPS", window.MaxFps.ToString(),
-            "-addonsDir", $"{addonsDir},{helperRoot}",
-            "-addonDownloadDir", addonDownloadDir,
+            "-addonsDir", $"{folder},{helperRoot}",
+            "-addonDownloadDir", folder,
             "-addons", HelperGuid,
             "-profile", profileDir,
             "-logsDir", logsDir,
