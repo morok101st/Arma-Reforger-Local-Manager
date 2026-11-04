@@ -97,6 +97,7 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <StackPanel Orientation="Horizontal" Margin="2,2,0,18">
@@ -130,6 +131,19 @@
                     <Button Content="Server entfernen" Click="OnRemoveProfileClick"
                             HorizontalAlignment="Stretch" Padding="8,7" Margin="0,6,0,0" />
                 </StackPanel>
+
+                <!-- Gilt für die App, nicht für einen Server, und bleibt deshalb auch während eines Syncs bedienbar. -->
+                <Border Grid.Row="4" BorderBrush="{StaticResource BrandBorderBrush}" BorderThickness="0,1,0,0"
+                        Margin="0,12,0,0" Padding="4,10,4,0">
+                    <StackPanel>
+                        <TextBlock Text="{Binding VersionText}" Foreground="{StaticResource BrandMutedBrush}" FontSize="12" />
+                        <TextBlock FontSize="12" Margin="0,4,0,0" Foreground="{StaticResource BrandMutedBrush}">
+                            <Hyperlink Click="OnOpenRepositoryClick" Foreground="{StaticResource BrandGoldBrush}">GitHub</Hyperlink>
+                            <Run Text=" · " />
+                            <Hyperlink Click="OnOpenReleasesClick" Foreground="{StaticResource BrandGoldBrush}">Alle Versionen</Hyperlink>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
             </Grid>
         </Border>
 
@@ -304,26 +318,6 @@
                         </DockPanel>
                     </StackPanel>
                 </ScrollViewer>
-            </TabItem>
-
-            <TabItem Header="Über">
-                <StackPanel Margin="16" HorizontalAlignment="Left" Width="640">
-                    <StackPanel Orientation="Horizontal">
-                        <Image Source="pack://application:,,,/Assets/logo.png" Height="64" Margin="0,0,16,0"
-                               RenderOptions.BitmapScalingMode="HighQuality" />
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Reforger Sync &amp; Launch" Style="{StaticResource SectionTitle}" FontSize="24" />
-                            <TextBlock Text="{Binding VersionText}" FontWeight="SemiBold" Foreground="{StaticResource BrandGoldBrush}" Margin="0,4,0,0" />
-                        </StackPanel>
-                    </StackPanel>
-                    <TextBlock TextWrapping="Wrap" Margin="0,20,0,0"
-                               Text="Lädt die Mods eines Arma-Reforger-Servers vorab herunter, damit du beim Beitritt nicht mehr warten musst." />
-                    <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
-                        <Button Content="Projekt auf GitHub" Click="OnOpenRepositoryClick" Padding="16,8" />
-                        <Button Content="Alle Versionen" Click="OnOpenReleasesClick" Margin="8,0,0,0" Padding="16,8" />
-                    </StackPanel>
-                    <TextBlock Text="Dies ist kein offizielles Produkt von Bohemia Interactive." Style="{StaticResource Hint}" Margin="0,20,0,0" />
-                </StackPanel>
             </TabItem>
         </TabControl>
     </Grid>

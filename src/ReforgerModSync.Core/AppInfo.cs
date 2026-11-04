@@ -1,6 +1,6 @@
 namespace ReforgerModSync.Core;
 
-/// <summary>Angaben zum Produkt für den Bereich „Über“.</summary>
+/// <summary>Angaben zum Produkt für die Anzeige in der App.</summary>
 public static class AppInfo
 {
     public const string RepositoryUrl = "https://github.com/morok101st/Arma-Reforger-Local-Manager";

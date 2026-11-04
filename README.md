@@ -70,7 +70,7 @@ Dies ist kein offizielles Produkt von Bohemia Interactive.
 
 ## Probleme melden
 
-Nenne deine Version (steht in der Titelleiste und im Reiter **Über**), beschreibe, was du geklickt hast und was passiert ist, und schicke diese beiden Ordner mit. Darin steht kein Passwort, aber die Server-Adresse und dein Windows-Benutzername:
+Nenne deine Version (steht in der Titelleiste und links unten in der App), beschreibe, was du geklickt hast und was passiert ist, und schicke diese beiden Ordner mit. Darin steht kein Passwort, aber die Server-Adresse und dein Windows-Benutzername:
 
 ```
 %LOCALAPPDATA%\ReforgerModSync\logs
