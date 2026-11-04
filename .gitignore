@@ -1,0 +1,12 @@
+# .NET
+bin/
+obj/
+publish/
+*.user
+.vs/
+TestResults/
+
+# Lokale Einstellungen und Spike-Daten (ungeprüfte Logs nicht einchecken)
+appsettings.Development.json
+spike/
+*.mdmp

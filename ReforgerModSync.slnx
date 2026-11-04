@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ReforgerModSync.App/ReforgerModSync.App.csproj" />
+    <Project Path="src/ReforgerModSync.Cli/ReforgerModSync.Cli.csproj" />
+    <Project Path="src/ReforgerModSync.Core/ReforgerModSync.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ReforgerModSync.Core.Tests/ReforgerModSync.Core.Tests.csproj" />
+  </Folder>
+</Solution>
