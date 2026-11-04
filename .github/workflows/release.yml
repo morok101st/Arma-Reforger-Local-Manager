@@ -1,0 +1,45 @@
+# Baut bei einem Versions-Tag (z. B. v0.1.0) das Paket und veröffentlicht es als Release.
+# Versionen unter 1.0 erscheinen als Vorabversion.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Tests
+        run: dotnet test ReforgerModSync.slnx -c Release --nologo
+
+      - name: Paket bauen
+        shell: powershell
+        run: |
+          $version = $env:GITHUB_REF_NAME.Substring(1)
+          & scripts\build-package.ps1 -Version $version
+
+      - name: Release veröffentlichen
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          $zip = (Get-Item publish\*.zip).FullName
+          $notes = 'Installation: ZIP in einen festen Ordner entpacken und 101stServerManager.exe starten. Alles Weitere steht in LIES-MICH.txt im Paket. Voraussetzungen: Windows 10 oder 11 (64 Bit), Steam und Arma Reforger.'
+          $options = @()
+          if ($tag.StartsWith('v0.')) { $options += '--prerelease' }
+          & gh release create $tag $zip --verify-tag --title "101st Server Manager $tag" --notes $notes @options
+          if ($LASTEXITCODE -ne 0) { throw 'Release konnte nicht erstellt werden' }
