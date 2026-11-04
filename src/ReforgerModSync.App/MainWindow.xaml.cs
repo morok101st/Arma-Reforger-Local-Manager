@@ -8,6 +8,7 @@ namespace ReforgerModSync.App;
 public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
+    private bool _allowClose;
 
     public MainWindow(MainViewModel viewModel)
     {
@@ -120,10 +121,26 @@ public partial class MainWindow : Window
     private void OnLogChanged(object sender, TextChangedEventArgs e) =>
         ((TextBox)sender).ScrollToEnd();
 
-    protected override void OnClosing(CancelEventArgs e)
+    /// <summary>Das Fenster wurde geschlossen, die App läuft im Infobereich weiter.</summary>
+    public event Action? HiddenToTray;
+
+    /// <summary>Beim echten Beenden das Fenster schließen lassen, statt es nur zu verstecken.</summary>
+    public void AllowClose()
     {
+        _allowClose = true;
         // Das Job Object beendet den Client mit, spätestens wenn dieser Prozess endet.
         _viewModel.RequestCancel();
+    }
+
+    protected override void OnClosing(CancelEventArgs e)
+    {
+        if (!_allowClose)
+        {
+            e.Cancel = true;
+            Hide();
+            HiddenToTray?.Invoke();
+        }
+
         base.OnClosing(e);
     }
 }

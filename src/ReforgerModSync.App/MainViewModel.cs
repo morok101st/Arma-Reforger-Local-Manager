@@ -37,6 +37,14 @@ public sealed partial class MainViewModel(
     public string SyncButtonText => IsBusy ? "Abbrechen" : "Jetzt synchronisieren";
     public bool IsNotBusy => !IsBusy;
 
+    /// <summary>Text für das Symbol im Infobereich. Windows erlaubt dort nur kurze Texte.</summary>
+    public string TrayStatus => SelectedProfile is { } profile
+        ? $"101st Server Manager\n{profile.DisplayName}: {profile.ListStatus}"
+        : "101st Server Manager";
+
+    /// <summary>Ein Sync ist fertig: Titel, Meldung und ob es ein Fehler war.</summary>
+    public event Action<string, string, bool>? RunFinished;
+
     /// <summary>Beim Start läuft kein Spielclient: Die Übersicht nutzt die zuletzt geholte Liste.</summary>
     public async Task InitializeAsync()
     {
@@ -282,6 +290,12 @@ public sealed partial class MainViewModel(
         {
             profile.ListStatus = result.Outcome == SyncOutcome.Failed ? "Fehler" : "abgebrochen";
         }
+
+        OnPropertyChanged(nameof(TrayStatus));
+        if (result.Outcome != SyncOutcome.Cancelled)
+        {
+            RunFinished?.Invoke(saved.Name, result.Message, result.Outcome is SyncOutcome.Failed or SyncOutcome.Incomplete);
+        }
     }
 
     /// <summary>Startet das Spiel mit dem gespeicherten Zielordner des gewählten Servers.</summary>
@@ -358,6 +372,7 @@ public sealed partial class MainViewModel(
     private async Task<SyncResult> RunExclusiveAsync(Func<CancellationToken, Task<SyncResult>> run)
     {
         IsBusy = true;
+        OnPropertyChanged(nameof(TrayStatus));
         using var cancel = _runCancel = new CancellationTokenSource();
         try
         {
@@ -367,11 +382,13 @@ public sealed partial class MainViewModel(
         {
             _runCancel = null;
             IsBusy = false;
+            OnPropertyChanged(nameof(TrayStatus));
         }
     }
 
     partial void OnSelectedProfileChanged(ProfileViewModel? value)
     {
+        OnPropertyChanged(nameof(TrayStatus));
         if (_initialized)
         {
             _ = PersistAsync();
