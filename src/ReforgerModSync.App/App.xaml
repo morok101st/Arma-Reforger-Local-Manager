@@ -21,6 +21,15 @@
         <SolidColorBrush x:Key="BrandMutedBrush" Color="{StaticResource BrandMuted}" />
         <SolidColorBrush x:Key="BrandDangerBrush" Color="#EF4444" />
 
+        <!-- Auswahl: dunkles Gold, damit weißer Text gut lesbar bleibt -->
+        <SolidColorBrush x:Key="DataGridRowSelectedBackgroundThemeBrush" Color="#5C4A0C" />
+        <SolidColorBrush x:Key="DataGridRowSelectedForegroundThemeBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#5C4A0C" />
+        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#5C4A0C" />
+        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="#FFFFFF" />
+        <Color x:Key="{x:Static SystemColors.HighlightColorKey}">#5C4A0C</Color>
+
         <!-- Akzentfarbe des Windows-Designs durch das Airborne-Gold ersetzen -->
         <Color x:Key="SystemAccentColor">#FFC720</Color>
         <Color x:Key="SystemAccentColorLight1">#FFCE3A</Color>
