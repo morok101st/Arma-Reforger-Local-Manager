@@ -191,7 +191,20 @@
                             <DataGridTextColumn Header="Mod" Binding="{Binding Name}" Width="*" />
                             <DataGridTextColumn Header="Benötigt" Binding="{Binding Required}" Width="100" />
                             <DataGridTextColumn Header="Lokal" Binding="{Binding Local}" Width="100" />
-                            <DataGridTextColumn Header="Status" Binding="{Binding State}" Width="140" />
+                            <DataGridTextColumn Header="Status" Binding="{Binding State}" Width="140">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{x:Static DataGridTextColumn.DefaultElementStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsOpen}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource BrandGoldBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsDamaged}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource BrandDangerBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
                         </DataGrid.Columns>
                     </DataGrid>
 

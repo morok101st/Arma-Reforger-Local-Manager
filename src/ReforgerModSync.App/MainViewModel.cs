@@ -446,7 +446,8 @@ public sealed partial class MainViewModel(
                     ModState.Newer => "neuer als Server",
                     ModState.Different => "andere Version",
                     _ => "beschädigt",
-                }));
+                },
+                mod.State));
         }
 
         var current = comparison.Count(mod => mod.State == ModState.Current);
@@ -460,7 +461,7 @@ public sealed partial class MainViewModel(
             : string.Join(" · ", new[]
             {
                 $"{current} von {comparison.Count} Mods aktuell",
-                CountText(comparison, ModState.Missing, "fehlen"),
+                CountText(comparison, ModState.Missing, comparison.Count(mod => mod.State == ModState.Missing) == 1 ? "fehlt" : "fehlen"),
                 CountText(comparison, ModState.Outdated, "veraltet"),
                 CountText(comparison, ModState.Newer, "neuer als Server"),
                 CountText(comparison, ModState.Different, "andere Version"),

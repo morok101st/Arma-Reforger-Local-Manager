@@ -6,7 +6,13 @@ using ReforgerModSync.Core.Settings;
 
 namespace ReforgerModSync.App;
 
-public sealed record ModRow(string Name, string Required, string Local, string State);
+public sealed record ModRow(string Name, string Required, string Local, string State, ModState Kind)
+{
+    /// <summary>Passt nicht zum Server: Der Status wird in der Liste hervorgehoben.</summary>
+    public bool IsOpen => Kind != ModState.Current;
+
+    public bool IsDamaged => Kind == ModState.Damaged;
+}
 
 /// <summary>Ein Server mit Eingabefeldern und eigenem Stand für die Übersicht.</summary>
 public sealed partial class ProfileViewModel : ObservableObject
