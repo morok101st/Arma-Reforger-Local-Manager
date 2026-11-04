@@ -1,0 +1,49 @@
+101st Server Manager (Testversion)
+==================================
+
+Lädt die Mods eines Reforger-Servers vorab, damit der Beitritt ohne Wartezeit klappt.
+
+VORAUSSETZUNGEN
+- Windows 10 oder 11, 64 Bit
+- Steam läuft, Arma Reforger ist installiert
+- Adresse (IP:Port) und Passwort des Servers
+
+INSTALLATION
+1. ZIP in einen festen Ordner entpacken, zum Beispiel C:\Spiele\101st Server Manager.
+   Der Ordner "helper" muss neben der EXE bleiben.
+2. 101stServerManager.exe starten.
+3. Windows warnt eventuell ("Der Computer wurde durch Windows geschützt"), weil die
+   Testversion nicht signiert ist: "Weitere Informationen" und "Trotzdem ausführen".
+
+EINRICHTUNG
+1. Im Reiter "Einstellungen" Name, Server-Adresse und Server-Passwort eintragen.
+2. Zielordner wählen: Am besten den Ordner, in dem deine Mods schon liegen, sonst wird
+   alles neu geladen. Ohne eigene Startoptionen in Steam lässt du das Feld einfach leer.
+3. "Speichern und Server prüfen" klicken. Das dauert rund 10 Sekunden.
+
+BENUTZUNG
+- "Jetzt synchronisieren" lädt fehlende Mods und bringt alle auf die Version des Servers.
+  Das Spielfenster bleibt dabei ausgeblendet. Das erste Mal kann das lange dauern.
+- "Direkt beitreten" startet das Spiel und verbindet mit dem Server.
+- "Spiel starten" startet nur das Spiel.
+- Das Spiel muss für den Sync geschlossen sein.
+- Beim Schließen des Fensters läuft die App im Infobereich neben der Uhr weiter.
+  Beenden: Rechtsklick auf das Symbol, dann "Beenden".
+- Beim Spielstart kann Windows nach Administratorrechten für BattlEye fragen.
+
+WICHTIG
+- Ein Sync bringt Mods auf die Version des Servers, auch zurück auf eine ältere. Das gilt
+  für den gewählten Zielordner. Wer auf anderen Servern andere Versionen braucht, nimmt
+  einen eigenen Zielordner.
+- Das Passwort liegt verschlüsselt im Windows-Anmeldeinformationsspeicher.
+
+RÜCKMELDUNG BEI PROBLEMEN
+Bitte beschreiben, was du geklickt hast und was passiert ist, und diese beiden Ordner
+mitschicken. Darin steht kein Passwort, aber die Server-Adresse und dein Windows-Benutzername:
+  %LOCALAPPDATA%\ReforgerModSync\logs
+  %LOCALAPPDATA%\ReforgerModSync\clientlogs
+
+ENTFERNEN
+Ordner der App löschen. Optional auch %APPDATA%\ReforgerModSync und
+%LOCALAPPDATA%\ReforgerModSync. Das Passwort entfernst du vorher in der App über
+"Server entfernen". Die geladenen Mods bleiben erhalten.
