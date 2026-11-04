@@ -39,11 +39,23 @@ public partial class MainWindow : Window
     // Das Passwort bleibt bewusst im PasswordBox-Steuerelement und wird nie an eine Bindung gehängt.
     private async void OnSaveClick(object sender, RoutedEventArgs e)
     {
+        var keepPassword = false;
+        if (_viewModel.NeedsPasswordTransferDecision(PasswordInput.Password))
+        {
+            keepPassword = BrandDialog.Confirm(
+                this,
+                "Server-Adresse geändert",
+                "Das gespeicherte Passwort gehört zur bisherigen Adresse. Soll es auch für die neue Adresse gelten? "
+                    + "Es wird dann beim Prüfen an diesen Server übermittelt. Ohne Übernahme wird es gelöscht.",
+                "Übernehmen",
+                cancelText: "Nicht übernehmen");
+        }
+
         var button = (Button)sender;
         button.IsEnabled = false;
         try
         {
-            await _viewModel.SaveSelectedProfileAsync(PasswordInput.Password);
+            await _viewModel.SaveSelectedProfileAsync(PasswordInput.Password, keepPassword);
             PasswordInput.Clear();
         }
         finally

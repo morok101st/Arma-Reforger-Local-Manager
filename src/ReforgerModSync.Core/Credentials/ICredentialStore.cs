@@ -2,7 +2,7 @@ namespace ReforgerModSync.Core.Credentials;
 
 /// <summary>
 /// Server-Passwörter gehören zu einem Profil und seiner Adresse: Sie werden nie für ein anderes
-/// Profil oder eine andere Adresse verwendet.
+/// Profil und ohne Zustimmung des Nutzers nie für eine andere Adresse verwendet.
 /// </summary>
 public interface ICredentialStore
 {

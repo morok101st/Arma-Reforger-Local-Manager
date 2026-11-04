@@ -28,10 +28,15 @@ public partial class BrandDialog : Window
     /// </summary>
     /// <param name="danger">Für Aktionen, die etwas löschen: roter Rahmen statt Gold.</param>
     /// <returns><c>true</c>, wenn der Nutzer bestätigt hat.</returns>
-    public static bool Confirm(Window? owner, string title, string message, string confirmText, bool danger = false)
+    public static bool Confirm(Window? owner, string title, string message, string confirmText, bool danger = false, string? cancelText = null)
     {
         var dialog = new BrandDialog(owner, title, message);
         dialog.ConfirmButton.Content = confirmText;
+        if (cancelText is not null)
+        {
+            dialog.CancelButton.Content = cancelText;
+        }
+
         dialog.ConfirmButton.BorderBrush = (System.Windows.Media.Brush)Application.Current.Resources[danger ? "BrandDangerBrush" : "BrandGoldBrush"];
         dialog.Loaded += (_, _) => dialog.CancelButton.Focus();
         return dialog.ShowDialog() == true;

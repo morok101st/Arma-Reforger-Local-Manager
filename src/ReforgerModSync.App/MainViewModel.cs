@@ -129,7 +129,8 @@ public sealed partial class MainViewModel(
     /// Holt zur Prüfung die Liste vom Server, dafür läuft kurz der ausgeblendete Spielclient. Ein Passwort
     /// wird nur gespeichert, wenn der Server es akzeptiert hat, alle anderen Werte in jedem Fall.
     /// </summary>
-    public async Task SaveSelectedProfileAsync(string enteredPassword)
+    /// <param name="keepPasswordForNewAddress">Der Nutzer hat zugestimmt, das bisherige Passwort für die neue Adresse zu verwenden.</param>
+    public async Task SaveSelectedProfileAsync(string enteredPassword, bool keepPasswordForNewAddress = false)
     {
         if (SelectedProfile is not { } profile || IsBusy)
         {
@@ -153,6 +154,12 @@ public sealed partial class MainViewModel(
         profile.Saved = saved;
         await PersistAsync();
 
+        if (previousAddress is not null && previousAddress != saved.ServerAddress
+            && !TryMovePassword(profile, previousAddress, saved.ServerAddress!, keepPasswordForNewAddress))
+        {
+            return;
+        }
+
         ShowSettingsMessage(profile, "Server wird geprüft, das dauert einen Moment …", isError: false);
         var result = await RunExclusiveAsync(token => orchestrator.CheckAsync(
             _settings,
@@ -174,11 +181,6 @@ public sealed partial class MainViewModel(
             {
                 credentialStore.SavePassword(saved.ServerAddress!, profile.Id, enteredPassword);
             }
-
-            if (previousAddress is not null && previousAddress != saved.ServerAddress)
-            {
-                credentialStore.DeletePassword(previousAddress, profile.Id);
-            }
         }
         catch (System.ComponentModel.Win32Exception ex)
         {
@@ -193,6 +195,43 @@ public sealed partial class MainViewModel(
         Log.Information("Server {Name} gespeichert, {Count} Mods", saved.Name, result.Mods.Count);
         ShowSettingsMessage(profile, $"Gespeichert. Der Server listet {result.Mods.Count} Mods.", isError: false);
         SelectedTab = 0;
+    }
+
+    /// <summary>
+    /// Die Adresse wurde geändert, ohne ein neues Passwort einzugeben. Ein Passwort gilt nur für seine Adresse:
+    /// Für eine andere darf es nur mit Zustimmung des Nutzers verwendet werden, sonst ginge es unbemerkt an einen fremden Server.
+    /// </summary>
+    public bool NeedsPasswordTransferDecision(string enteredPassword) =>
+        enteredPassword.Length == 0
+        && SelectedProfile is { HasSavedPassword: true, Saved.ServerAddress: { } previous } profile
+        && !string.IsNullOrWhiteSpace(profile.Name)
+        && profile.ToProfile().ServerAddress is { } current
+        && current != previous
+        && ClientArgsBuilder.IsValidServerAddress(current);
+
+    /// <summary>Der Eintrag der alten Adresse verschwindet in jedem Fall, damit kein verwaistes Passwort zurückbleibt.</summary>
+    private bool TryMovePassword(ProfileViewModel profile, string previousAddress, string newAddress, bool keep)
+    {
+        try
+        {
+            if (keep && credentialStore.ReadPassword(previousAddress, profile.Id) is { } password)
+            {
+                credentialStore.SavePassword(newAddress, profile.Id, password);
+            }
+
+            credentialStore.DeletePassword(previousAddress, profile.Id);
+        }
+        catch (System.ComponentModel.Win32Exception ex)
+        {
+            ShowSettingsMessage(profile, $"Das Passwort konnte nicht übernommen werden: {ex.Message}", isError: true);
+            return false;
+        }
+        finally
+        {
+            ReadPasswordState(profile);
+        }
+
+        return true;
     }
 
     public void DeleteSelectedPassword()
