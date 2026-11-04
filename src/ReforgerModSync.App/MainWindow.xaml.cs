@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
@@ -71,8 +72,19 @@ public partial class MainWindow : Window
 
     private void OnBrowseClick(object sender, RoutedEventArgs e)
     {
+        if (_viewModel.SelectedProfile is not { } profile)
+        {
+            return;
+        }
+
         var dialog = new OpenFolderDialog { Title = "Zielordner für die Mods wählen" };
-        if (dialog.ShowDialog(this) == true && _viewModel.SelectedProfile is { } profile)
+        var current = profile.DownloadDir.Trim();
+        if (Directory.Exists(current))
+        {
+            dialog.InitialDirectory = current;
+        }
+
+        if (dialog.ShowDialog(this) == true)
         {
             profile.DownloadDir = dialog.FolderName;
         }
