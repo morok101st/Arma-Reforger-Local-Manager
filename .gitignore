@@ -10,3 +10,7 @@ TestResults/
 appsettings.Development.json
 spike/
 *.mdmp
+
+# Nur lokal: Projektnotizen und Doku
+/CLAUDE.md
+/docs/
