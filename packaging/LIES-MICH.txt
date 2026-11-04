@@ -26,7 +26,6 @@ BENUTZUNG
 - "Jetzt synchronisieren" lädt fehlende Mods und bringt alle auf die Version des Servers.
   Das Spielfenster bleibt dabei ausgeblendet. Das erste Mal kann das lange dauern.
 - "Direkt beitreten" startet das Spiel und verbindet mit dem Server.
-- "Spiel starten" startet nur das Spiel.
 - Das Spiel muss für den Sync geschlossen sein.
 - Beim Schließen des Fensters läuft die App im Infobereich neben der Uhr weiter.
   Beenden: Rechtsklick auf das Symbol, dann "Beenden".

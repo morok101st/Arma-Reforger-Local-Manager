@@ -17,10 +17,6 @@ public static class GameLauncher
 
     private static string PasswordFile => Path.Combine(AddonPaths.ClientDefaultFolder, "profile", PasswordFileName);
 
-    /// <returns><c>null</c> bei Erfolg, sonst eine Meldung für den Nutzer.</returns>
-    public static string? Start(AppSettings settings, ServerProfile profile) =>
-        Launch(settings, ClientArgsBuilder.BuildGame(profile.DownloadDir));
-
     /// <summary>Startet das Spiel und lässt die Hilfs-Mod dem Server beitreten.</summary>
     /// <returns><c>null</c> bei Erfolg, sonst eine Meldung für den Nutzer.</returns>
     public static string? StartAndJoin(AppSettings settings, ServerProfile profile, string? password)

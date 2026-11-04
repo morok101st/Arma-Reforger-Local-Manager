@@ -155,7 +155,7 @@
                     </TextBlock>
                     <TextBlock Grid.Row="2" Text="{Binding Summary}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,12,0,0" />
 
-                    <!-- Links die Verwaltung, neutral. Rechts die Aktionen für Spieler, „Direkt beitreten“ am stärksten. -->
+                    <!-- Links die Verwaltung, neutral. Rechts die Hauptaktion für Spieler. -->
                     <DockPanel Grid.Row="3" Margin="0,12,0,0" LastChildFill="False">
                         <Button DockPanel.Dock="Left" Padding="16,8"
                                 Content="{Binding DataContext.SyncButtonText, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -167,10 +167,6 @@
                                 Style="{DynamicResource AccentButtonStyle}" FontWeight="SemiBold"
                                 IsEnabled="{Binding DataContext.IsNotBusy, RelativeSource={RelativeSource AncestorType=Window}}"
                                 ToolTip="Startet Arma Reforger und tritt diesem Server direkt bei" />
-                        <Button DockPanel.Dock="Right" Content="Spiel starten" Padding="16,8" Click="OnStartGameClick"
-                                BorderBrush="{StaticResource BrandGoldBrush}"
-                                IsEnabled="{Binding DataContext.IsNotBusy, RelativeSource={RelativeSource AncestorType=Window}}"
-                                ToolTip="Startet Arma Reforger mit dem Zielordner dieses Servers" />
                     </DockPanel>
 
                     <ProgressBar Grid.Row="4" Height="6" Margin="0,12,0,0"
@@ -248,7 +244,7 @@
 
                         <StackPanel Visibility="{Binding HasDownloadDir, Converter={StaticResource BoolToVisibility}}" Margin="0,12,0,0">
                             <TextBlock TextWrapping="Wrap"
-                                       Text="Über „Spiel starten“ in der Übersicht nutzt das Spiel diesen Ordner automatisch. Nur wenn du lieber direkt über Steam startest, trage diesen Text dort ein: Arma Reforger › Eigenschaften › Startoptionen. Sonst lädt das Spiel beim Beitritt alles erneut." />
+                                       Text="Über „Direkt beitreten“ in der Übersicht nutzt das Spiel diesen Ordner automatisch. Nur wenn du lieber direkt über Steam startest, trage diesen Text dort ein: Arma Reforger › Eigenschaften › Startoptionen. Sonst lädt das Spiel beim Beitritt alles erneut." />
                             <Grid Margin="0,6,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />

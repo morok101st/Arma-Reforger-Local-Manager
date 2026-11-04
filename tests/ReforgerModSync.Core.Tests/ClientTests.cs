@@ -128,16 +128,6 @@ public class ClientTests
     }
 
     [Fact]
-    public void Game_start_only_sets_the_mod_folder() =>
-        Assert.Equal(
-            ["-addonsDir", @"D:\Meine Mods", "-addonDownloadDir", @"D:\Meine Mods"],
-            ClientArgsBuilder.BuildGame(@"D:\Meine Mods\addons"));
-
-    [Fact]
-    public void Game_start_without_folder_uses_the_games_own_default() =>
-        Assert.Empty(ClientArgsBuilder.BuildGame(null));
-
-    [Fact]
     public void Join_uses_the_helper_and_the_players_own_profile()
     {
         var args = ClientArgsBuilder.BuildJoin("203.0.113.10:2001", @"D:\Meine Mods", @"C:\app\helper");

@@ -34,12 +34,6 @@ public static partial class ClientArgsBuilder
             "-rmsServer", serverAddress.Trim(),
         ];
 
-    /// <summary>Startparameter zum Spielen: nur der Mod-Ordner. Ohne Zielordner gilt der Standard des Spiels.</summary>
-    public static IReadOnlyList<string> BuildGame(string? downloadDir) =>
-        AddonPaths.NormalizeDownloadDir(downloadDir) is { } folder
-            ? ["-addonsDir", folder, "-addonDownloadDir", folder]
-            : [];
-
     /// <summary>
     /// Startparameter für den direkten Beitritt: mit Hilfs-Mod und echtem Profil des Spielers. Beim
     /// Verbinden lädt das Spiel die Mods des Servers neu. Das Passwort steht nie darin.

@@ -93,23 +93,15 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnStartGameClick(object sender, RoutedEventArgs e)
-    {
-        if (ConfirmOpenMods("Das Spiel lädt sie sonst beim Beitritt nach.", "Trotzdem starten"))
-        {
-            _viewModel.StartGame();
-        }
-    }
-
     private async void OnJoinServerClick(object sender, RoutedEventArgs e)
     {
-        if (ConfirmOpenMods("Der Beitritt kann daran scheitern. Am besten zuerst synchronisieren.", "Trotzdem beitreten"))
+        if (ConfirmOpenMods())
         {
             await _viewModel.JoinServerAsync();
         }
     }
 
-    private bool ConfirmOpenMods(string consequence, string confirmText)
+    private bool ConfirmOpenMods()
     {
         if (_viewModel.SelectedProfile is not { } profile)
         {
@@ -124,7 +116,7 @@ public partial class MainWindow : Window
         var title = profile.OpenModCount == 1
             ? "1 Mod passt nicht zum Server"
             : $"{profile.OpenModCount} Mods passen nicht zum Server";
-        return BrandDialog.Confirm(this, title, consequence, confirmText);
+        return BrandDialog.Confirm(this, title, "Der Beitritt kann daran scheitern. Am besten zuerst synchronisieren.", "Trotzdem beitreten");
     }
 
     private void OnCopyLaunchOptionsClick(object sender, RoutedEventArgs e)

@@ -298,30 +298,6 @@ public sealed partial class MainViewModel(
         }
     }
 
-    /// <summary>Startet das Spiel mit dem gespeicherten Zielordner des gewählten Servers.</summary>
-    public void StartGame()
-    {
-        if (SelectedProfile is not { } profile || IsBusy)
-        {
-            return;
-        }
-
-        if (profile.Saved is not { } saved || profile.ToProfile() != saved)
-        {
-            SetStatus(profile, "Dieser Server hat ungespeicherte Änderungen. Bitte zuerst in den Einstellungen speichern.", isError: true);
-            return;
-        }
-
-        if (GameLauncher.Start(_settings, saved) is { } problem)
-        {
-            SetStatus(profile, problem, isError: true);
-            return;
-        }
-
-        Log.Information("Spiel gestartet für Server {Name}", saved.Name);
-        SetStatus(profile, $"Das Spiel startet. Tritt im Spiel dem Server {saved.ServerAddress} bei.", isError: false);
-    }
-
     /// <summary>Startet das Spiel und tritt dem gewählten Server direkt bei.</summary>
     public async Task JoinServerAsync()
     {
