@@ -32,22 +32,25 @@
             </Style.Triggers>
         </Style>
         <Style TargetType="TabItem">
-            <Setter Property="Foreground" Value="{StaticResource BrandMutedBrush}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
+            <!-- Der Inhalt des Reiters erbt diese Farbe. -->
+            <Setter Property="Foreground" Value="White" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
+                    <!-- Farbe nur an der Beschriftung setzen: Am TabItem würde sie auf den Inhalt des Reiters abfärben. -->
                     <ControlTemplate TargetType="TabItem">
                         <Border x:Name="Tab" Background="Transparent" BorderBrush="Transparent"
                                 BorderThickness="0,0,0,2" Padding="14,8" Margin="0,0,4,0">
-                            <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" />
+                            <ContentPresenter x:Name="Label" ContentSource="Header" RecognizesAccessKey="True"
+                                              TextElement.FontWeight="SemiBold"
+                                              TextElement.Foreground="{StaticResource BrandMutedBrush}" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Foreground" Value="White" />
+                                <Setter TargetName="Label" Property="TextElement.Foreground" Value="White" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Foreground" Value="{StaticResource BrandGoldBrush}" />
+                                <Setter TargetName="Label" Property="TextElement.Foreground" Value="{StaticResource BrandGoldBrush}" />
                                 <Setter TargetName="Tab" Property="BorderBrush" Value="{StaticResource BrandGoldBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
