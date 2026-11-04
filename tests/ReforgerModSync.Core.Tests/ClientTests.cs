@@ -13,7 +13,7 @@ public class ClientTests
     ];
 
     private static IReadOnlyList<string> Download(string? downloadDir) =>
-        ClientArgsBuilder.BuildDownload(Mods, downloadDir, new ClientWindowSettings(), @"C:\logs", @"C:\profil", @"C:\app\helper");
+        ClientArgsBuilder.BuildDownload("203.0.113.10:2001", Mods, downloadDir, new ClientWindowSettings(), @"C:\logs", @"C:\profil", @"C:\app\helper");
 
     private static IReadOnlyList<string> ListRequest() =>
         ClientArgsBuilder.BuildListRequest("203.0.113.10:2001", @"D:\Mods", new ClientWindowSettings(), @"C:\logs", @"C:\profil", @"C:\app\helper");
@@ -97,6 +97,7 @@ public class ClientTests
         AssertValue(args, "-addons", ClientArgsBuilder.HelperGuid);
         AssertValue(args, "-profile", @"C:\profil");
         AssertValue(args, "-logsDir", @"C:\logs");
+        AssertValue(args, "-rmsServer", "203.0.113.10:2001");
         AssertValue(args, "-rmsMods", "65AD7C139EB4C1A1:1.5.36;64EE818E08AFCF94");
         Assert.Contains("-noSound", args);
     }

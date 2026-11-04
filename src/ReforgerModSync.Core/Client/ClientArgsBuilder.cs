@@ -8,8 +8,12 @@ public static partial class ClientArgsBuilder
 {
     public const string HelperGuid = "7A3C1E5D9B2F4860";
 
-    /// <summary>Startparameter, mit denen die Hilfs-Mod genau diese Mods lädt.</summary>
+    /// <summary>
+    /// Startparameter, mit denen die Hilfs-Mod genau diese Mods in der Version des Servers lädt. Sie braucht
+    /// dafür den Server-Eintrag, die Workshop-Suche findet manche Mods nicht. Das Passwort steht nie darin.
+    /// </summary>
     public static IReadOnlyList<string> BuildDownload(
+        string serverAddress,
         IEnumerable<ModEntry> mods,
         string? downloadDir,
         ClientWindowSettings window,
@@ -18,6 +22,7 @@ public static partial class ClientArgsBuilder
         string helperRoot) =>
         [
             .. BuildCommon(downloadDir, window, logsDir, profileDir, helperRoot),
+            "-rmsServer", serverAddress.Trim(),
             "-rmsMods", FormatMods(mods),
         ];
 

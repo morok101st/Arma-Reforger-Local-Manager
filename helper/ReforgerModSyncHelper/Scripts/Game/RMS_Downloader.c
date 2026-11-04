@@ -1,43 +1,36 @@
-//! Laedt beim Start des Clients die per -rmsMods "id:version;id:version" uebergebenen Mods.
-//! Ohne diesen Startparameter macht die Mod nichts. Status steht mit Praefix [RMS] im console.log.
-
-class RMS_SearchParams : PageParams
-{
-	string m_sSearch;
-
-	override void OnPack()
-	{
-		StoreString("search", m_sSearch);
-		StoreBoolean("reported", false);
-		StoreBoolean("hidden", false);
-	}
-}
+//! Hilfs-Mod des 101st Server Manager. Ohne ihre Startparameter macht sie nichts.
+//!   -rmsServer <IP:Port>                  Mod-Liste des Servers melden
+//!   -rmsServer <IP:Port> -rmsMods "a;b"   diese Mods in der Version des Servers laden
+//!   -rmsJoin <IP:Port>                    dem Server beitreten
+//! Status steht mit Praefix [RMS] im console.log. Das Passwort kommt aus einer Datei im Profil.
 
 enum RMS_EState
 {
+	WAIT_LIST,
 	WAIT_MANAGER,
 	NEXT_MOD,
-	WAIT_PAGE,
-	WAIT_DETAILS,
 	DOWNLOADING,
 	FINISHED
 }
 
+//! Laedt wie SCR_DownloadManager.DownloadItems direkt aus dem Server-Eintrag, ohne Workshop-Suche.
+//! Die Suche ist eine Textsuche und findet manche Mods nicht ueber ihre ID.
 class RMS_Downloader
 {
+	protected const float MANAGER_WAIT_SECONDS = 15;
+
 	protected ref array<string> m_aIds = {};
-	protected ref array<string> m_aVersions = {};
-	protected ref BackendCallback m_Callback;
-	protected ref RMS_SearchParams m_Params;
+	protected ref array<Dependency> m_aDependencies;
 	protected ref SCR_WorkshopItem m_Item;
 	protected ref SCR_WorkshopItemActionDownload m_Action;
-	protected RMS_EState m_eState = RMS_EState.WAIT_MANAGER;
+	protected RMS_EState m_eState = RMS_EState.WAIT_LIST;
+	protected string m_sWantedVersion;
 	protected int m_iIndex = -1;
 	protected int m_iFailed;
 	protected float m_fLogTimer;
 	protected float m_fManagerWait;
-	protected const float MANAGER_WAIT_SECONDS = 15;
 
+	//! @param mods "id;id" oder "id:version;id:version". Massgeblich ist die Version aus dem Server-Eintrag.
 	void RMS_Downloader(string mods)
 	{
 		array<string> entries = {};
@@ -47,17 +40,17 @@ class RMS_Downloader
 			array<string> parts = {};
 			entry.Split(":", parts, true);
 			if (parts.Count() >= 1)
-			{
 				m_aIds.Insert(parts[0]);
-				// Ohne Version wird die neueste geladen.
-				if (parts.Count() == 2)
-					m_aVersions.Insert(parts[1]);
-				else
-					m_aVersions.Insert(string.Empty);
-			}
 		}
 
 		Log(string.Format("START mods=%1", m_aIds.Count()));
+	}
+
+	//! Der Server-Eintrag ist geladen, jetzt kann es losgehen.
+	void Start(array<Dependency> dependencies)
+	{
+		m_aDependencies = dependencies;
+		m_eState = RMS_EState.WAIT_MANAGER;
 	}
 
 	protected void Log(string message)
@@ -110,14 +103,7 @@ class RMS_Downloader
 					GetGame().RequestClose();
 					break;
 				}
-				RequestItem();
-				break;
-			}
-
-			case RMS_EState.WAIT_DETAILS:
-			{
-				if (m_Item.GetRevisionsLoaded())
-					StartDownload();
+				StartDownload();
 				break;
 			}
 
@@ -129,11 +115,9 @@ class RMS_Downloader
 					break;
 				}
 
-				Revision local = m_Item.GetCurrentLocalRevision();
-				string wanted = m_aVersions[m_iIndex];
-				if (local && (wanted.IsEmpty() || local.GetVersion() == wanted) && !m_Item.IsDownloadRunning())
+				if (m_Action.IsCompleted())
 				{
-					Log(string.Format("MOD_DONE %1 %2", m_aIds[m_iIndex], m_aVersions[m_iIndex]));
+					Log(string.Format("MOD_DONE %1 %2", m_aIds[m_iIndex], m_sWantedVersion));
 					m_eState = RMS_EState.NEXT_MOD;
 					break;
 				}
@@ -149,69 +133,26 @@ class RMS_Downloader
 		}
 	}
 
-	protected void RequestItem()
-	{
-		Log(string.Format("SEARCH %1", m_aIds[m_iIndex]));
-		m_Params = new RMS_SearchParams();
-		m_Params.m_sSearch = m_aIds[m_iIndex];
-		m_Params.limit = 20;
-		m_Params.offset = 0;
-
-		m_Callback = new BackendCallback();
-		m_Callback.SetOnSuccess(OnPageLoaded);
-		m_Callback.SetOnError(OnPageError);
-
-		WorkshopApi api = GetGame().GetBackendApi().GetWorkshop();
-		api.SetPageSize(20);
-		m_eState = RMS_EState.WAIT_PAGE;
-		api.RequestPage(m_Callback, m_Params, true);
-	}
-
-	protected void OnPageLoaded()
-	{
-		WorkshopApi api = GetGame().GetBackendApi().GetWorkshop();
-		array<WorkshopItem> items = {};
-		api.GetPageItems(items);
-		Log(string.Format("PAGE items=%1", items.Count()));
-
-		foreach (WorkshopItem item : items)
-		{
-			if (item.Id() == m_aIds[m_iIndex])
-			{
-				m_Item = SCR_AddonManager.GetInstance().Register(item);
-				m_Item.LoadDetails();
-				m_eState = RMS_EState.WAIT_DETAILS;
-				Log(string.Format("FOUND %1 %2", item.Id(), item.Name()));
-				return;
-			}
-		}
-
-		Fail("not found");
-	}
-
-	protected void OnPageError()
-	{
-		Fail("page request failed");
-	}
-
 	protected void StartDownload()
 	{
-		if (m_aVersions[m_iIndex].IsEmpty())
+		Dependency dependency = FindDependency(m_aIds[m_iIndex]);
+		if (!dependency)
 		{
-			m_Action = m_Item.DownloadLatestVersion();
-		}
-		else
-		{
-			Revision revision = m_Item.FindRevision(m_aVersions[m_iIndex]);
-			if (!revision)
-			{
-				Fail(string.Format("version %1 not available", m_aVersions[m_iIndex]));
-				return;
-			}
-
-			m_Action = m_Item.Download(revision);
+			Fail("not listed by server");
+			return;
 		}
 
+		Revision revision = dependency.GetRevision();
+		if (!revision)
+		{
+			Fail("no revision");
+			return;
+		}
+
+		m_sWantedVersion = dependency.GetVersion();
+		m_Item = SCR_AddonManager.GetInstance().Register(dependency);
+		m_Item.SetItemTargetRevision(revision);
+		m_Action = m_Item.Download(revision);
 		if (!m_Action)
 		{
 			Fail("download could not be started");
@@ -220,12 +161,23 @@ class RMS_Downloader
 
 		m_Action.Activate();
 		m_eState = RMS_EState.DOWNLOADING;
-		Log(string.Format("DOWNLOAD_STARTED %1 %2", m_aIds[m_iIndex], m_aVersions[m_iIndex]));
+		Log(string.Format("DOWNLOAD_STARTED %1 %2 %3", m_aIds[m_iIndex], m_sWantedVersion, dependency.GetName()));
+	}
+
+	protected Dependency FindDependency(string id)
+	{
+		foreach (Dependency dependency : m_aDependencies)
+		{
+			if (dependency.GetID() == id)
+				return dependency;
+		}
+
+		return null;
 	}
 }
 
-//! Holt die Mod-Liste eines Servers ueber seinen Eintrag im Backend, wie der Server-Browser.
-//! Es entsteht keine Verbindung zum Spielserver und kein Beitritt.
+//! Sucht den Server im Backend und prueft das Passwort, wie der Server-Browser.
+//! Beim Melden und Laden entsteht keine Verbindung zum Spielserver.
 class RMS_RoomReader
 {
 	protected string m_sAddress;
@@ -236,17 +188,21 @@ class RMS_RoomReader
 	protected ref BackendCallback m_JoinCallback;
 	protected ref RoomJoinData m_JoinData;
 	protected ref array<Room> m_aRooms = {};
+	protected ref array<Dependency> m_aDependencies = {};
+	protected RMS_Downloader m_Downloader;
 	protected Room m_Room;
 	protected string m_sPassword;
 	protected bool m_bJoin;
 	protected bool m_bStarted;
 	protected bool m_bFinished;
 
-	//! @param join Dem Server danach beitreten, wie der Server-Browser, statt nur die Liste zu melden.
-	void RMS_RoomReader(string address, bool join)
+	//! @param join Dem Server danach beitreten.
+	//! @param downloader Die Mods aus dem Server-Eintrag laden, statt die Liste zu melden.
+	void RMS_RoomReader(string address, bool join, RMS_Downloader downloader)
 	{
 		m_sAddress = address;
 		m_bJoin = join;
+		m_Downloader = downloader;
 	}
 
 	protected void Log(string message)
@@ -362,8 +318,7 @@ class RMS_RoomReader
 
 	protected void OnListLoaded()
 	{
-		array<Dependency> dependencies = {};
-		m_Room.GetItems(dependencies);
+		m_Room.GetItems(m_aDependencies);
 
 		if (m_bJoin)
 		{
@@ -371,12 +326,19 @@ class RMS_RoomReader
 			return;
 		}
 
-		foreach (Dependency dependency : dependencies)
+		if (m_Downloader)
+		{
+			m_bFinished = true;
+			m_Downloader.Start(m_aDependencies);
+			return;
+		}
+
+		foreach (Dependency dependency : m_aDependencies)
 		{
 			Log(string.Format("SERVER_MOD %1 %2 %3", dependency.GetID(), dependency.GetVersion(), dependency.GetName()));
 		}
 
-		Finish(string.Format("LIST_DONE mods=%1", dependencies.Count()));
+		Finish(string.Format("LIST_DONE mods=%1", m_aDependencies.Count()));
 	}
 
 	//! Wie JoinProcess_Join im Server-Browser. Das Spiel laedt danach die Mods des Servers neu und verbindet sich.
@@ -430,15 +392,20 @@ modded class ArmaReforgerScripted
 		if (!m_bRmsChecked)
 		{
 			m_bRmsChecked = true;
-			string mods;
-			if (System.GetCLIParam("rmsMods", mods))
-				m_RmsDownloader = new RMS_Downloader(mods);
 
 			string server;
-			if (System.GetCLIParam("rmsServer", server))
-				m_RmsRoomReader = new RMS_RoomReader(server, false);
-			else if (System.GetCLIParam("rmsJoin", server))
-				m_RmsRoomReader = new RMS_RoomReader(server, true);
+			if (System.GetCLIParam("rmsJoin", server))
+			{
+				m_RmsRoomReader = new RMS_RoomReader(server, true, null);
+			}
+			else if (System.GetCLIParam("rmsServer", server))
+			{
+				string mods;
+				if (System.GetCLIParam("rmsMods", mods))
+					m_RmsDownloader = new RMS_Downloader(mods);
+
+				m_RmsRoomReader = new RMS_RoomReader(server, false, m_RmsDownloader);
+			}
 		}
 
 		if (m_RmsDownloader)

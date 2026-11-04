@@ -123,17 +123,8 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
     {
         progress.Report(new SyncStatus("Mod-Liste wird vom Server geholt …"));
         var address = profile.ServerAddress!.Trim();
-        var password = passwordOverride ?? credentialStore.ReadPassword(address, profile.Id);
         var (logsDir, profileDir) = PrepareRunFolders();
-
-        // Bewusst nicht als Startparameter: Der Client schreibt seine Startparameter ins Log.
-        var profileData = Path.Combine(profileDir, "profile");
-        Directory.CreateDirectory(profileData);
-        var passwordFile = Path.Combine(profileData, PasswordFileName);
-        if (!string.IsNullOrEmpty(password))
-        {
-            await File.WriteAllTextAsync(passwordFile, password, cancellationToken);
-        }
+        var passwordFile = await WritePasswordFileAsync(profile, passwordOverride, profileDir, cancellationToken);
 
         try
         {
@@ -154,6 +145,26 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         {
             File.Delete(passwordFile);
         }
+    }
+
+    /// <summary>Bewusst nicht als Startparameter: Der Client schreibt seine Startparameter ins Log.</summary>
+    /// <returns>Der Pfad, den der Aufrufer am Ende löscht. Die Hilfs-Mod löscht die Datei schon beim Lesen.</returns>
+    private async Task<string> WritePasswordFileAsync(
+        ServerProfile profile,
+        string? passwordOverride,
+        string profileDir,
+        CancellationToken cancellationToken)
+    {
+        var password = passwordOverride ?? credentialStore.ReadPassword(profile.ServerAddress!.Trim(), profile.Id);
+        var profileData = Path.Combine(profileDir, "profile");
+        Directory.CreateDirectory(profileData);
+        var passwordFile = Path.Combine(profileData, PasswordFileName);
+        if (!string.IsNullOrEmpty(password))
+        {
+            await File.WriteAllTextAsync(passwordFile, password, cancellationToken);
+        }
+
+        return passwordFile;
     }
 
     private static async Task<IReadOnlyList<ModEntry>> ReadListAsync(
@@ -205,7 +216,7 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         throw new ServerListException($"Die Mod-Liste kam nicht innerhalb von {ListTimeout.TotalMinutes:0} Minuten an. Client-Logs: {logsDir}");
     }
 
-    private static async Task<SyncResult> DownloadAsync(
+    private async Task<SyncResult> DownloadAsync(
         AppSettings settings,
         ServerProfile profile,
         string clientExe,
@@ -231,13 +242,13 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         var deadline = DateTime.UtcNow.AddMinutes(settings.Timeouts.TotalMinutes);
         var failures = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        var end = await RunClientAsync(comparison, settings, clientExe, profile.DownloadDir, required, modsRoot, logsDir, profileDir, deadline, failures, progress, cancellationToken);
+        var end = await RunClientAsync(comparison, settings, profile, clientExe, required, modsRoot, logsDir, profileDir, deadline, failures, progress, cancellationToken);
         if (end == WatchEnd.Idle)
         {
             progress.Report(new SyncStatus("Keine Aktivität mehr, der Client wird einmal neu gestartet …"));
             comparison = await CompareAsync(required, modsRoot, cancellationToken);
             (logsDir, profileDir) = PrepareRunFolders();
-            end = await RunClientAsync(comparison, settings, clientExe, profile.DownloadDir, required, modsRoot, logsDir, profileDir, deadline, failures, progress, cancellationToken);
+            end = await RunClientAsync(comparison, settings, profile, clientExe, required, modsRoot, logsDir, profileDir, deadline, failures, progress, cancellationToken);
         }
 
         comparison = await CompareAsync(required, modsRoot, cancellationToken);
@@ -311,11 +322,11 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         return null;
     }
 
-    private static async Task<WatchEnd> RunClientAsync(
+    private async Task<WatchEnd> RunClientAsync(
         IReadOnlyList<ModComparison> comparison,
         AppSettings settings,
+        ServerProfile profile,
         string clientExe,
-        string? downloadDir,
         IReadOnlyList<ModEntry> required,
         string modsRoot,
         string logsDir,
@@ -327,15 +338,23 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
     {
         var open = comparison.Where(mod => mod.State != ModState.Current).Select(mod => mod.Required).ToList();
         progress.Report(new SyncStatus($"Spielclient lädt {open.Count} Mods …"));
-        var arguments = ClientArgsBuilder.BuildDownload(open, downloadDir, settings.Client, logsDir, profileDir, AddonPaths.HelperRoot);
-        using var session = ClientSession.Start(clientExe, arguments, settings.Client.HideWindow);
+        var arguments = ClientArgsBuilder.BuildDownload(profile.ServerAddress!, open, profile.DownloadDir, settings.Client, logsDir, profileDir, AddonPaths.HelperRoot);
+        var passwordFile = await WritePasswordFileAsync(profile, null, profileDir, cancellationToken);
         try
         {
-            return await WatchAsync(session, required, modsRoot, logsDir, settings.Timeouts, deadline, failures, progress, cancellationToken);
+            using var session = ClientSession.Start(clientExe, arguments, settings.Client.HideWindow);
+            try
+            {
+                return await WatchAsync(session, required, modsRoot, logsDir, settings.Timeouts, deadline, failures, progress, cancellationToken);
+            }
+            finally
+            {
+                await session.StopAsync();
+            }
         }
         finally
         {
-            await session.StopAsync();
+            File.Delete(passwordFile);
         }
     }
 
