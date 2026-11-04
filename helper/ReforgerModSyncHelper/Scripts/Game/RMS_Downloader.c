@@ -1,4 +1,4 @@
-//! Hilfs-Mod des 101st Server Manager. Ohne ihre Startparameter macht sie nichts.
+//! Hilfs-Mod von Reforger Sync & Launch. Ohne ihre Startparameter macht sie nichts.
 //!   -rmsServer <IP:Port>                  Mod-Liste des Servers melden
 //!   -rmsServer <IP:Port> -rmsMods "a;b"   diese Mods in der Version des Servers laden
 //!   -rmsJoin <IP:Port>                    dem Server beitreten

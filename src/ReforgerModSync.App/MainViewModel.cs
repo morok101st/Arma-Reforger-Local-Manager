@@ -39,8 +39,8 @@ public sealed partial class MainViewModel(
 
     /// <summary>Text für das Symbol im Infobereich. Windows erlaubt dort nur kurze Texte.</summary>
     public string TrayStatus => SelectedProfile is { } profile
-        ? $"101st Server Manager\n{profile.DisplayName}: {profile.ListStatus}"
-        : "101st Server Manager";
+        ? $"Sync & Launch\n{profile.DisplayName}: {profile.ListStatus}"
+        : "Sync & Launch";
 
     /// <summary>Ein Sync ist fertig: Titel, Meldung und ob es ein Fehler war.</summary>
     public event Action<string, string, bool>? RunFinished;

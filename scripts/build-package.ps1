@@ -5,8 +5,8 @@ param([string]$Version = '0.1.0')
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
 $out = Join-Path $repo 'publish'
-$folder = Join-Path $out '101st Server Manager'
-$zip = Join-Path $out "101st-Server-Manager-$Version.zip"
+$folder = Join-Path $out 'ReforgerSyncLaunch'
+$zip = Join-Path $out "Reforger-Sync-Launch-$Version.zip"
 
 if (Test-Path $out) { Remove-Item $out -Recurse -Force }
 

@@ -16,9 +16,9 @@
     <OutputType>WinExe</OutputType>
     <UseWPF>true</UseWPF>
     <RootNamespace>ReforgerModSync.App</RootNamespace>
-    <AssemblyName>101stServerManager</AssemblyName>
-    <Product>101st Server Manager</Product>
-    <AssemblyTitle>101st Server Manager</AssemblyTitle>
+    <AssemblyName>ReforgerSyncLaunch</AssemblyName>
+    <Product>Reforger Sync &amp; Launch</Product>
+    <AssemblyTitle>Reforger Sync &amp; Launch</AssemblyTitle>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- WPF0001: Das Windows-11-Design (ThemeMode) ist als experimentell markiert. -->
     <NoWarn>$(NoWarn);WPF0001</NoWarn>

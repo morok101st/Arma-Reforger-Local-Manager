@@ -1,12 +1,12 @@
-# Local Server Manager
+# Reforger Sync & Launch
 
-Lädt die Mods eines Arma-Reforger-Servers vorab herunter, damit du beim Beitritt nicht mehr warten musst.
+**Sync & Launch** lädt die Mods eines Arma-Reforger-Servers vorab herunter, damit du beim Beitritt nicht mehr warten musst.
 
 ![Übersicht mit Mod-Liste und Status](.github/screenshots/uebersicht.png)
 
 ## Wofür ist das?
 
-Beim Beitritt zu einem Server lädt Arma Reforger fehlende Mods erst dann, und du wartest im Ladebildschirm. Mit dem Local Server Manager erledigst du das vorher, zum Beispiel am Abend vor einem Event. Beim Beitritt ist dann schon alles da.
+Beim Beitritt zu einem Server lädt Arma Reforger fehlende Mods erst dann, und du wartest im Ladebildschirm. Mit Sync & Launch erledigst du das vorher, zum Beispiel am Abend vor einem Event. Beim Beitritt ist dann schon alles da.
 
 ## Was macht es?
 
@@ -27,8 +27,8 @@ Den Download übernimmt dein installierter Arma-Reforger-Client mit einer kleine
 ## Installation
 
 1. Die ZIP-Datei von der Seite [Releases](../../releases) herunterladen.
-2. In einen festen Ordner entpacken, zum Beispiel `C:\Spiele\Local Server Manager`. Der Ordner `helper` muss neben der EXE bleiben.
-3. `101stServerManager.exe` starten.
+2. In einen festen Ordner entpacken, zum Beispiel `C:\Spiele\ReforgerSyncLaunch`. Der Ordner `helper` muss neben der EXE bleiben.
+3. `ReforgerSyncLaunch.exe` starten.
 
 Die Testversion ist nicht signiert, deshalb warnt Windows eventuell beim ersten Start. Klicke dann auf „Weitere Informationen“ und „Trotzdem ausführen“.
 

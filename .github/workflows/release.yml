@@ -38,8 +38,8 @@ jobs:
         run: |
           $tag = $env:GITHUB_REF_NAME
           $zip = (Get-Item publish\*.zip).FullName
-          $notes = 'Installation: ZIP in einen festen Ordner entpacken und 101stServerManager.exe starten. Alles Weitere steht in LIES-MICH.txt im Paket. Voraussetzungen: Windows 10 oder 11 (64 Bit), Steam und Arma Reforger.'
+          $notes = 'Installation: ZIP in einen festen Ordner entpacken und ReforgerSyncLaunch.exe starten. Alles Weitere steht in LIES-MICH.txt im Paket. Voraussetzungen: Windows 10 oder 11 (64 Bit), Steam und Arma Reforger.'
           $options = @()
           if ($tag.StartsWith('v0.')) { $options += '--prerelease' }
-          & gh release create $tag $zip --verify-tag --title "101st Server Manager $tag" --notes $notes @options
+          & gh release create $tag $zip --verify-tag --title "Reforger Sync & Launch $tag" --notes $notes @options
           if ($LASTEXITCODE -ne 0) { throw 'Release konnte nicht erstellt werden' }

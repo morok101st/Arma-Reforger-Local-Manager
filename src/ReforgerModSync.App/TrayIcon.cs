@@ -99,7 +99,7 @@ public sealed class TrayIcon : IDisposable
         }
 
         _hintShown = true;
-        _icon.ShowNotification("101st Server Manager", "Die App läuft im Infobereich weiter. Beenden über das Symbol mit der rechten Maustaste.", NotificationIcon.Info);
+        _icon.ShowNotification("Sync & Launch","Die App läuft im Infobereich weiter. Beenden über das Symbol mit der rechten Maustaste.", NotificationIcon.Info);
     }
 
     private void Exit()
