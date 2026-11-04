@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:ReforgerModSync.App"
-        Title="Reforger Sync &amp; Launch"
+        Title="{Binding WindowTitle}"
         Icon="pack://application:,,,/Assets/app.ico"
         Background="{StaticResource BrandBackgroundBrush}"
         Width="1080" Height="830" MinWidth="820" MinHeight="540"
@@ -304,6 +304,26 @@
                         </DockPanel>
                     </StackPanel>
                 </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Über">
+                <StackPanel Margin="16" HorizontalAlignment="Left" Width="640">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="pack://application:,,,/Assets/logo.png" Height="64" Margin="0,0,16,0"
+                               RenderOptions.BitmapScalingMode="HighQuality" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Reforger Sync &amp; Launch" Style="{StaticResource SectionTitle}" FontSize="24" />
+                            <TextBlock Text="{Binding VersionText}" FontWeight="SemiBold" Foreground="{StaticResource BrandGoldBrush}" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                    <TextBlock TextWrapping="Wrap" Margin="0,20,0,0"
+                               Text="Lädt die Mods eines Arma-Reforger-Servers vorab herunter, damit du beim Beitritt nicht mehr warten musst." />
+                    <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                        <Button Content="Projekt auf GitHub" Click="OnOpenRepositoryClick" Padding="16,8" />
+                        <Button Content="Alle Versionen" Click="OnOpenReleasesClick" Margin="8,0,0,0" Padding="16,8" />
+                    </StackPanel>
+                    <TextBlock Text="Dies ist kein offizielles Produkt von Bohemia Interactive." Style="{StaticResource Hint}" Margin="0,20,0,0" />
+                </StackPanel>
             </TabItem>
         </TabControl>
     </Grid>

@@ -1,9 +1,11 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using Microsoft.Win32;
+using ReforgerModSync.Core;
 
 namespace ReforgerModSync.App;
 
@@ -173,6 +175,22 @@ public partial class MainWindow : Window
         if (_viewModel.SelectedProfile is { } profile)
         {
             Clipboard.SetText(profile.SteamLaunchOptions);
+        }
+    }
+
+    private void OnOpenRepositoryClick(object sender, RoutedEventArgs e) => OpenInBrowser(AppInfo.RepositoryUrl);
+
+    private void OnOpenReleasesClick(object sender, RoutedEventArgs e) => OpenInBrowser(AppInfo.ReleasesUrl);
+
+    private void OpenInBrowser(string url)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true })?.Dispose();
+        }
+        catch (Win32Exception ex)
+        {
+            BrandDialog.Inform(this, "Browser konnte nicht geöffnet werden", $"{ex.Message}\n\n{url}");
         }
     }
 

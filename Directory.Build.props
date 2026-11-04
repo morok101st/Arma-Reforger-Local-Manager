@@ -4,5 +4,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Nur für lokale Builds: Ein Release setzt die Version aus dem Tag (scripts/build-package.ps1). -->
+    <Version>0.0.0-dev</Version>
   </PropertyGroup>
 </Project>

@@ -48,6 +48,7 @@ public partial class App : Application
                 retainedFileCountLimit: 14,
                 flushToDiskInterval: TimeSpan.FromSeconds(1))
             .CreateLogger();
+        Log.Information("Reforger Sync & Launch {Version} gestartet", MainViewModel.Version);
 
         DispatcherUnhandledException += (_, args) =>
         {

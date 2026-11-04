@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
+using System.Reflection;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ReforgerModSync.Core;
 using ReforgerModSync.Core.Addons;
 using ReforgerModSync.Core.Client;
 using ReforgerModSync.Core.Credentials;
@@ -36,6 +38,12 @@ public sealed partial class MainViewModel(
     private bool _isBusy;
 
     public ObservableCollection<ProfileViewModel> Profiles { get; } = [];
+
+    public static string Version { get; } = AppInfo.FormatVersion(
+        typeof(MainViewModel).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
+
+    public string WindowTitle => $"Reforger Sync & Launch {Version}";
+    public string VersionText => $"Version {Version}";
 
     public string SyncButtonText => IsBusy ? "Abbrechen" : "Jetzt synchronisieren";
     public bool IsNotBusy => !IsBusy;

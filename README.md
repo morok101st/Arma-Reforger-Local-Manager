@@ -70,7 +70,7 @@ Dies ist kein offizielles Produkt von Bohemia Interactive.
 
 ## Probleme melden
 
-Beschreibe, was du geklickt hast und was passiert ist, und schicke diese beiden Ordner mit. Darin steht kein Passwort, aber die Server-Adresse und dein Windows-Benutzername:
+Nenne deine Version (steht in der Titelleiste und im Reiter **Über**), beschreibe, was du geklickt hast und was passiert ist, und schicke diese beiden Ordner mit. Darin steht kein Passwort, aber die Server-Adresse und dein Windows-Benutzername:
 
 ```
 %LOCALAPPDATA%\ReforgerModSync\logs
@@ -94,4 +94,4 @@ dotnet test ReforgerModSync.slnx                                                
 powershell -ExecutionPolicy Bypass -File scripts\build-package.ps1 -Version 0.2.0  # Paket bauen
 ```
 
-Ein Tag wie `v0.2.0` baut das Paket über GitHub Actions und veröffentlicht es als Release. Versionen unter 1.0 erscheinen als Vorabversion.
+Ein Tag wie `v0.2.0` baut das Paket über GitHub Actions und veröffentlicht es als Release. Die App zeigt dann genau diese Version an, lokale Builds melden `0.0.0-dev`. Versionen unter 1.0 erscheinen als Vorabversion.

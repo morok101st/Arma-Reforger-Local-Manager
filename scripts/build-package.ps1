@@ -1,7 +1,7 @@
 # Baut das Paket fuer Tester: eigenstaendige EXE, Hilfs-Mod und Anleitung als ZIP.
 # Aufruf: powershell -ExecutionPolicy Bypass -File scripts\build-package.ps1 -Version 0.1.0
 # Datei bewusst nur ASCII (Windows PowerShell 5.1).
-param([string]$Version = '0.1.0')
+param([Parameter(Mandatory = $true)][string]$Version)
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
 $out = Join-Path $repo 'publish'
@@ -18,6 +18,10 @@ if (Test-Path $out) { Remove-Item $out -Recurse -Force }
     -p:Version=$Version `
     -o $folder
 if ($LASTEXITCODE -ne 0) { throw 'dotnet publish fehlgeschlagen' }
+
+# Die App zeigt diese Version an. Ein Paket mit falscher Angabe darf nicht entstehen.
+$exeVersion = ((Get-Item (Join-Path $folder 'ReforgerSyncLaunch.exe')).VersionInfo.ProductVersion -split '\+')[0]
+if ($exeVersion -cne $Version) { throw "Die EXE meldet Version '$exeVersion' statt '$Version'" }
 
 Copy-Item (Join-Path $repo 'packaging\LIES-MICH.txt') $folder
 Compress-Archive -Path $folder -DestinationPath $zip
