@@ -51,7 +51,11 @@ public sealed partial class ProfileViewModel : ObservableObject
     public ObservableCollection<ModRow> Mods { get; } = [];
 
     /// <summary>Mods, die laut letztem Abgleich nicht zum Server passen.</summary>
-    public int OpenModCount { get; set; }
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasOpenMods))]
+    private int _openModCount;
+
+    public bool HasOpenMods => OpenModCount > 0;
 
     public string DisplayName => string.IsNullOrWhiteSpace(Name) ? "Neuer Server" : Name;
     public bool HasDownloadDir => !string.IsNullOrWhiteSpace(DownloadDir);

@@ -9,6 +9,7 @@
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <local:AttentionBorderConverter x:Key="AttentionBorder" />
         <Style x:Key="SectionTitle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="18" />
             <Setter Property="FontWeight" Value="SemiBold" />
@@ -154,19 +155,23 @@
                     </TextBlock>
                     <TextBlock Grid.Row="2" Text="{Binding Summary}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,12,0,0" />
 
-                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,12,0,0">
-                        <Button Content="{Binding DataContext.SyncButtonText, RelativeSource={RelativeSource AncestorType=Window}}"
+                    <!-- Links die Verwaltung, neutral. Rechts die Aktionen für Spieler, „Direkt beitreten“ am stärksten. -->
+                    <DockPanel Grid.Row="3" Margin="0,12,0,0" LastChildFill="False">
+                        <Button DockPanel.Dock="Left" Padding="16,8"
+                                Content="{Binding DataContext.SyncButtonText, RelativeSource={RelativeSource AncestorType=Window}}"
                                 Command="{Binding DataContext.SyncCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                Style="{DynamicResource AccentButtonStyle}" FontWeight="SemiBold" Padding="20,8" />
-                        <Button Content="Neu prüfen" Margin="8,0,0,0" Padding="14,8"
+                                BorderBrush="{Binding HasOpenMods, Converter={StaticResource AttentionBorder}}" />
+                        <Button DockPanel.Dock="Left" Content="Neu prüfen" Margin="8,0,0,0" Padding="14,8"
                                 Command="{Binding DataContext.RefreshCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-                        <Button Content="Spiel starten" Margin="8,0,0,0" Padding="14,8" Click="OnStartGameClick"
-                                IsEnabled="{Binding DataContext.IsNotBusy, RelativeSource={RelativeSource AncestorType=Window}}"
-                                ToolTip="Startet Arma Reforger mit dem Zielordner dieses Servers" />
-                        <Button Content="Direkt beitreten" Margin="8,0,0,0" Padding="14,8" Click="OnJoinServerClick"
+                        <Button DockPanel.Dock="Right" Content="Direkt beitreten" Margin="8,0,0,0" Padding="20,8" Click="OnJoinServerClick"
+                                Style="{DynamicResource AccentButtonStyle}" FontWeight="SemiBold"
                                 IsEnabled="{Binding DataContext.IsNotBusy, RelativeSource={RelativeSource AncestorType=Window}}"
                                 ToolTip="Startet Arma Reforger und tritt diesem Server direkt bei" />
-                    </StackPanel>
+                        <Button DockPanel.Dock="Right" Content="Spiel starten" Padding="16,8" Click="OnStartGameClick"
+                                BorderBrush="{StaticResource BrandGoldBrush}"
+                                IsEnabled="{Binding DataContext.IsNotBusy, RelativeSource={RelativeSource AncestorType=Window}}"
+                                ToolTip="Startet Arma Reforger mit dem Zielordner dieses Servers" />
+                    </DockPanel>
 
                     <ProgressBar Grid.Row="4" Height="6" Margin="0,12,0,0"
                                  Foreground="{StaticResource BrandGoldBrush}"
