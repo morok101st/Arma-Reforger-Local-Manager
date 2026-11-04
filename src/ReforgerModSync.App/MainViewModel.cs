@@ -61,7 +61,7 @@ public sealed partial class MainViewModel(
         foreach (var saved in _settings.Profiles)
         {
             var profile = new ProfileViewModel(saved);
-            ReadPasswordHint(profile);
+            ReadPasswordState(profile);
             await ShowCachedListAsync(profile);
             Profiles.Add(profile);
         }
@@ -186,7 +186,7 @@ public sealed partial class MainViewModel(
             return;
         }
 
-        ReadPasswordHint(profile);
+        ReadPasswordState(profile);
         ShowMods(profile, result.Mods);
         SetStandNow(profile);
         SetStatus(profile, "", isError: false);
@@ -207,7 +207,7 @@ public sealed partial class MainViewModel(
             credentialStore.DeletePassword(address, profile.Id);
         }
 
-        ReadPasswordHint(profile);
+        ReadPasswordState(profile);
         ShowSettingsMessage(profile, "Das gespeicherte Passwort dieses Servers wurde gelöscht.", isError: false);
     }
 
@@ -484,13 +484,11 @@ public sealed partial class MainViewModel(
         }
     }
 
-    private void ReadPasswordHint(ProfileViewModel profile)
+    private void ReadPasswordState(ProfileViewModel profile)
     {
-        var hasPassword = profile.Saved?.ServerAddress is { } address
+        profile.HasSavedPassword = profile.Saved?.ServerAddress is { } address
             && credentialStore.ReadPassword(address, profile.Id) is not null;
-        profile.PasswordHint = hasPassword
-            ? "Ein Passwort ist sicher gespeichert. Leer lassen, um es beizubehalten."
-            : "Leer lassen, wenn der Server kein Passwort hat.";
+        profile.IsEditingPassword = false;
     }
 
     private static bool IsConfigured(ProfileViewModel profile) =>

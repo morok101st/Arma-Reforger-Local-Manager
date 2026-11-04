@@ -41,7 +41,26 @@ public sealed partial class ProfileViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(SteamLaunchOptions), nameof(HasDownloadDir), nameof(DownloadDirDisplay))]
     private string _downloadDir;
 
-    [ObservableProperty] private string _passwordHint = "";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowSavedPassword), nameof(ShowPasswordInput), nameof(CanCancelPasswordEdit), nameof(PasswordHint))]
+    private bool _hasSavedPassword;
+
+    /// <summary>Der Nutzer hat bei einem gespeicherten Passwort „Ändern“ gewählt.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowSavedPassword), nameof(ShowPasswordInput), nameof(CanCancelPasswordEdit), nameof(PasswordHint))]
+    private bool _isEditingPassword;
+
+    public bool ShowSavedPassword => HasSavedPassword && !IsEditingPassword;
+    public bool ShowPasswordInput => !ShowSavedPassword;
+    public bool CanCancelPasswordEdit => HasSavedPassword && IsEditingPassword;
+
+    public string PasswordHint => (HasSavedPassword, IsEditingPassword) switch
+    {
+        (true, false) => "Sicher im Windows-Anmeldeinformationsspeicher abgelegt.",
+        (true, true) => "Neues Passwort eingeben und unten speichern. Es ersetzt das bisherige.",
+        _ => "Leer lassen, wenn der Server kein Passwort hat.",
+    };
+
     [ObservableProperty] private string _settingsMessage = "";
     [ObservableProperty] private bool _settingsMessageIsError;
 

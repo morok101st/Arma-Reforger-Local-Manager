@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 using Microsoft.Win32;
 
 namespace ReforgerModSync.App;
@@ -27,6 +28,10 @@ public partial class MainWindow : Window
             if (e.PropertyName == nameof(MainViewModel.SelectedProfile))
             {
                 PasswordInput.Clear();
+                if (viewModel.SelectedProfile is { } selected)
+                {
+                    selected.IsEditingPassword = false;
+                }
             }
         };
     }
@@ -47,10 +52,39 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OnChangePasswordClick(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.SelectedProfile is { } profile)
+        {
+            profile.IsEditingPassword = true;
+
+            // Das Feld wird gerade erst sichtbar und kann den Fokus erst nach dem Layout annehmen.
+            Dispatcher.BeginInvoke(() => PasswordInput.Focus(), DispatcherPriority.Input);
+        }
+    }
+
+    private void OnCancelPasswordClick(object sender, RoutedEventArgs e)
+    {
+        PasswordInput.Clear();
+        if (_viewModel.SelectedProfile is { } profile)
+        {
+            profile.IsEditingPassword = false;
+        }
+    }
+
     private void OnDeletePasswordClick(object sender, RoutedEventArgs e)
     {
-        _viewModel.DeleteSelectedPassword();
-        PasswordInput.Clear();
+        var confirmed = BrandDialog.Confirm(
+            this,
+            "Gespeichertes Passwort löschen?",
+            "Für diesen Server musst du das Passwort danach neu eingeben.",
+            "Löschen",
+            danger: true);
+        if (confirmed)
+        {
+            _viewModel.DeleteSelectedPassword();
+            PasswordInput.Clear();
+        }
     }
 
     private async void OnRemoveProfileClick(object sender, RoutedEventArgs e)

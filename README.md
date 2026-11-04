@@ -49,7 +49,7 @@ Klicke danach auf **Speichern und Server prüfen**. Das dauert rund 10 Sekunden.
 
 **Zielordner:** Die Mods liegen darin im Unterordner `addons`. Wähle den Ordner, der deinen vorhandenen `addons`-Ordner enthält, sonst wird alles neu geladen.
 
-**Start über Steam:** Mit „Direkt beitreten“ nutzt das Spiel einen eigenen Zielordner automatisch. Startest du lieber über Steam, kopiere den angezeigten Text in die Startoptionen des Spiels (Arma Reforger › Eigenschaften › Startoptionen). Sonst lädt das Spiel beim Beitritt alles erneut.
+**Start über Steam (optional):** Mit „Direkt beitreten“ musst du nichts weiter einstellen, das Spiel nutzt deinen Zielordner automatisch. Nur wenn du das Spiel direkt über Steam startest und einen eigenen Zielordner gewählt hast, klappe „Nur beim Start über Steam“ auf und kopiere den Text in die Startoptionen (Arma Reforger › Eigenschaften › Startoptionen). Sonst lädt das Spiel beim Beitritt alles erneut.
 
 ## Benutzung
 

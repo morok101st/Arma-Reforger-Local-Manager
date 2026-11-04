@@ -226,7 +226,34 @@
                         <TextBlock Text="IP und Port, zum Beispiel 203.0.113.10:2001. Von diesem Server kommt die Mod-Liste, der Server muss dafür laufen." Style="{StaticResource Hint}" />
 
                         <TextBlock Text="Server-Passwort" Style="{StaticResource FieldLabel}" />
-                        <PasswordBox x:Name="PasswordInput" />
+                        <!-- Die Punkte sind reine Anzeige: feste Anzahl, nichts vom echten Passwort, nie in der Eingabe. -->
+                        <Grid Visibility="{Binding ShowSavedPassword, Converter={StaticResource BoolToVisibility}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Background="{StaticResource BrandSurfaceBrush}" BorderBrush="{StaticResource BrandBorderBrush}"
+                                    BorderThickness="1" CornerRadius="4" Padding="12,6"
+                                    AutomationProperties.Name="Ein Passwort ist gespeichert">
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Right" Text="✓ Gespeichert" FontWeight="SemiBold"
+                                               Foreground="{StaticResource BrandGoldBrush}" VerticalAlignment="Center" />
+                                    <TextBlock Text="●●●●●●●●" Foreground="{StaticResource BrandMutedBrush}" VerticalAlignment="Center" />
+                                </DockPanel>
+                            </Border>
+                            <Button Grid.Column="1" Content="Ändern" Margin="8,0,0,0" Click="OnChangePasswordClick" />
+                            <Button Grid.Column="2" Content="Löschen" Margin="8,0,0,0" Click="OnDeletePasswordClick" />
+                        </Grid>
+                        <Grid Visibility="{Binding ShowPasswordInput, Converter={StaticResource BoolToVisibility}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <PasswordBox x:Name="PasswordInput" />
+                            <Button Grid.Column="1" Content="Abbrechen" Margin="8,0,0,0" Click="OnCancelPasswordClick"
+                                    Visibility="{Binding CanCancelPasswordEdit, Converter={StaticResource BoolToVisibility}}" />
+                        </Grid>
                         <TextBlock Text="{Binding PasswordHint}" Style="{StaticResource Hint}" />
 
                         <TextBlock Text="Download" Style="{StaticResource SectionTitle}" Margin="0,24,0,0" />
@@ -243,23 +270,31 @@
                                    Text="Leer lassen, um den Standardordner des Spiels zu nutzen. Mehrere Server können denselben Ordner teilen, gemeinsame Mods werden dann nur einmal geladen." />
 
                         <StackPanel Visibility="{Binding HasDownloadDir, Converter={StaticResource BoolToVisibility}}" Margin="0,12,0,0">
-                            <TextBlock TextWrapping="Wrap"
-                                       Text="Über „Direkt beitreten“ in der Übersicht nutzt das Spiel diesen Ordner automatisch. Nur wenn du lieber direkt über Steam startest, trage diesen Text dort ein: Arma Reforger › Eigenschaften › Startoptionen. Sonst lädt das Spiel beim Beitritt alles erneut." />
-                            <Grid Margin="0,6,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBox Text="{Binding SteamLaunchOptions, Mode=OneWay}" IsReadOnly="True" />
-                                <Button Grid.Column="1" Content="Kopieren" Margin="8,0,0,0" Click="OnCopyLaunchOptionsClick" />
-                            </Grid>
+                            <TextBlock TextWrapping="Wrap" FontWeight="SemiBold">
+                                <Run Text="✓" Foreground="{StaticResource BrandGoldBrush}" />
+                                <Run Text="Du musst nichts weiter einstellen: „Direkt beitreten“ nutzt diesen Ordner automatisch." />
+                            </TextBlock>
+                            <!-- Zugeklappt, weil die meisten Nutzer das nie brauchen. -->
+                            <Expander Header="Nur beim Start über Steam (optional)" Margin="0,10,0,0" HorizontalAlignment="Stretch">
+                                <StackPanel Margin="0,6,0,0">
+                                    <TextBlock TextWrapping="Wrap"
+                                               Text="Nur nötig, wenn du das Spiel nicht über diese App, sondern direkt über Steam startest. Trage dann diesen Text dort ein: Arma Reforger › Eigenschaften › Startoptionen. Sonst lädt das Spiel beim Beitritt alles erneut." />
+                                    <Grid Margin="0,8,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Text="{Binding SteamLaunchOptions, Mode=OneWay}" IsReadOnly="True" />
+                                        <Button Grid.Column="1" Content="Kopieren" Margin="8,0,0,0" Click="OnCopyLaunchOptionsClick" />
+                                    </Grid>
+                                </StackPanel>
+                            </Expander>
                         </StackPanel>
 
                         <StackPanel Orientation="Horizontal" Margin="0,24,0,0"
                                     IsEnabled="{Binding DataContext.IsNotBusy, RelativeSource={RelativeSource AncestorType=Window}}">
                             <Button Content="Speichern und Server prüfen" Click="OnSaveClick"
                                     Style="{DynamicResource AccentButtonStyle}" FontWeight="SemiBold" Padding="20,8" />
-                            <Button Content="Gespeichertes Passwort löschen" Click="OnDeletePasswordClick" Margin="8,0,0,0" Padding="14,8" />
                         </StackPanel>
                         <DockPanel Margin="0,12,0,0">
                             <local:BusyIndicator DockPanel.Dock="Left" Margin="0,1,10,0" VerticalAlignment="Top"
