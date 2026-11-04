@@ -1,0 +1,8 @@
+GameProject {
+ ID "ReforgerModSyncHelper"
+ GUID "7A3C1E5D9B2F4860"
+ TITLE "Reforger Mod Sync Helper"
+ Dependencies {
+  "58D0FB3206B6F859"
+ }
+}
