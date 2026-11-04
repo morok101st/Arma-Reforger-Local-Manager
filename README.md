@@ -45,7 +45,7 @@ Alles wird im Reiter **Einstellungen** eingetragen:
 | **Server-Passwort** | Leer lassen, wenn der Server keines hat |
 | **Zielordner** | Wohin die Mods geladen werden. Leer lassen, um den Standardordner des Spiels zu nutzen |
 
-Klicke danach auf **Speichern und Server prüfen**. Das dauert rund 10 Sekunden.
+Klicke danach auf **Speichern und Server prüfen**. Das dauert rund 10 Sekunden. Ist der Server gerade offline, legst du alles mit **Nur speichern** ungeprüft ab und prüfst später in der Übersicht mit **Neu prüfen**.
 
 **Zielordner:** Die Mods liegen darin im Unterordner `addons`. Wähle den Ordner, der deinen vorhandenen `addons`-Ordner enthält, sonst wird alles neu geladen.
 

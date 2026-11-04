@@ -130,34 +130,17 @@ public sealed partial class MainViewModel(
     /// wird nur gespeichert, wenn der Server es akzeptiert hat, alle anderen Werte in jedem Fall.
     /// </summary>
     /// <param name="keepPasswordForNewAddress">Der Nutzer hat zugestimmt, das bisherige Passwort für die neue Adresse zu verwenden.</param>
-    public async Task SaveSelectedProfileAsync(string enteredPassword, bool keepPasswordForNewAddress = false)
+    /// <returns><c>false</c>, wenn das eingegebene Passwort nicht gespeichert wurde und im Eingabefeld bleiben soll.</returns>
+    public async Task<bool> SaveSelectedProfileAsync(string enteredPassword, bool keepPasswordForNewAddress = false)
     {
         if (SelectedProfile is not { } profile || IsBusy)
         {
-            return;
+            return false;
         }
 
-        if (string.IsNullOrWhiteSpace(profile.Name))
+        if (await TryApplyChangesAsync(profile, keepPasswordForNewAddress) is not { } saved)
         {
-            ShowSettingsMessage(profile, "Bitte einen Namen für diesen Server eintragen.", isError: true);
-            return;
-        }
-
-        var saved = profile.ToProfile();
-        if (!ClientArgsBuilder.IsValidServerAddress(saved.ServerAddress))
-        {
-            ShowSettingsMessage(profile, "Bitte die Server-Adresse als IP und Port eintragen, zum Beispiel 203.0.113.10:2001.", isError: true);
-            return;
-        }
-
-        var previousAddress = profile.Saved?.ServerAddress;
-        profile.Saved = saved;
-        await PersistAsync();
-
-        if (previousAddress is not null && previousAddress != saved.ServerAddress
-            && !TryMovePassword(profile, previousAddress, saved.ServerAddress!, keepPasswordForNewAddress))
-        {
-            return;
+            return false;
         }
 
         ShowSettingsMessage(profile, "Server wird geprüft, das dauert einen Moment …", isError: false);
@@ -171,21 +154,16 @@ public sealed partial class MainViewModel(
         if (result.Outcome != SyncOutcome.Checked)
         {
             Log.Warning("Prüfung von Server {Name} fehlgeschlagen: {Message}", saved.Name, result.Message);
-            ShowSettingsMessage(profile, result.Message, isError: true);
-            return;
+            var savedHint = enteredPassword.Length > 0
+                ? "Die Einstellungen sind gespeichert, das Passwort noch nicht. Mit „Nur speichern“ legst du es ungeprüft ab."
+                : "Die Einstellungen sind gespeichert.";
+            ShowSettingsMessage(profile, $"{result.Message} {savedHint}", isError: true);
+            return false;
         }
 
-        try
+        if (!TryStorePassword(profile, saved, enteredPassword))
         {
-            if (enteredPassword.Length > 0)
-            {
-                credentialStore.SavePassword(saved.ServerAddress!, profile.Id, enteredPassword);
-            }
-        }
-        catch (System.ComponentModel.Win32Exception ex)
-        {
-            ShowSettingsMessage(profile, $"Das Passwort konnte nicht gespeichert werden: {ex.Message}", isError: true);
-            return;
+            return false;
         }
 
         ReadPasswordState(profile);
@@ -195,6 +173,106 @@ public sealed partial class MainViewModel(
         Log.Information("Server {Name} gespeichert, {Count} Mods", saved.Name, result.Mods.Count);
         ShowSettingsMessage(profile, $"Gespeichert. Der Server listet {result.Mods.Count} Mods.", isError: false);
         SelectedTab = 0;
+        return true;
+    }
+
+    /// <summary>
+    /// Speichert ohne Verbindung zum Server, zum Beispiel wenn er gerade offline ist. Auch ein eingegebenes
+    /// Passwort wird ungeprüft abgelegt, ob es stimmt, zeigt sich erst beim nächsten Kontakt mit dem Server.
+    /// </summary>
+    /// <returns><c>false</c>, wenn das eingegebene Passwort nicht gespeichert wurde und im Eingabefeld bleiben soll.</returns>
+    public async Task<bool> SaveSelectedProfileWithoutCheckAsync(string enteredPassword, bool keepPasswordForNewAddress = false)
+    {
+        if (SelectedProfile is not { } profile || IsBusy)
+        {
+            return false;
+        }
+
+        if (await TryApplyChangesAsync(profile, keepPasswordForNewAddress) is not { } saved
+            || !TryStorePassword(profile, saved, enteredPassword))
+        {
+            return false;
+        }
+
+        ReadPasswordState(profile);
+        Log.Information("Server {Name} ohne Prüfung gespeichert", saved.Name);
+        ShowSettingsMessage(profile, "Gespeichert, aber nicht geprüft. Ob alles passt, zeigt „Neu prüfen“ in der Übersicht, sobald der Server läuft.", isError: false);
+        return true;
+    }
+
+    /// <summary>Prüft die Eingaben, schreibt sie in die Einstellungen und zieht Passwort und Mod-Liste nach.</summary>
+    /// <returns>Der gespeicherte Stand, oder <c>null</c>, wenn dem Nutzer ein Problem angezeigt wird.</returns>
+    private async Task<ServerProfile?> TryApplyChangesAsync(ProfileViewModel profile, bool keepPasswordForNewAddress)
+    {
+        if (string.IsNullOrWhiteSpace(profile.Name))
+        {
+            ShowSettingsMessage(profile, "Bitte einen Namen für diesen Server eintragen.", isError: true);
+            return null;
+        }
+
+        var saved = profile.ToProfile();
+        if (!ClientArgsBuilder.IsValidServerAddress(saved.ServerAddress))
+        {
+            ShowSettingsMessage(profile, "Bitte die Server-Adresse als IP und Port eintragen, zum Beispiel 203.0.113.10:2001.", isError: true);
+            return null;
+        }
+
+        var previous = profile.Saved;
+        profile.Saved = saved;
+        await PersistAsync();
+
+        if (previous is null)
+        {
+            return saved;
+        }
+
+        if (previous.ServerAddress != saved.ServerAddress)
+        {
+            // Die gemerkte Liste gehört zum alten Server und würde in der Übersicht falsche Mods zeigen.
+            ResetModList(profile);
+            if (previous.ServerAddress is { } previousAddress
+                && !TryMovePassword(profile, previousAddress, saved.ServerAddress!, keepPasswordForNewAddress))
+            {
+                return null;
+            }
+        }
+        else if (previous.DownloadDir != saved.DownloadDir)
+        {
+            await ShowCachedListAsync(profile);
+        }
+
+        return saved;
+    }
+
+    private bool TryStorePassword(ProfileViewModel profile, ServerProfile saved, string enteredPassword)
+    {
+        if (enteredPassword.Length == 0)
+        {
+            return true;
+        }
+
+        try
+        {
+            credentialStore.SavePassword(saved.ServerAddress!, profile.Id, enteredPassword);
+            return true;
+        }
+        catch (System.ComponentModel.Win32Exception ex)
+        {
+            ShowSettingsMessage(profile, $"Das Passwort konnte nicht gespeichert werden: {ex.Message}", isError: true);
+            return false;
+        }
+    }
+
+    private void ResetModList(ProfileViewModel profile)
+    {
+        cache.Delete(profile.Id);
+        profile.Mods.Clear();
+        profile.OpenModCount = 0;
+        profile.ProgressDone = 0;
+        profile.ProgressTotal = 1;
+        profile.ListStatus = "noch nicht geprüft";
+        profile.Summary = "Noch nicht geprüft";
+        profile.ListStand = "";
     }
 
     /// <summary>
