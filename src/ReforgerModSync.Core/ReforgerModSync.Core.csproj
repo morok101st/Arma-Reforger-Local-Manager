@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <!-- Die Hilfs-Mod liegt neben der EXE, der Client lädt sie ungepackt. -->
+    <None Include="..\..\helper\ReforgerModSyncHelper\**\*"
+          Link="helper\ReforgerModSyncHelper\%(RecursiveDir)%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
