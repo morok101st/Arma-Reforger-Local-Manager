@@ -5,7 +5,7 @@
         Title="101st Server Manager"
         Icon="pack://application:,,,/Assets/app.ico"
         Background="{StaticResource BrandBackgroundBrush}"
-        Width="1080" Height="720" MinWidth="820" MinHeight="540"
+        Width="1080" Height="880" MinWidth="820" MinHeight="540"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />

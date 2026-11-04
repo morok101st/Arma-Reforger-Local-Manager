@@ -14,6 +14,10 @@ public partial class MainWindow : Window
     public MainWindow(MainViewModel viewModel)
     {
         InitializeComponent();
+
+        // Die Höhe ist so gewählt, dass die Einstellungen ohne Scrollen passen, aber nie über den Bildschirm hinaus.
+        Height = Math.Min(Height, SystemParameters.WorkArea.Height);
+
         _viewModel = viewModel;
         DataContext = viewModel;
         Loaded += async (_, _) => await viewModel.InitializeAsync();
@@ -57,14 +61,13 @@ public partial class MainWindow : Window
             return;
         }
 
-        var answer = MessageBox.Show(
+        var confirmed = BrandDialog.Confirm(
             this,
-            $"Server „{profile.DisplayName}“ mit dem gespeicherten Passwort entfernen? Die geladenen Mods bleiben auf der Festplatte.",
-            "Server entfernen",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question,
-            MessageBoxResult.No);
-        if (answer == MessageBoxResult.Yes)
+            $"Server „{profile.DisplayName}“ entfernen?",
+            "Der Eintrag und sein gespeichertes Passwort werden gelöscht. Die geladenen Mods bleiben auf der Festplatte.",
+            "Entfernen",
+            danger: true);
+        if (confirmed)
         {
             await _viewModel.RemoveSelectedProfileAsync();
         }
@@ -92,7 +95,7 @@ public partial class MainWindow : Window
 
     private void OnStartGameClick(object sender, RoutedEventArgs e)
     {
-        if (ConfirmOpenMods("Spiel starten", "Das Spiel lädt sie sonst beim Beitritt. Trotzdem starten?"))
+        if (ConfirmOpenMods("Das Spiel lädt sie sonst beim Beitritt nach.", "Trotzdem starten"))
         {
             _viewModel.StartGame();
         }
@@ -100,26 +103,28 @@ public partial class MainWindow : Window
 
     private async void OnJoinServerClick(object sender, RoutedEventArgs e)
     {
-        if (ConfirmOpenMods("Direkt beitreten", "Der Beitritt kann daran scheitern. Am besten zuerst synchronisieren. Trotzdem beitreten?"))
+        if (ConfirmOpenMods("Der Beitritt kann daran scheitern. Am besten zuerst synchronisieren.", "Trotzdem beitreten"))
         {
             await _viewModel.JoinServerAsync();
         }
     }
 
-    private bool ConfirmOpenMods(string title, string question)
+    private bool ConfirmOpenMods(string consequence, string confirmText)
     {
         if (_viewModel.SelectedProfile is not { } profile)
         {
             return false;
         }
 
-        return profile.OpenModCount == 0 || MessageBox.Show(
-            this,
-            $"{profile.OpenModCount} Mods passen nicht zum Server. {question}",
-            title,
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning,
-            MessageBoxResult.No) == MessageBoxResult.Yes;
+        if (profile.OpenModCount == 0)
+        {
+            return true;
+        }
+
+        var title = profile.OpenModCount == 1
+            ? "1 Mod passt nicht zum Server"
+            : $"{profile.OpenModCount} Mods passen nicht zum Server";
+        return BrandDialog.Confirm(this, title, consequence, confirmText);
     }
 
     private void OnCopyLaunchOptionsClick(object sender, RoutedEventArgs e)

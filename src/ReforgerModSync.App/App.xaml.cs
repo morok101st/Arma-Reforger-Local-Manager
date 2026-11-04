@@ -50,7 +50,7 @@ public partial class App : Application
         DispatcherUnhandledException += (_, args) =>
         {
             Log.Error(args.Exception, "Unerwarteter Fehler");
-            MessageBox.Show(args.Exception.Message, "101st Server Manager", MessageBoxButton.OK, MessageBoxImage.Error);
+            BrandDialog.Inform(MainWindow, "Unerwarteter Fehler", args.Exception.Message);
             args.Handled = true;
         };
 
