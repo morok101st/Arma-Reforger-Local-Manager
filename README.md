@@ -10,7 +10,7 @@ Beim Beitritt zu einem Server lädt Arma Reforger fehlende Mods erst dann, und d
 
 ## Was macht es?
 
-- **Mods abgleichen:** Holt die Mod-Liste direkt vom Spielserver und zeigt, welche Mods fehlen, veraltet oder aktuell sind.
+- **Mods abgleichen:** Holt die Mod-Liste aus dem Eintrag des Servers bei Bohemia und zeigt, welche Mods fehlen, veraltet oder aktuell sind.
 - **Mods laden:** Bringt alle Mods auf die Version des Servers. Das Spielfenster bleibt dabei ausgeblendet.
 - **Direkt beitreten:** Startet das Spiel und verbindet dich mit dem Server.
 - **Mehrere Server verwalten:** Jeder Server hat seine eigene Adresse, sein Passwort und seinen Zielordner. Weitere Server legst du links mit **Server hinzufügen** an.
@@ -22,7 +22,7 @@ Den Download übernimmt dein installierter Arma-Reforger-Client mit einer kleine
 - Windows 10 oder 11, 64 Bit
 - Steam läuft, Arma Reforger ist installiert
 - Adresse (IP:Port) und gegebenenfalls Passwort des Servers
-- Zum Prüfen und Synchronisieren muss der Server laufen, denn von ihm kommt die Mod-Liste
+- Zum Prüfen und Synchronisieren muss der Server laufen, sonst wird sein Eintrag bei Bohemia nicht gefunden
 
 ## Installation
 
@@ -56,7 +56,7 @@ Klicke danach auf **Speichern**. Dabei wird noch nicht geprüft, ob Adresse und 
 ## Benutzung
 
 1. Das Spiel schließen.
-2. Optional in der **Übersicht** auf **Neu prüfen** klicken. Das holt nur die Mod-Liste vom Server und zeigt, was fehlt, ohne etwas herunterzuladen.
+2. Optional in der **Übersicht** auf **Neu prüfen** klicken. Das holt nur die Mod-Liste und zeigt, was fehlt, ohne etwas herunterzuladen.
 3. Auf **Jetzt synchronisieren** klicken. Das erste Mal kann das lange dauern. Während des Laufs wird daraus **Abbrechen**, bereits geladene Mods bleiben dabei erhalten.
 4. Auf **Direkt beitreten** klicken, sobald alles aktuell ist.
 
@@ -87,6 +87,161 @@ Nenne deine Version (steht in der Titelleiste und links unten in der App), besch
 3. Optional auch `%APPDATA%\ReforgerModSync` und `%LOCALAPPDATA%\ReforgerModSync` löschen.
 
 Die geladenen Mods bleiben erhalten.
+
+## Abläufe und Schnittstellen
+
+Die App spricht weder mit Bohemia noch mit dem Spielserver. Sie startet den Spielclient, und die Hilfs-Mod in diesem Client erledigt den Rest. App und Hilfs-Mod verständigen sich nur über Startparameter und Dateien:
+
+| Richtung | Schnittstelle | Inhalt |
+|---|---|---|
+| App → Hilfs-Mod | Startparameter | `-rmsServer`, `-rmsMods` oder `-rmsJoin` sagen ihr, was zu tun ist. Ohne sie macht sie nichts |
+| App → Hilfs-Mod | Datei `rms_server_password.txt` im Profilordner | Das Passwort. Die Hilfs-Mod löscht die Datei beim Lesen |
+| Hilfs-Mod → App | `[RMS]`-Zeilen in der `console.log` des Clients | Fortschritt, Mod-Liste und Fehler |
+| Spielclient → App | Ordner `addons` im Zielordner | Die App liest die Versionen der Mods auf der Festplatte und vergleicht sie |
+| App → Spielclient | Fensternachricht `WM_CLOSE` | Beenden. Reagiert der Client nach 5 Sekunden nicht, beendet die App den Prozess |
+| Spielclient → Bohemia | Schnittstellen des Spiels | Server suchen, Passwort prüfen, Mod-Liste laden, Mods laden, Beitritt anfragen |
+
+### Neu prüfen
+
+Holt nur die Mod-Liste. Der Client läuft ausgeblendet und verbindet sich nicht mit dem Spielserver.
+
+```mermaid
+sequenceDiagram
+    actor N as Nutzer
+    participant A as App
+    participant D as Dateien
+    participant H as Spielclient mit Hilfs-Mod
+    participant B as Bohemia-Dienste
+
+    N->>A: Klick auf „Neu prüfen“
+    A->>A: Vorprüfung: Adresse, Steam läuft,<br/>Spiel geschlossen, Client und Hilfs-Mod da
+    A->>D: Passwort aus dem Windows-Speicher<br/>in die Passwortdatei schreiben
+    A->>H: Prozess starten mit -rmsServer IP:Port
+    Note over A,D: Ab jetzt liest die App die console.log<br/>alle 0,5 Sekunden, höchstens 2 Minuten
+    Note over H: Wartet bis zum Hauptmenü
+    H->>B: Server suchen
+    B-->>H: Server-Eintrag
+    H->>D: Passwortdatei lesen und löschen
+    opt Server verlangt ein Passwort
+        H->>B: Passwort prüfen
+        B-->>H: Akzeptiert oder abgelehnt
+    end
+    H->>B: Mod-Liste laden
+    B-->>H: Mods mit Versionen
+    H->>D: console.log: SERVER_MOD je Mod, dann LIST_DONE
+    H->>H: Client beendet sich selbst
+    D-->>A: App erkennt LIST_DONE
+    A->>D: Liste merken
+    A->>H: WM_CLOSE, falls der Client noch läuft
+    A->>D: Passwortdatei löschen, falls noch vorhanden
+    A->>D: Ordner addons einlesen und vergleichen
+    A-->>N: Mod-Liste mit Status
+```
+
+Statt `LIST_DONE` kann die Hilfs-Mod auch `ROOM_NOT_FOUND`, `ROOM_PASSWORD_REQUIRED`, `ROOM_PASSWORD_REJECTED` oder einen anderen Fehler melden. Die App zeigt dann eine passende Meldung.
+
+### Jetzt synchronisieren
+
+Der Client startet zweimal: erst für die Mod-Liste, dann für den Download. Sind schon alle Mods aktuell, entfällt der zweite Start.
+
+```mermaid
+sequenceDiagram
+    actor N as Nutzer
+    participant A as App
+    participant D as Dateien
+    participant H as Spielclient mit Hilfs-Mod
+    participant B as Bohemia-Dienste
+
+    N->>A: Klick auf „Jetzt synchronisieren“
+    A->>A: Vorprüfung wie bei „Neu prüfen“
+
+    rect rgba(128, 128, 128, 0.15)
+        Note over A,B: Start 1: Mod-Liste holen, Ablauf wie bei „Neu prüfen“
+        A->>H: Prozess starten mit -rmsServer IP:Port
+        H->>D: console.log: SERVER_MOD, LIST_DONE
+        D-->>A: App erkennt LIST_DONE
+        A->>H: Client beenden
+    end
+
+    A->>D: Ordner addons einlesen und vergleichen
+    alt Alle Mods aktuell
+        A-->>N: „Alles aktuell“
+    else Mods offen
+        A->>A: Freien Speicher prüfen (mindestens 2 GB)
+        A->>D: Passwort in die Passwortdatei schreiben
+        A->>H: Prozess starten mit -rmsServer IP:Port -rmsMods (offene Mods)
+        H->>B: Server suchen, Passwort prüfen, Mod-Liste laden
+        H->>D: Passwortdatei lesen und löschen
+        par Hilfs-Mod lädt
+            loop Für jede offene Mod
+                H->>B: Download in der Version des Servers starten
+                B-->>H: Mod-Daten
+                H->>D: Mod in den Ordner addons schreiben
+                H->>D: console.log: DOWNLOAD_STARTED, MOD_DONE oder MOD_FAILED
+            end
+            H->>D: console.log: DONE, Client beendet sich selbst
+        and App überwacht gleichzeitig
+            loop Alle 3 Sekunden
+                A->>D: console.log und Ordner addons lesen
+                A-->>N: Fortschritt anzeigen
+            end
+        end
+        Note over A: Der Lauf endet, sobald alle Mods aktuell sind, DONE im Log steht,<br/>der Client sich beendet oder die Gesamtzeit von 120 Minuten abläuft.<br/>Nach 10 Minuten ohne Aktivität startet die App den Client einmal neu.
+        A->>H: Client beenden
+        A->>D: Passwortdatei löschen, falls noch vorhanden
+        A->>D: Ordner addons ein letztes Mal vergleichen
+        A-->>N: Ergebnis: fertig oder Mods, die noch fehlen
+    end
+
+    opt Jederzeit: Klick auf „Abbrechen“
+        N->>A: Abbrechen
+        A->>H: Client beenden
+        A-->>N: Geladene Mods bleiben erhalten
+    end
+```
+
+### Direkt beitreten
+
+Hier läuft das Spiel normal: über den BattlEye-Starter, mit deinem echten Profil und sichtbar. Die App bekommt danach keine Rückmeldung mehr, sie liest bei diesem Ablauf keine Logzeilen.
+
+```mermaid
+sequenceDiagram
+    actor N as Nutzer
+    participant A as App
+    participant D as Dateien
+    participant H as Spielclient mit Hilfs-Mod
+    participant B as Bohemia-Dienste
+    participant S as Spielserver
+
+    N->>A: Klick auf „Direkt beitreten“
+    opt Mods passen laut letztem Abgleich nicht
+        A-->>N: Rückfrage „Trotzdem beitreten“
+        N->>A: Bestätigung
+    end
+    A->>D: Passwort in die Passwortdatei im echten Profil schreiben
+    A->>A: Vorprüfung: Steam läuft, Spiel geschlossen, Client da
+    A->>H: ArmaReforger_BE.exe starten mit -rmsJoin IP:Port
+    A-->>N: „Das Spiel startet und tritt dem Server bei“
+    Note over A,H: Ab hier keine Verbindung mehr zwischen App und Spiel
+    Note over H: Wartet bis zum Hauptmenü
+    H->>B: Server suchen
+    B-->>H: Server-Eintrag
+    H->>D: Passwortdatei lesen und löschen
+    opt Server verlangt ein Passwort
+        H->>B: Passwort prüfen
+    end
+    H->>B: Mod-Liste laden
+    H->>B: Beitritt anfragen, mit Passwort
+    alt Beitritt angenommen
+        B-->>H: Angenommen
+        H->>H: Spiel lädt die Mods des Servers neu
+        H->>S: Verbindung zum Spielserver
+    else Fehler
+        B-->>H: Abgelehnt
+        Note over H: Spiel bleibt im Hauptmenü,<br/>du kannst selbst beitreten
+    end
+    Note over A,D: Nach 2 Minuten oder beim Schließen der App<br/>löscht die App die Passwortdatei, falls sie noch da ist
+```
 
 ## Entwicklung
 
