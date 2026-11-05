@@ -48,7 +48,7 @@ public partial class MainWindow : Window
                 this,
                 "Server-Adresse geändert",
                 "Das gespeicherte Passwort gehört zur bisherigen Adresse. Soll es auch für die neue Adresse gelten? "
-                    + "Es wird dann an diesen Server übermittelt, sobald du ihn prüfst, synchronisierst oder ihm beitrittst. Ohne Übernahme wird es gelöscht.",
+                    + "Es wird dann für diesen Server verwendet, sobald du ihn prüfst, synchronisierst oder ihm beitrittst. Ohne Übernahme wird es gelöscht.",
                 "Übernehmen",
                 cancelText: "Nicht übernehmen");
         }

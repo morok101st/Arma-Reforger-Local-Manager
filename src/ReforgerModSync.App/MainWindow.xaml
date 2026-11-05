@@ -237,7 +237,7 @@
                         <TextBlock Text="Spielserver" Style="{StaticResource SectionTitle}" Margin="0,24,0,0" />
                         <TextBlock Text="Server-Adresse" Style="{StaticResource FieldLabel}" />
                         <TextBox Text="{Binding ServerAddress, UpdateSourceTrigger=PropertyChanged}" />
-                        <TextBlock Text="IP und Port, zum Beispiel 203.0.113.10:2001. Von diesem Server kommt die Mod-Liste, der Server muss dafür laufen." Style="{StaticResource Hint}" />
+                        <TextBlock Text="IP und Port, zum Beispiel 203.0.113.10:2001. Über diese Adresse wird der Server bei Bohemia gefunden, von dort kommt die Mod-Liste. Der Server muss dafür laufen." Style="{StaticResource Hint}" />
 
                         <TextBlock Text="Server-Passwort" Style="{StaticResource FieldLabel}" />
                         <!-- Die Punkte sind reine Anzeige: feste Anzahl, nichts vom echten Passwort, nie in der Eingabe. -->
