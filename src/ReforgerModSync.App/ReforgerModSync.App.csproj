@@ -19,6 +19,9 @@
     <Product>Reforger Sync &amp; Launch</Product>
     <AssemblyTitle>Reforger Sync &amp; Launch</AssemblyTitle>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <!-- Halbiert die EXE, der Start dauert rund 0,1 Sekunden länger. Die App ist nur auf Deutsch. -->
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <SatelliteResourceLanguages>de</SatelliteResourceLanguages>
     <!-- WPF0001: Das Windows-11-Design (ThemeMode) ist als experimentell markiert. -->
     <NoWarn>$(NoWarn);WPF0001</NoWarn>
   </PropertyGroup>
