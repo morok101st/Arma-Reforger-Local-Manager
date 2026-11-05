@@ -11,6 +11,9 @@ public sealed record AppSettings
 
     public ClientWindowSettings Client { get; init; } = new();
     public TimeoutSettings Timeouts { get; init; } = new();
+
+    /// <summary>Zielordner, in denen der Sync überzählige Mods löschen darf. Der Nutzer stimmt je Ordner einmal zu.</summary>
+    public IReadOnlyList<string> CleanupApprovedFolders { get; init; } = [];
 }
 
 /// <summary>Ein Spielserver mit eigenem Zielordner. Sein Passwort liegt im Anmeldeinformationsspeicher.</summary>

@@ -281,7 +281,7 @@
                             <Button Grid.Column="1" Content="Durchsuchen …" Margin="8,0,0,0" Click="OnBrowseClick" />
                         </Grid>
                         <TextBlock Style="{StaticResource Hint}"
-                                   Text="Leer lassen, um den Standardordner des Spiels zu nutzen. Mehrere Server können denselben Ordner teilen, gemeinsame Mods werden dann nur einmal geladen." />
+                                   Text="Leer lassen, um den Standardordner des Spiels zu nutzen, dort wird nie etwas gelöscht. In einem eigenen Ordner löscht der Sync nach einmaliger Rückfrage alle Mods, die kein Server mit diesem Ordner braucht. Mehrere Server können denselben Ordner teilen, gemeinsame Mods werden nur einmal geladen." />
 
                         <StackPanel Visibility="{Binding HasDownloadDir, Converter={StaticResource BoolToVisibility}}" Margin="0,12,0,0">
                             <TextBlock TextWrapping="Wrap" FontWeight="SemiBold">

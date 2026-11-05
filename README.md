@@ -49,7 +49,7 @@ Alles wird im Reiter **Einstellungen** eingetragen:
 
 Klicke danach auf **Speichern**. Dabei wird noch nicht geprüft, ob Adresse und Passwort stimmen, der Server darf also gerade offline sein. Das zeigt sich erst in der **Übersicht** mit **Neu prüfen** oder **Jetzt synchronisieren**. Beides braucht einen laufenden Server.
 
-**Zielordner:** Die Mods liegen darin im Unterordner `addons`. Wähle den Ordner, der deinen vorhandenen `addons`-Ordner enthält, sonst wird alles neu geladen.
+**Zielordner:** Die Mods liegen darin im Unterordner `addons`. Wähle den Ordner, der deinen vorhandenen `addons`-Ordner enthält, sonst wird alles neu geladen. Achtung: In einem eigenen Zielordner löscht der Sync alle Mods, die kein eingetragener Server mit diesem Ordner braucht, siehe [Gut zu wissen](#gut-zu-wissen).
 
 **Start über Steam (optional):** Mit „Direkt beitreten“ musst du nichts weiter einstellen, das Spiel nutzt deinen Zielordner automatisch. Nur wenn du das Spiel direkt über Steam startest und einen eigenen Zielordner gewählt hast, klappe „Nur beim Start über Steam“ auf und kopiere den Text in die Startoptionen (Arma Reforger › Eigenschaften › Startoptionen). Sonst lädt das Spiel beim Beitritt alles erneut.
 
@@ -65,6 +65,11 @@ Beim Schließen des Fensters wird die App beendet. Ein laufender Sync bricht dab
 ## Gut zu wissen
 
 - **Versionen:** Ein Sync bringt Mods auf die Version des Servers, auch zurück auf eine ältere. Das gilt für den gewählten Zielordner. Wer auf anderen Servern andere Versionen braucht, nimmt einen eigenen Zielordner.
+- **Exakter Abgleich:** Nach einem vollständigen Sync enthält ein eigener Zielordner nur noch die Mods, die mindestens ein eingetragener Server mit diesem Ordner braucht. Beim ersten Mal zeigt die App die Liste und fragt nach, danach löscht sie für diesen Ordner automatisch. Das Ergebnis steht im Protokoll.
+    - Der Standardordner des Spiels bleibt unberührt, dort wird nie etwas gelöscht.
+    - Fehlt für einen Server mit demselben Ordner die Mod-Liste, wird nichts gelöscht. Klicke dort einmal auf **Neu prüfen**. Es gilt die zuletzt geholte Liste jedes Servers.
+    - Liegen im Ordner Mods von Servern, die nicht in der App eingetragen sind, gelten sie als überzählig. Nimm für solche Server einen eigenen Ordner oder trage sie ein.
+    - Ordner ohne lesbare Mod-Angaben bleiben liegen.
 - **Passwort:** Es liegt verschlüsselt im Windows-Anmeldeinformationsspeicher. Für den Abruf beim Server steht es kurz in einer temporären Datei, die danach sofort gelöscht wird. Änderst du die Server-Adresse, fragt die App, ob das Passwort auch für die neue Adresse gelten soll.
 - **BattlEye:** Beim Spielstart kann Windows nach Administratorrechten fragen.
 - **Lizenzen:** Die Mods stammen aus dem Arma Reforger Workshop. Für jede Mod gelten ihre Lizenz und die [Workshop-Bedingungen](https://reforger.armaplatform.com/workshop-terms) von Bohemia Interactive.
@@ -191,6 +196,17 @@ sequenceDiagram
         A->>D: Passwortdatei löschen, falls noch vorhanden
         A->>D: Ordner addons ein letztes Mal vergleichen
         A-->>N: Ergebnis: fertig oder Mods, die noch fehlen
+    end
+
+    opt Sync vollständig und eigener Zielordner
+        A->>D: Gemerkte Listen aller Server mit diesem Ordner lesen
+        A->>A: Überzählige Mods bestimmen
+        opt Erstes Mal für diesen Ordner
+            A-->>N: Rückfrage mit Liste und Größe
+            N->>A: Zustimmung
+        end
+        A->>D: Überzählige Mods aus dem Ordner addons löschen
+        A-->>N: Anzahl und frei gewordener Speicher
     end
 
     opt Jederzeit: Klick auf „Abbrechen“

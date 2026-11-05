@@ -7,6 +7,7 @@ using ReforgerModSync.Core.Addons;
 using ReforgerModSync.Core.Client;
 using ReforgerModSync.Core.Credentials;
 using ReforgerModSync.Core.Settings;
+using ReforgerModSync.Core.Steam;
 using ReforgerModSync.Core.Sync;
 using Serilog;
 
@@ -20,6 +21,7 @@ public sealed partial class MainViewModel(
 {
     private static readonly TimeSpan PasswordCleanupDelay = TimeSpan.FromMinutes(2);
 
+    private readonly ModCleanup _cleanup = new(cache);
     private readonly SemaphoreSlim _saveGate = new(1, 1);
     private AppSettings _settings = new();
     private CancellationTokenSource? _runCancel;
@@ -38,6 +40,9 @@ public sealed partial class MainViewModel(
     private bool _isBusy;
 
     public ObservableCollection<ProfileViewModel> Profiles { get; } = [];
+
+    /// <summary>Fragt den Nutzer, ob überzählige Mods in einem Zielordner gelöscht werden dürfen. Setzt das Fenster.</summary>
+    public Func<CleanupPlan, bool>? ConfirmCleanup { get; set; }
 
     public static string Version { get; } = AppInfo.FormatVersion(
         typeof(MainViewModel).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
@@ -316,6 +321,12 @@ public sealed partial class MainViewModel(
     {
         if (IsBusy)
         {
+            // Beim Löschen überzähliger Mods nach dem Sync gibt es nichts mehr abzubrechen.
+            if (_runCancel is null)
+            {
+                return;
+            }
+
             if (SelectedProfile is { } running)
             {
                 SetStatus(running, "Wird abgebrochen, der Spielclient wird beendet …", isError: false);
@@ -358,6 +369,85 @@ public sealed partial class MainViewModel(
             profile.ListStatus = result.Outcome == SyncOutcome.Failed ? "Fehler" : "abgebrochen";
         }
 
+        // Nur nach einem vollständigen Lauf: Sonst ist nicht sicher, dass die Liste und der Ordner stimmen.
+        if (result.Outcome is SyncOutcome.Completed or SyncOutcome.AlreadyCurrent)
+        {
+            await CleanUpAsync(profile, saved, result);
+        }
+    }
+
+    private async Task CleanUpAsync(ProfileViewModel profile, ServerProfile saved, SyncResult result)
+    {
+        IsBusy = true;
+        try
+        {
+            var required = result.Mods.Select(mod => mod.Required).ToList();
+            var profiles = _settings.Profiles;
+            var plan = await Task.Run(() => _cleanup.PlanAsync(saved, required, profiles));
+            if (plan.Blocker is { } blocker)
+            {
+                ReportCleanup(profile, result, blocker, isError: false);
+                return;
+            }
+
+            if (plan.Surplus.Count == 0)
+            {
+                return;
+            }
+
+            if (SteamLocator.IsGameRunning())
+            {
+                ReportCleanup(profile, result, "Überzählige Mods wurden nicht gelöscht, weil das Spiel läuft.", isError: false);
+                return;
+            }
+
+            if (!_settings.CleanupApprovedFolders.Contains(plan.FolderKey))
+            {
+                if (ConfirmCleanup?.Invoke(plan) != true)
+                {
+                    ReportCleanup(profile, result, "Überzählige Mods bleiben erhalten, die App fragt beim nächsten Sync erneut.", isError: false);
+                    return;
+                }
+
+                _settings = _settings with { CleanupApprovedFolders = [.. _settings.CleanupApprovedFolders, plan.FolderKey] };
+                await PersistAsync();
+            }
+
+            var cleaned = await Task.Run(() => ModCleanup.Delete(plan));
+            foreach (var mod in cleaned.Deleted)
+            {
+                Log.Information("Überzählige Mod gelöscht: {Name} ({Folder})", mod.Name, mod.Folder);
+                AppendLog(profile, $"Überzählige Mod gelöscht: {mod.Name}");
+            }
+
+            var freed = ModCleanup.FormatSize(cleaned.Deleted.Sum(mod => mod.Bytes));
+            var note = cleaned.Deleted.Count == 1
+                ? $"1 überzählige Mod gelöscht ({freed} frei)."
+                : $"{cleaned.Deleted.Count} überzählige Mods gelöscht ({freed} frei).";
+            if (cleaned.Failed.Count > 0)
+            {
+                Log.Warning("Nicht gelöscht: {Names}", string.Join(", ", cleaned.Failed.Select(mod => mod.Name)));
+                note += $" Nicht löschbar: {string.Join(", ", cleaned.Failed.Select(mod => mod.Name))}.";
+            }
+
+            ReportCleanup(profile, result, note, isError: cleaned.Failed.Count > 0);
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            Log.Warning("Abgleich des Zielordners fehlgeschlagen: {Message}", ex.Message);
+            ReportCleanup(profile, result, $"Überzählige Mods konnten nicht gelöscht werden: {ex.Message}", isError: true);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private static void ReportCleanup(ProfileViewModel profile, SyncResult result, string note, bool isError)
+    {
+        Log.Information("[{Name}] {Note}", profile.DisplayName, note);
+        AppendLog(profile, note);
+        SetStatus(profile, $"{result.Message} {note}", isError);
     }
 
     /// <summary>Startet das Spiel und tritt dem gewählten Server direkt bei.</summary>

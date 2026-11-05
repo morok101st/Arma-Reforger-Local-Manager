@@ -29,6 +29,13 @@ public static class AddonPaths
         "My Games",
         "ArmaReforger");
 
+    /// <summary>Vergleichswert: Gleich, wenn zwei Angaben denselben Zielordner meinen, auch über den Standardordner.</summary>
+    public static string FolderKey(string? downloadDir) =>
+        Path.TrimEndingDirectorySeparator(Path.GetFullPath(NormalizeDownloadDir(downloadDir) ?? ClientDefaultFolder))
+            .ToUpperInvariant();
+
+    public static bool IsDefaultFolder(string? downloadDir) => FolderKey(downloadDir) == FolderKey(null);
+
     /// <summary>Ordner, der die mitgelieferte Hilfs-Mod enthält.</summary>
     public static string HelperRoot { get; } = Path.Combine(AppContext.BaseDirectory, "helper");
 

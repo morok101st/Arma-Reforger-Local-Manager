@@ -84,6 +84,16 @@ public static partial class ClientLogParser
         };
     }
 
+    /// <summary>Die Anzahl aus <c>[RMS] LIST_DONE mods=n</c>. Sie zeigt, ob die Liste vollständig gelesen wurde.</summary>
+    public static int? ParseListDoneCount(string line)
+    {
+        var match = ListDoneCountRegex().Match(line);
+        return match.Success && int.TryParse(match.Groups["count"].Value, out var count) ? count : null;
+    }
+
+    [GeneratedRegex(@"\[RMS\] LIST_DONE mods=(?<count>\d+)")]
+    private static partial Regex ListDoneCountRegex();
+
     [GeneratedRegex(@"\[RMS\] SERVER_MOD (?<id>[0-9A-Fa-f]{16}) (?<version>\S*) (?<name>.*)$")]
     private static partial Regex ServerModRegex();
 

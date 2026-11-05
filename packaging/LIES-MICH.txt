@@ -36,6 +36,9 @@ WICHTIG
 - Ein Sync bringt Mods auf die Version des Servers, auch zurück auf eine ältere. Das gilt
   für den gewählten Zielordner. Wer auf anderen Servern andere Versionen braucht, nimmt
   einen eigenen Zielordner.
+- In einem eigenen Zielordner löscht der Sync alle Mods, die kein eingetragener Server mit
+  diesem Ordner braucht. Beim ersten Mal fragt die App nach, danach läuft das automatisch.
+  Der Standardordner des Spiels bleibt unberührt.
 - Das Passwort liegt verschlüsselt im Windows-Anmeldeinformationsspeicher. Für den Abruf
   beim Server steht es kurz in einer temporären Datei und wird danach sofort gelöscht.
 - Die Mods stammen aus dem Arma Reforger Workshop. Mit dem Download gelten für jede Mod

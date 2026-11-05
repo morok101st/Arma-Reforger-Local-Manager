@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using ReforgerModSync.Core;
+using ReforgerModSync.Core.Sync;
 
 namespace ReforgerModSync.App;
 
@@ -22,6 +23,7 @@ public partial class MainWindow : Window
 
         _viewModel = viewModel;
         DataContext = viewModel;
+        viewModel.ConfirmCleanup = ConfirmCleanup;
         Loaded += async (_, _) => await viewModel.InitializeAsync();
 
         // Ein getipptes Passwort darf nie beim nächsten Server landen.
@@ -176,6 +178,22 @@ public partial class MainWindow : Window
         {
             Clipboard.SetText(profile.SteamLaunchOptions);
         }
+    }
+
+    private bool ConfirmCleanup(CleanupPlan plan)
+    {
+        const int MaxListed = 8;
+        var count = plan.Surplus.Count;
+        var names = string.Join("\n", plan.Surplus.Take(MaxListed).Select(mod => $"•  {mod.Name}"));
+        var more = count > MaxListed ? $"\n•  und {count - MaxListed} weitere" : "";
+        return BrandDialog.Confirm(
+            this,
+            count == 1 ? "1 überzählige Mod löschen?" : $"{count} überzählige Mods löschen?",
+            $"Kein eingetragener Server mit diesem Zielordner braucht sie ({ModCleanup.FormatSize(plan.TotalBytes)}):\n\n{names}{more}\n\n"
+                + $"Ordner: {plan.ModsRoot}\n\nNach deiner Zustimmung löscht der Sync überzählige Mods in diesem Ordner künftig automatisch.",
+            "Löschen",
+            danger: true,
+            cancelText: "Behalten");
     }
 
     private void OnOpenRepositoryClick(object sender, RoutedEventArgs e) => OpenInBrowser(AppInfo.RepositoryUrl);

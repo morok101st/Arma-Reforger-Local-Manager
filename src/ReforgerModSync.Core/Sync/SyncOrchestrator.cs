@@ -191,6 +191,12 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
                 switch (ClientLogParser.ParseServerListEnd(line))
                 {
                     case ServerListEnd.Done:
+                        // Die Liste entscheidet auch darüber, was gelöscht wird. Eine unvollständige darf nie gelten.
+                        if (ClientLogParser.ParseListDoneCount(line) is { } expected && expected != mods.Count)
+                        {
+                            throw new ServerListException($"Die Mod-Liste kam unvollständig an ({mods.Count} von {expected} Mods). Bitte erneut versuchen. Client-Logs: {logsDir}");
+                        }
+
                         return mods;
                     case ServerListEnd.NotFound:
                         throw new ServerListException($"Der Server {address} wurde nicht gefunden. Läuft er, und stimmt die Adresse?");
