@@ -157,12 +157,19 @@ public sealed partial class MainViewModel(
             return false;
         }
 
-        var saved = profile.ToProfile();
-        if (!ClientArgsBuilder.IsValidServerAddress(saved.ServerAddress))
+        if (!ClientArgsBuilder.IsValidIp(profile.ServerIp))
         {
-            ShowSettingsMessage(profile, "Bitte die Server-Adresse als IP und Port eintragen, zum Beispiel 203.0.113.10:2001.", isError: true);
+            ShowSettingsMessage(profile, "Bitte die IP-Adresse des Servers eintragen, zum Beispiel 203.0.113.10.", isError: true);
             return false;
         }
+
+        if (!ClientArgsBuilder.IsValidPort(profile.ServerPort))
+        {
+            ShowSettingsMessage(profile, "Bitte den Port des Servers eintragen, eine Zahl von 1 bis 65535, zum Beispiel 2001.", isError: true);
+            return false;
+        }
+
+        var saved = profile.ToProfile();
 
         var previous = profile.Saved;
         profile.Saved = saved;

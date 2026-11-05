@@ -6,7 +6,7 @@ Lädt die Mods eines Reforger-Servers vorab, damit der Beitritt ohne Wartezeit k
 VORAUSSETZUNGEN
 - Windows 10 oder 11, 64 Bit
 - Steam läuft, Arma Reforger ist installiert
-- Adresse (IP:Port) und Passwort des Servers
+- IP-Adresse, Port und Passwort des Servers
 
 INSTALLATION
 1. ZIP in einen festen Ordner entpacken, zum Beispiel C:\Spiele\ReforgerSyncLaunch.
@@ -16,7 +16,7 @@ INSTALLATION
    Testversion nicht signiert ist: "Weitere Informationen" und "Trotzdem ausführen".
 
 EINRICHTUNG
-1. Im Reiter "Einstellungen" Name, Server-Adresse und Server-Passwort eintragen.
+1. Im Reiter "Einstellungen" Name, IP-Adresse, Port und Server-Passwort eintragen.
 2. Zielordner wählen: Die Mods liegen darin im Unterordner "addons". Wähle den Ordner,
    der deinen vorhandenen Ordner "addons" enthält, sonst wird alles neu geladen. Ohne
    eigene Startoptionen in Steam lässt du das Feld einfach leer.

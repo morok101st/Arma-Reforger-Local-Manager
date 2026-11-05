@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using ReforgerModSync.Core;
@@ -71,6 +72,23 @@ public partial class MainWindow : Window
             button.IsEnabled = true;
         }
     }
+
+    /// <summary>Wer aus Gewohnheit <c>IP:Port</c> tippt, landet mit dem Doppelpunkt im Portfeld.</summary>
+    private void OnIpTextInput(object sender, TextCompositionEventArgs e)
+    {
+        if (e.Text == ":")
+        {
+            PortInput.Focus();
+            PortInput.SelectAll();
+            e.Handled = true;
+            return;
+        }
+
+        e.Handled = !e.Text.All(character => char.IsAsciiDigit(character) || character == '.');
+    }
+
+    private void OnPortTextInput(object sender, TextCompositionEventArgs e) =>
+        e.Handled = !e.Text.All(char.IsAsciiDigit);
 
     private void OnChangePasswordClick(object sender, RoutedEventArgs e)
     {

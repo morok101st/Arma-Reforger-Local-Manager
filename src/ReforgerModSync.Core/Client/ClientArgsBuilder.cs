@@ -70,8 +70,45 @@ public static partial class ClientArgsBuilder
         string.Join(' ', arguments.Select(argument => argument.Contains(' ') ? $"\"{argument}\"" : argument));
 
     /// <summary>Nur IP und Port: Ein Hostname wird im Backend nicht gefunden.</summary>
-    public static bool IsValidServerAddress(string? address) =>
-        address is not null && ServerAddressRegex().IsMatch(address.Trim());
+    public static bool IsValidServerAddress(string? address)
+    {
+        var (ip, port) = SplitServerAddress(address);
+        return IsValidIp(ip) && IsValidPort(port);
+    }
+
+    public static bool IsValidIp(string? ip) =>
+        ip is not null && IpRegex().IsMatch(ip.Trim());
+
+    public static bool IsValidPort(string? port) =>
+        int.TryParse(port?.Trim(), out var number) && number is >= 1 and <= 65535;
+
+    /// <summary>Zerlegt <c>IP:Port</c> für die Eingabefelder. Ohne Doppelpunkt ist der Port leer.</summary>
+    public static (string Ip, string Port) SplitServerAddress(string? address)
+    {
+        var text = address?.Trim() ?? "";
+        var separator = text.LastIndexOf(':');
+        return separator < 0 ? (text, "") : (text[..separator].Trim(), text[(separator + 1)..].Trim());
+    }
+
+    /// <summary>Gespeichert wird immer <c>IP:Port</c>, daran hängt auch das Passwort. <c>null</c>: beide Felder leer.</summary>
+    public static string? CombineServerAddress(string? ip, string? port)
+    {
+        var cleanIp = ip?.Trim() ?? "";
+        var cleanPort = port?.Trim() ?? "";
+        if (cleanIp.Length == 0 && cleanPort.Length == 0)
+        {
+            return null;
+        }
+
+        return $"{cleanIp}:{(int.TryParse(cleanPort, out var number) ? number.ToString() : cleanPort)}";
+    }
+
+    /// <summary>Lässt im Portfeld nur Ziffern zu, auch beim Einfügen, und höchstens die fünf eines gültigen Ports.</summary>
+    public static string CleanPortInput(string? input)
+    {
+        var digits = new string((input ?? "").Where(char.IsAsciiDigit).ToArray());
+        return digits.Length > 5 ? digits[..5] : digits;
+    }
 
     /// <summary>
     /// Ein eigenes Profil lässt die Einstellungen des Spielers unberührt, ändert aber auch den
@@ -103,6 +140,6 @@ public static partial class ClientArgsBuilder
         ];
     }
 
-    [GeneratedRegex(@"^(\d{1,3}\.){3}\d{1,3}:\d{1,5}$")]
-    private static partial Regex ServerAddressRegex();
+    [GeneratedRegex(@"^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$")]
+    private static partial Regex IpRegex();
 }

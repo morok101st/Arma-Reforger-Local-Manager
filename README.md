@@ -21,7 +21,7 @@ Den Download übernimmt dein installierter Arma-Reforger-Client mit einer kleine
 
 - Windows 10 oder 11, 64 Bit
 - Steam läuft, Arma Reforger ist installiert
-- Adresse (IP:Port) und gegebenenfalls Passwort des Servers
+- IP-Adresse, Port und gegebenenfalls Passwort des Servers
 - Zum Prüfen und Synchronisieren muss der Server laufen, sonst wird sein Eintrag bei Bohemia nicht gefunden
 
 ## Installation
@@ -43,7 +43,8 @@ Alles wird im Reiter **Einstellungen** eingetragen:
 | Feld | Bedeutung |
 |---|---|
 | **Name** | Frei wählbar, zum Beispiel „Training“ |
-| **Server-Adresse** | IP und Port des Spielservers, zum Beispiel `203.0.113.10:2001` |
+| **IP-Adresse** | IP des Spielservers, zum Beispiel `203.0.113.10`. Fügst du `IP:Port` am Stück ein, füllt die App beide Felder |
+| **Port** | Port des Spielservers, zum Beispiel `2001`. Das Feld nimmt nur Ziffern an |
 | **Server-Passwort** | Leer lassen, wenn der Server keines hat. Ein gespeichertes Passwort erscheint als Punkte mit „✓ Gespeichert“ und lässt sich über **Ändern** und **Löschen** bearbeiten |
 | **Zielordner** | Wohin die Mods geladen werden. Leer lassen, um den Standardordner des Spiels zu nutzen |
 

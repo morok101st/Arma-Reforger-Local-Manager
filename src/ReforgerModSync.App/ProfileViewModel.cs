@@ -22,7 +22,7 @@ public sealed partial class ProfileViewModel : ObservableObject
         Id = saved?.Id ?? Guid.NewGuid().ToString("N");
         Saved = saved is null ? null : saved with { DownloadDir = AddonPaths.NormalizeDownloadDir(saved.DownloadDir) };
         _name = saved?.Name ?? "";
-        _serverAddress = saved?.ServerAddress ?? "";
+        (_serverIp, _serverPort) = ClientArgsBuilder.SplitServerAddress(saved?.ServerAddress);
         _downloadDir = Saved?.DownloadDir ?? "";
     }
 
@@ -35,7 +35,43 @@ public sealed partial class ProfileViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(DisplayName))]
     private string _name;
 
-    [ObservableProperty] private string _serverAddress;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ServerAddress))]
+    private string _serverIp;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ServerAddress))]
+    private string _serverPort;
+
+    public string ServerAddress => ClientArgsBuilder.CombineServerAddress(ServerIp, ServerPort) ?? "";
+
+    /// <summary>Wer die Adresse am Stück als <c>IP:Port</c> einfügt, bekommt sie auf beide Felder verteilt.</summary>
+    partial void OnServerIpChanged(string value)
+    {
+        var clean = new string(value.Where(character => !char.IsWhiteSpace(character)).ToArray());
+        if (clean.Contains(':'))
+        {
+            var (ip, port) = ClientArgsBuilder.SplitServerAddress(clean);
+            ServerIp = ip;
+            if (port.Length > 0)
+            {
+                ServerPort = port;
+            }
+        }
+        else if (clean != value)
+        {
+            ServerIp = clean;
+        }
+    }
+
+    partial void OnServerPortChanged(string value)
+    {
+        var clean = ClientArgsBuilder.CleanPortInput(value);
+        if (clean != value)
+        {
+            ServerPort = clean;
+        }
+    }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SteamLaunchOptions), nameof(HasDownloadDir), nameof(DownloadDirDisplay))]
@@ -91,7 +127,7 @@ public sealed partial class ProfileViewModel : ObservableObject
     {
         Id = Id,
         Name = Name.Trim(),
-        ServerAddress = string.IsNullOrWhiteSpace(ServerAddress) ? null : ServerAddress.Trim(),
+        ServerAddress = ClientArgsBuilder.CombineServerAddress(ServerIp, ServerPort),
         DownloadDir = AddonPaths.NormalizeDownloadDir(DownloadDir),
     };
 }

@@ -235,9 +235,23 @@
                         <TextBlock Text="Frei wählbar, zum Beispiel „Training“ oder „Event-Server“." Style="{StaticResource Hint}" />
 
                         <TextBlock Text="Spielserver" Style="{StaticResource SectionTitle}" Margin="0,24,0,0" />
-                        <TextBlock Text="Server-Adresse" Style="{StaticResource FieldLabel}" />
-                        <TextBox Text="{Binding ServerAddress, UpdateSourceTrigger=PropertyChanged}" />
-                        <TextBlock Text="IP und Port, zum Beispiel 203.0.113.10:2001. Über diese Adresse wird der Server bei Bohemia gefunden, von dort kommt die Mod-Liste. Der Server muss dafür laufen." Style="{StaticResource Hint}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="140" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="IP-Adresse" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding ServerIp, UpdateSourceTrigger=PropertyChanged}"
+                                         PreviewTextInput="OnIpTextInput" AutomationProperties.Name="IP-Adresse" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                <TextBlock Text="Port" Style="{StaticResource FieldLabel}" />
+                                <TextBox x:Name="PortInput" Text="{Binding ServerPort, UpdateSourceTrigger=PropertyChanged}" MaxLength="5"
+                                         PreviewTextInput="OnPortTextInput" AutomationProperties.Name="Port" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="Zum Beispiel 203.0.113.10 und 2001. Darüber wird der Server bei Bohemia gefunden, von dort kommt die Mod-Liste. Der Server muss dafür laufen." Style="{StaticResource Hint}" />
 
                         <TextBlock Text="Server-Passwort" Style="{StaticResource FieldLabel}" />
                         <!-- Die Punkte sind reine Anzeige: feste Anzahl, nichts vom echten Passwort, nie in der Eingabe. -->

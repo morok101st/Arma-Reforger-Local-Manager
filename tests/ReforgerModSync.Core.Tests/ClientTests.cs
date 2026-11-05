@@ -173,8 +173,79 @@ public class ClientTests
     [InlineData("203.0.113.10", false)]
     [InlineData("", false)]
     [InlineData(null, false)]
+    [InlineData("999.1.1.1:2001", false)]
+    [InlineData("203.0.113.10:70000", false)]
+    [InlineData("203.0.113.10:0", false)]
+    [InlineData("203.0.113.10:", false)]
+    [InlineData(":2001", false)]
     public void Server_address_needs_ip_and_port(string? address, bool valid) =>
         Assert.Equal(valid, ClientArgsBuilder.IsValidServerAddress(address));
+
+    [Theory]
+    [InlineData("0.0.0.0", true)]
+    [InlineData("255.255.255.255", true)]
+    [InlineData(" 203.0.113.10 ", true)]
+    [InlineData("256.1.1.1", false)]
+    [InlineData("1.2.3", false)]
+    [InlineData("1.2.3.4.5", false)]
+    [InlineData("01.2.3.4", false)]
+    [InlineData("server.example.org", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void Ip_must_be_a_real_ipv4_address(string? ip, bool valid) =>
+        Assert.Equal(valid, ClientArgsBuilder.IsValidIp(ip));
+
+    [Theory]
+    [InlineData("1", true)]
+    [InlineData("2001", true)]
+    [InlineData("65535", true)]
+    [InlineData("0", false)]
+    [InlineData("65536", false)]
+    [InlineData("abc", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void Port_must_be_in_range(string? port, bool valid) =>
+        Assert.Equal(valid, ClientArgsBuilder.IsValidPort(port));
+
+    [Theory]
+    [InlineData("203.0.113.10:2001", "203.0.113.10", "2001")]
+    [InlineData(" 203.0.113.10:2001 ", "203.0.113.10", "2001")]
+    [InlineData("203.0.113.10", "203.0.113.10", "")]
+    [InlineData("203.0.113.10:", "203.0.113.10", "")]
+    [InlineData("", "", "")]
+    [InlineData(null, "", "")]
+    public void Splits_address_for_the_input_fields(string? address, string ip, string port) =>
+        Assert.Equal((ip, port), ClientArgsBuilder.SplitServerAddress(address));
+
+    [Theory]
+    [InlineData("203.0.113.10", "2001", "203.0.113.10:2001")]
+    [InlineData(" 203.0.113.10 ", " 2001 ", "203.0.113.10:2001")]
+    [InlineData("203.0.113.10", "02001", "203.0.113.10:2001")]
+    [InlineData("203.0.113.10", "", "203.0.113.10:")]
+    [InlineData("", "", null)]
+    [InlineData(null, null, null)]
+    public void Combines_fields_to_the_stored_address(string? ip, string? port, string? expected) =>
+        Assert.Equal(expected, ClientArgsBuilder.CombineServerAddress(ip, port));
+
+    [Theory]
+    [InlineData("203.0.113.10:2001")]
+    [InlineData("1.1.1.1:65535")]
+    public void Split_and_combine_keep_a_saved_address_unchanged(string address)
+    {
+        // Das Passwort hängt an diesem Wert. Ändert er sich beim Laden, ginge die Zuordnung verloren.
+        var (ip, port) = ClientArgsBuilder.SplitServerAddress(address);
+        Assert.Equal(address, ClientArgsBuilder.CombineServerAddress(ip, port));
+    }
+
+    [Theory]
+    [InlineData("2001", "2001")]
+    [InlineData("20x01 ", "2001")]
+    [InlineData("abc", "")]
+    [InlineData("123456789", "12345")]
+    [InlineData("", "")]
+    [InlineData(null, "")]
+    public void Port_field_keeps_only_digits(string? input, string expected) =>
+        Assert.Equal(expected, ClientArgsBuilder.CleanPortInput(input));
 
     private static void AssertValue(IReadOnlyList<string> args, string name, string value) =>
         Assert.Equal(value, args[args.ToList().IndexOf(name) + 1]);
