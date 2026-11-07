@@ -1,0 +1,14 @@
+# Schlägt Updates für die Actions im Release-Workflow und die NuGet-Pakete vor, als Pull Request gegen dev.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+  - package-ecosystem: nuget
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

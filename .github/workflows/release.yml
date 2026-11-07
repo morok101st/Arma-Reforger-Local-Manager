@@ -1,5 +1,7 @@
 # Baut bei einem Versions-Tag (z. B. v0.1.0) das Paket und veröffentlicht es als Release.
 # Versionen unter 1.0 erscheinen als Vorabversion.
+# Actions sind per Commit-SHA eingebunden, damit ein verschobener Tag nichts Fremdes ausführt.
+# Dependabot (.github/dependabot.yml) schlägt neue Versionen vor.
 name: Release
 
 on:
@@ -16,9 +18,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
           dotnet-version: 10.0.x
 
@@ -37,9 +41,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $tag = $env:GITHUB_REF_NAME
-          $zip = (Get-Item publish\*.zip).FullName
-          $notes = 'Installation: ZIP in einen festen Ordner entpacken und ReforgerSyncLaunch.exe starten. Alles Weitere steht in LIES-MICH.txt im Paket. Voraussetzungen: Windows 10 oder 11 (64 Bit), Steam und Arma Reforger.'
+          $zip = Get-Item publish\*.zip
+          $hash = (Get-FileHash $zip.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          $hashFile = "$($zip.FullName).sha256"
+          [IO.File]::WriteAllText($hashFile, "$hash  $($zip.Name)`n")
+          $notes = "Installation: ZIP nach %LOCALAPPDATA%\Programs\ReforgerSyncLaunch entpacken und ReforgerSyncLaunch.exe starten. Alles Weitere steht in LIES-MICH.txt im Paket. Voraussetzungen: Windows 10 oder 11 (64 Bit), Steam und Arma Reforger.`n`nSHA-256 von $($zip.Name):`n``$hash``"
           $options = @()
           if ($tag.StartsWith('v0.')) { $options += '--prerelease' }
-          & gh release create $tag $zip --verify-tag --title "Reforger Sync & Launch $tag" --notes $notes @options
+          & gh release create $tag $zip.FullName $hashFile --verify-tag --title "Reforger Sync & Launch $tag" --notes $notes @options
           if ($LASTEXITCODE -ne 0) { throw 'Release konnte nicht erstellt werden' }

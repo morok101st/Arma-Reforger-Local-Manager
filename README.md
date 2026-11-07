@@ -32,6 +32,8 @@ Den Download übernimmt dein installierter Arma-Reforger-Client mit einer kleine
    Nimm keinen Ordner direkt unter `C:\`, etwa `C:\Spiele`. Dort dürfen alle Benutzer des PCs Dateien ändern und könnten die App oder die Hilfs-Mod austauschen. Dein Benutzerordner ist nur für dich beschreibbar.
 3. `ReforgerSyncLaunch.exe` starten.
 
+**Prüfsumme (optional):** Jedes Release nennt die SHA-256-Prüfsumme der ZIP-Datei. In PowerShell zeigt `Get-FileHash .\Reforger-Sync-Launch-<Version>.zip` den Wert deiner Datei, beide müssen übereinstimmen.
+
 Die Testversion ist nicht signiert, deshalb warnt Windows eventuell beim ersten Start. Klicke dann auf „Weitere Informationen“ und „Trotzdem ausführen“.
 
 **Aktualisieren:** Deine Version steht in der Titelleiste und links unten in der App, der Link **Alle Versionen** führt zu den Releases. Schließe die App und entpacke die neue ZIP-Datei in denselben Ordner. Einstellungen, Passwörter und Mods bleiben erhalten.
