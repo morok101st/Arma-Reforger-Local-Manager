@@ -43,7 +43,7 @@
         </Style>
     </Window.Resources>
 
-    <Border BorderBrush="{StaticResource BrandBorderBrush}" BorderThickness="1">
+    <Border BorderBrush="{StaticResource BrandGoldBrush}" BorderThickness="1">
         <DockPanel>
             <Border DockPanel.Dock="Top" Height="3" Background="{StaticResource BrandGoldBrush}" />
             <StackPanel Margin="24,20,24,20">
@@ -64,23 +64,6 @@
                 </Grid>
                 <TextBlock Text="{Binding ReforgerExeError}" Style="{StaticResource Error}" />
                 <TextBlock Text="{Binding DetectedExeHint}" Style="{StaticResource Hint}" />
-
-                <TextBlock Text="Spielfenster beim Sync" Style="{StaticResource SectionTitle}" />
-                <TextBlock Text="Breite × Höhe in Pixeln" Style="{StaticResource FieldLabel}" />
-                <StackPanel Orientation="Horizontal">
-                    <TextBox Text="{Binding Width, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Number}"
-                             AutomationProperties.Name="Breite" />
-                    <TextBlock Text="×" Margin="10,0" VerticalAlignment="Center" Foreground="{StaticResource BrandMutedBrush}" />
-                    <TextBox Text="{Binding Height, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Number}"
-                             AutomationProperties.Name="Höhe" />
-                </StackPanel>
-                <TextBlock Text="{Binding WindowError}" Style="{StaticResource Error}" />
-                <TextBlock Text="Max. Bilder pro Sekunde" Style="{StaticResource FieldLabel}" />
-                <TextBox Text="{Binding MaxFps, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Number}"
-                         AutomationProperties.Name="Max. Bilder pro Sekunde" />
-                <TextBlock Text="{Binding MaxFpsError}" Style="{StaticResource Error}" />
-                <TextBlock Style="{StaticResource Hint}"
-                           Text="Das Fenster bleibt beim Sync ausgeblendet. Kleine Werte schonen den Rechner." />
 
                 <TextBlock Text="Zeitlimits" Style="{StaticResource SectionTitle}" />
                 <TextBlock Text="Höchstdauer eines Syncs in Minuten" Style="{StaticResource FieldLabel}" />

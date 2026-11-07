@@ -645,11 +645,8 @@ public sealed partial class MainViewModel(
         }
 
         Log.Information(
-            "Grundeinstellungen gespeichert: Client {Client}, Fenster {Width}x{Height}, {Fps} FPS, {Total} min, Neustart nach {Idle} min",
+            "Grundeinstellungen gespeichert: Client {Client}, höchstens {Total} min, Neustart nach {Idle} min",
             _settings.ReforgerExe ?? "automatisch",
-            _settings.Client.Width,
-            _settings.Client.Height,
-            _settings.Client.MaxFps,
             _settings.Timeouts.TotalMinutes,
             _settings.Timeouts.IdleMinutes);
         return null;

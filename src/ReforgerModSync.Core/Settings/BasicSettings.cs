@@ -5,17 +5,11 @@ namespace ReforgerModSync.Core.Settings;
 /// <summary>Eingaben aus den Grundeinstellungen, so wie sie in den Feldern stehen.</summary>
 public sealed record BasicSettingsInput(
     string ReforgerExe,
-    string Width,
-    string Height,
-    string MaxFps,
     string TotalMinutes,
     string IdleMinutes)
 {
     public static BasicSettingsInput From(AppSettings settings) => new(
         settings.ReforgerExe ?? "",
-        settings.Client.Width.ToString(),
-        settings.Client.Height.ToString(),
-        settings.Client.MaxFps.ToString(),
         settings.Timeouts.TotalMinutes.ToString(),
         settings.Timeouts.IdleMinutes.ToString());
 
@@ -25,9 +19,6 @@ public sealed record BasicSettingsInput(
 public enum BasicSettingsField
 {
     ReforgerExe,
-    Width,
-    Height,
-    MaxFps,
     TotalMinutes,
     IdleMinutes,
 }
@@ -38,12 +29,12 @@ public sealed record BasicSettingsResult(AppSettings? Settings, IReadOnlyDiction
     public bool IsValid => Settings is not null;
 }
 
-/// <summary>Grenzen und Prüfung der Grundeinstellungen. Sie gelten für alle Server.</summary>
+/// <summary>
+/// Grenzen und Prüfung der Grundeinstellungen. Sie gelten für alle Server. Das Spielfenster beim Sync
+/// ist bewusst nicht dabei, seine Werte sind schon klein und bleiben, wie sie sind.
+/// </summary>
 public static class BasicSettingsValidator
 {
-    public const int MinWidth = 320, MaxWidth = 3840;
-    public const int MinHeight = 180, MaxHeight = 2160;
-    public const int MinFps = 5, MaxFps = 60;
     public const int MinTotalMinutes = 10, MaxTotalMinutes = 600;
     public const int MinIdleMinutes = 2, MaxIdleMinutes = 60;
 
@@ -58,15 +49,12 @@ public static class BasicSettingsValidator
             errors[BasicSettingsField.ReforgerExe] = exeProblem;
         }
 
-        var width = Number(input.Width, MinWidth, MaxWidth, BasicSettingsField.Width, errors);
-        var height = Number(input.Height, MinHeight, MaxHeight, BasicSettingsField.Height, errors);
-        var fps = Number(input.MaxFps, MinFps, MaxFps, BasicSettingsField.MaxFps, errors);
         var total = Number(input.TotalMinutes, MinTotalMinutes, MaxTotalMinutes, BasicSettingsField.TotalMinutes, errors);
         var idle = Number(input.IdleMinutes, MinIdleMinutes, MaxIdleMinutes, BasicSettingsField.IdleMinutes, errors);
 
         if (total is not null && idle is not null && idle >= total)
         {
-            errors[BasicSettingsField.IdleMinutes] = "Muss kleiner als die Gesamtzeit sein.";
+            errors[BasicSettingsField.IdleMinutes] = "Muss kleiner als die Höchstdauer sein.";
         }
 
         if (errors.Count > 0)
@@ -78,7 +66,6 @@ public static class BasicSettingsValidator
             current with
             {
                 ReforgerExe = exe.Length == 0 ? null : Path.GetFullPath(exe),
-                Client = current.Client with { Width = width!.Value, Height = height!.Value, MaxFps = fps!.Value },
                 Timeouts = current.Timeouts with { TotalMinutes = total!.Value, IdleMinutes = idle!.Value },
             },
             errors);

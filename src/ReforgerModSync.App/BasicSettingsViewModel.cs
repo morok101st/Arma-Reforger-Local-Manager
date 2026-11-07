@@ -7,15 +7,10 @@ namespace ReforgerModSync.App;
 public sealed partial class BasicSettingsViewModel : ObservableObject
 {
     [ObservableProperty] private string _reforgerExe = "";
-    [ObservableProperty] private string _width = "";
-    [ObservableProperty] private string _height = "";
-    [ObservableProperty] private string _maxFps = "";
     [ObservableProperty] private string _totalMinutes = "";
     [ObservableProperty] private string _idleMinutes = "";
 
     [ObservableProperty] private string _reforgerExeError = "";
-    [ObservableProperty] private string _windowError = "";
-    [ObservableProperty] private string _maxFpsError = "";
     [ObservableProperty] private string _totalMinutesError = "";
     [ObservableProperty] private string _idleMinutesError = "";
     [ObservableProperty] private string _saveError = "";
@@ -30,14 +25,11 @@ public sealed partial class BasicSettingsViewModel : ObservableObject
 
     public string DetectedExeHint { get; }
 
-    public BasicSettingsInput ToInput() => new(ReforgerExe, Width, Height, MaxFps, TotalMinutes, IdleMinutes);
+    public BasicSettingsInput ToInput() => new(ReforgerExe, TotalMinutes, IdleMinutes);
 
     public void Load(BasicSettingsInput input)
     {
         ReforgerExe = input.ReforgerExe;
-        Width = input.Width;
-        Height = input.Height;
-        MaxFps = input.MaxFps;
         TotalMinutes = input.TotalMinutes;
         IdleMinutes = input.IdleMinutes;
         ShowErrors(new Dictionary<BasicSettingsField, string>());
@@ -48,12 +40,6 @@ public sealed partial class BasicSettingsViewModel : ObservableObject
         string Error(BasicSettingsField field) => errors.TryGetValue(field, out var message) ? message : "";
 
         ReforgerExeError = Error(BasicSettingsField.ReforgerExe);
-        WindowError = string.Join(" ", new[]
-        {
-            errors.ContainsKey(BasicSettingsField.Width) ? $"Breite: {BasicSettingsValidator.MinWidth} bis {BasicSettingsValidator.MaxWidth}." : "",
-            errors.ContainsKey(BasicSettingsField.Height) ? $"Höhe: {BasicSettingsValidator.MinHeight} bis {BasicSettingsValidator.MaxHeight}." : "",
-        }.Where(text => text.Length > 0));
-        MaxFpsError = Error(BasicSettingsField.MaxFps);
         TotalMinutesError = Error(BasicSettingsField.TotalMinutes);
         IdleMinutesError = Error(BasicSettingsField.IdleMinutes);
         SaveError = "";

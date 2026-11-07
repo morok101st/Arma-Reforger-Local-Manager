@@ -7,7 +7,7 @@ using ReforgerModSync.Core.Steam;
 
 namespace ReforgerModSync.App;
 
-/// <summary>Grundeinstellungen für alle Server: Spielclient, Spielfenster beim Sync und Zeitlimits.</summary>
+/// <summary>Grundeinstellungen für alle Server: Spielclient und Zeitlimits.</summary>
 public partial class BasicSettingsDialog : Window
 {
     private readonly BasicSettingsViewModel _fields;
@@ -25,7 +25,7 @@ public partial class BasicSettingsDialog : Window
 
     /// <returns><c>true</c>, wenn gespeichert wurde.</returns>
     public static bool Show(Window owner, BasicSettingsInput current, string? detectedExe, Func<BasicSettingsInput, Task<string?>> save) =>
-        new BasicSettingsDialog(owner, current, detectedExe, save).ShowDialog() == true;
+        DialogBackdrop.ShowDialog(new BasicSettingsDialog(owner, current, detectedExe, save)) == true;
 
     private async void OnSaveClick(object sender, RoutedEventArgs e)
     {

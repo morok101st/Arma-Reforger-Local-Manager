@@ -39,7 +39,7 @@ public partial class BrandDialog : Window
 
         dialog.ConfirmButton.BorderBrush = (System.Windows.Media.Brush)Application.Current.Resources[danger ? "BrandDangerBrush" : "BrandGoldBrush"];
         dialog.Loaded += (_, _) => dialog.CancelButton.Focus();
-        return dialog.ShowDialog() == true;
+        return DialogBackdrop.ShowDialog(dialog) == true;
     }
 
     /// <summary>Reine Meldung mit nur einer Schaltfläche.</summary>
@@ -49,7 +49,7 @@ public partial class BrandDialog : Window
         dialog.CancelButton.Content = "OK";
         dialog.ConfirmButton.Visibility = Visibility.Collapsed;
         dialog.Loaded += (_, _) => dialog.CancelButton.Focus();
-        dialog.ShowDialog();
+        DialogBackdrop.ShowDialog(dialog);
     }
 
     private void OnConfirm(object sender, RoutedEventArgs e) => DialogResult = true;

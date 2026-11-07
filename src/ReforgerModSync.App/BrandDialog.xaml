@@ -7,7 +7,7 @@
         Background="{StaticResource BrandSurfaceBrush}" Foreground="White"
         WindowStartupLocation="CenterOwner"
         MouseLeftButtonDown="OnDragWindow">
-    <Border BorderBrush="{StaticResource BrandBorderBrush}" BorderThickness="1">
+    <Border BorderBrush="{StaticResource BrandGoldBrush}" BorderThickness="1">
         <DockPanel>
             <Border DockPanel.Dock="Top" Height="3" Background="{StaticResource BrandGoldBrush}" />
             <Grid Margin="24,20,24,20">

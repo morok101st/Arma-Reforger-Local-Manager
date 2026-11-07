@@ -23,8 +23,8 @@ EINRICHTUNG
 3. "Speichern" klicken. Ob Adresse und Passwort stimmen, zeigt sich erst in der Übersicht
    mit "Neu prüfen" oder "Jetzt synchronisieren". Beides braucht einen laufenden Server.
 4. Optional: "Grundeinstellungen" links unten gilt für alle Server. Dort trägst du den
-   Spielclient ein, falls er nicht über Steam gefunden wird, und änderst Spielfenster und
-   Zeitlimits des Syncs. Die Standardwerte passen in den meisten Fällen.
+   Spielclient ein, falls er nicht über Steam gefunden wird, und änderst die Zeitlimits
+   des Syncs. Die Standardwerte passen in den meisten Fällen.
 
 BENUTZUNG
 - "Jetzt synchronisieren" lädt fehlende Mods und bringt alle auf die Version des Servers.
