@@ -64,12 +64,44 @@ public static partial class ClientArgsBuilder
     /// <summary>Text für die Steam-Startoptionen, damit das Spiel denselben Ordner nutzt.</summary>
     public static string SteamLaunchOptions(string? downloadDir) =>
         AddonPaths.NormalizeDownloadDir(downloadDir) is { } folder
-            ? $"-addonsDir \"{folder}\" -addonDownloadDir \"{folder}\""
+            ? ToCommandLine(["-addonsDir", folder, "-addonDownloadDir", folder])
             : "";
 
-    /// <summary>Baut eine Befehlszeile, Werte mit Leerzeichen kommen in Anführungszeichen.</summary>
+    /// <summary>
+    /// Baut eine Befehlszeile nach den Regeln, mit denen Windows-Programme sie wieder zerlegen (CommandLineToArgvW):
+    /// Werte mit Leerzeichen, Tabulator oder Anführungszeichen kommen in Anführungszeichen, Backslashes vor einem
+    /// Anführungszeichen werden verdoppelt. Nur nötig für ShellExecute, sonst gilt <see cref="System.Diagnostics.ProcessStartInfo.ArgumentList"/>.
+    /// </summary>
     public static string ToCommandLine(IEnumerable<string> arguments) =>
-        string.Join(' ', arguments.Select(argument => argument.Contains(' ') ? $"\"{argument}\"" : argument));
+        string.Join(' ', arguments.Select(QuoteArgument));
+
+    private static string QuoteArgument(string argument)
+    {
+        if (argument.Length > 0 && !argument.Any(character => character is ' ' or '\t' or '"'))
+        {
+            return argument;
+        }
+
+        var quoted = new System.Text.StringBuilder("\"");
+        var backslashes = 0;
+        foreach (var character in argument)
+        {
+            if (character == '\\')
+            {
+                backslashes++;
+                continue;
+            }
+
+            // Backslashes vor einem Anführungszeichen verdoppeln, das Anführungszeichen selbst maskieren.
+            quoted.Append('\\', character == '"' ? (backslashes * 2) + 1 : backslashes);
+            quoted.Append(character);
+            backslashes = 0;
+        }
+
+        // Am Ende stehen Backslashes vor dem schließenden Anführungszeichen und werden deshalb verdoppelt.
+        quoted.Append('\\', backslashes * 2);
+        return quoted.Append('"').ToString();
+    }
 
     /// <summary>Nur IP und Port: Ein Hostname wird im Backend nicht gefunden.</summary>
     public static bool IsValidServerAddress(string? address)
