@@ -22,6 +22,7 @@ public sealed partial class MainViewModel(
     private static readonly TimeSpan PasswordCleanupDelay = TimeSpan.FromMinutes(2);
 
     private readonly ModCleanup _cleanup = new(cache);
+    private readonly ProfilePasswords _passwords = new(credentialStore);
     private readonly SemaphoreSlim _saveGate = new(1, 1);
     private AppSettings _settings = new();
     private CancellationTokenSource? _runCancel;
@@ -155,21 +156,9 @@ public sealed partial class MainViewModel(
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(profile.Name))
+        if (ProfileInput.Validate(profile.Name, profile.ServerIp, profile.ServerPort) is { } problem)
         {
-            ShowSettingsMessage(profile, "Bitte einen Namen für diesen Server eintragen.", isError: true);
-            return false;
-        }
-
-        if (!ClientArgsBuilder.IsValidIp(profile.ServerIp))
-        {
-            ShowSettingsMessage(profile, "Bitte die IP-Adresse des Servers eintragen, zum Beispiel 203.0.113.10.", isError: true);
-            return false;
-        }
-
-        if (!ClientArgsBuilder.IsValidPort(profile.ServerPort))
-        {
-            ShowSettingsMessage(profile, "Bitte den Port des Servers eintragen, eine Zahl von 1 bis 65535, zum Beispiel 2001.", isError: true);
+            ShowSettingsMessage(profile, problem, isError: true);
             return false;
         }
 
@@ -214,7 +203,7 @@ public sealed partial class MainViewModel(
 
         try
         {
-            credentialStore.SavePassword(saved.ServerAddress!, profile.Id, enteredPassword);
+            _passwords.StoreEntered(saved.ServerAddress!, profile.Id, enteredPassword);
             return true;
         }
         catch (System.ComponentModel.Win32Exception ex)
@@ -241,24 +230,16 @@ public sealed partial class MainViewModel(
     /// Für eine andere darf es nur mit Zustimmung des Nutzers verwendet werden, sonst ginge es unbemerkt an einen fremden Server.
     /// </summary>
     public bool NeedsPasswordTransferDecision(string enteredPassword) =>
-        enteredPassword.Length == 0
-        && SelectedProfile is { HasSavedPassword: true, Saved.ServerAddress: { } previous } profile
-        && !string.IsNullOrWhiteSpace(profile.Name)
-        && profile.ToProfile().ServerAddress is { } current
-        && current != previous
-        && ClientArgsBuilder.IsValidServerAddress(current);
+        SelectedProfile is { } profile
+        && ProfileInput.Validate(profile.Name, profile.ServerIp, profile.ServerPort) is null
+        && ProfilePasswords.NeedsTransferDecision(profile.HasSavedPassword, profile.Saved?.ServerAddress, profile.ToProfile().ServerAddress, enteredPassword);
 
     /// <summary>Der Eintrag der alten Adresse verschwindet in jedem Fall, damit kein verwaistes Passwort zurückbleibt.</summary>
     private bool TryMovePassword(ProfileViewModel profile, string previousAddress, string newAddress, bool keep)
     {
         try
         {
-            if (keep && credentialStore.ReadPassword(previousAddress, profile.Id) is { } password)
-            {
-                credentialStore.SavePassword(newAddress, profile.Id, password);
-            }
-
-            credentialStore.DeletePassword(previousAddress, profile.Id);
+            _passwords.MoveToNewAddress(profile.Id, previousAddress, newAddress, keep);
         }
         catch (System.ComponentModel.Win32Exception ex)
         {
@@ -431,17 +412,12 @@ public sealed partial class MainViewModel(
                 AppendLog(profile, $"Überzählige Mod gelöscht: {mod.Name}");
             }
 
-            var freed = ModCleanup.FormatSize(cleaned.Deleted.Sum(mod => mod.Bytes));
-            var note = cleaned.Deleted.Count == 1
-                ? $"1 überzählige Mod gelöscht ({freed} frei)."
-                : $"{cleaned.Deleted.Count} überzählige Mods gelöscht ({freed} frei).";
             if (cleaned.Failed.Count > 0)
             {
                 Log.Warning("Nicht gelöscht: {Names}", string.Join(", ", cleaned.Failed.Select(mod => mod.Name)));
-                note += $" Nicht löschbar: {string.Join(", ", cleaned.Failed.Select(mod => mod.Name))}.";
             }
 
-            ReportCleanup(profile, result, note, isError: cleaned.Failed.Count > 0);
+            ReportCleanup(profile, result, cleaned.Summary, isError: cleaned.Failed.Count > 0);
         }
         catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or ArgumentException)
         {
@@ -576,47 +552,22 @@ public sealed partial class MainViewModel(
     private static void ShowMods(ProfileViewModel profile, IReadOnlyList<ModComparison> comparison)
     {
         profile.Mods.Clear();
-        foreach (var mod in comparison.OrderBy(mod => mod.State == ModState.Current).ThenBy(mod => mod.Required.Name))
+        foreach (var mod in ModSummary.Sort(comparison))
         {
             profile.Mods.Add(new ModRow(
                 mod.Required.Name,
                 mod.Required.Version ?? "beliebig",
                 mod.Installed?.Version ?? "–",
-                mod.State switch
-                {
-                    ModState.Current => "aktuell",
-                    ModState.Missing => "fehlt",
-                    ModState.Outdated => "veraltet",
-                    ModState.Newer => "neuer als Server",
-                    ModState.Different => "andere Version",
-                    _ => "beschädigt",
-                },
+                ModSummary.StateText(mod.State),
                 mod.State));
         }
 
-        var current = comparison.Count(mod => mod.State == ModState.Current);
-        var open = comparison.Count - current;
-        profile.OpenModCount = open;
-        profile.ProgressTotal = Math.Max(comparison.Count, 1);
-        profile.ProgressDone = current;
-        profile.ListStatus = open == 0 ? "aktuell" : $"{open} von {comparison.Count} offen";
-        profile.Summary = open == 0
-            ? $"Alles aktuell: {comparison.Count} Mods"
-            : string.Join(" · ", new[]
-            {
-                $"{current} von {comparison.Count} Mods aktuell",
-                CountText(comparison, ModState.Missing, comparison.Count(mod => mod.State == ModState.Missing) == 1 ? "fehlt" : "fehlen"),
-                CountText(comparison, ModState.Outdated, "veraltet"),
-                CountText(comparison, ModState.Newer, "neuer als Server"),
-                CountText(comparison, ModState.Different, "andere Version"),
-                CountText(comparison, ModState.Damaged, "beschädigt"),
-            }.Where(text => text.Length > 0));
-    }
-
-    private static string CountText(IReadOnlyList<ModComparison> comparison, ModState state, string label)
-    {
-        var count = comparison.Count(mod => mod.State == state);
-        return count == 0 ? "" : $"{count} {label}";
+        var summary = ModSummary.From(comparison);
+        profile.OpenModCount = summary.Open;
+        profile.ProgressTotal = Math.Max(summary.Total, 1);
+        profile.ProgressDone = summary.Current;
+        profile.ListStatus = summary.ListStatus;
+        profile.Summary = summary.Text;
     }
 
     /// <summary>Werte der Grundeinstellungen, wie sie gespeichert sind.</summary>
@@ -688,8 +639,7 @@ public sealed partial class MainViewModel(
 
     private void ReadPasswordState(ProfileViewModel profile)
     {
-        profile.HasSavedPassword = profile.Saved?.ServerAddress is { } address
-            && credentialStore.ReadPassword(address, profile.Id) is not null;
+        profile.HasSavedPassword = _passwords.HasPassword(profile.Saved?.ServerAddress, profile.Id);
         profile.IsEditingPassword = false;
     }
 

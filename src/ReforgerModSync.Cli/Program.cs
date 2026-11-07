@@ -65,7 +65,7 @@ static async Task<int> StatusAsync(AppSettings settings, ICredentialStore creden
 
     foreach (var profile in settings.Profiles)
     {
-        var hasPassword = profile.ServerAddress is { } address && credentialStore.ReadPassword(address, profile.Id) is not null;
+        var hasPassword = new ProfilePasswords(credentialStore).HasPassword(profile.ServerAddress, profile.Id);
         var modsRoot = AddonPaths.ResolveModsRoot(profile.DownloadDir);
         var addons = await AddonScanner.ScanAsync(modsRoot);
         Console.WriteLine();
@@ -81,10 +81,10 @@ static async Task<int> StatusAsync(AppSettings settings, ICredentialStore creden
         }
 
         var comparison = AddonComparer.Compare(list.Mods, addons);
-        Console.WriteLine($"  Modset:     {comparison.Count} Mods, davon {comparison.Count(mod => mod.State == ModState.Current)} aktuell (Stand {list.FetchedAt:g})");
-        foreach (var mod in comparison.Where(mod => mod.State != ModState.Current))
+        Console.WriteLine($"  Modset:     {ModSummary.From(comparison).Text} (Stand {list.FetchedAt:g})");
+        foreach (var mod in ModSummary.Sort(comparison).Where(mod => mod.State != ModState.Current))
         {
-            Console.WriteLine($"    [{mod.State}] {mod.Required.Name}: benötigt {mod.Required.Version ?? "beliebig"}, lokal {mod.Installed?.Version ?? "-"}");
+            Console.WriteLine($"    [{ModSummary.StateText(mod.State)}] {mod.Required.Name}: benötigt {mod.Required.Version ?? "beliebig"}, lokal {mod.Installed?.Version ?? "-"}");
         }
     }
 

@@ -12,7 +12,21 @@ public sealed record CleanupPlan(string FolderKey, string ModsRoot, IReadOnlyLis
     public long TotalBytes => Surplus.Sum(mod => mod.Bytes);
 }
 
-public sealed record CleanupResult(IReadOnlyList<SurplusMod> Deleted, IReadOnlyList<SurplusMod> Failed);
+public sealed record CleanupResult(IReadOnlyList<SurplusMod> Deleted, IReadOnlyList<SurplusMod> Failed)
+{
+    /// <summary>Ergebnis für Status und Protokoll, z. B. „3 überzählige Mods gelöscht (1,2 GB frei).“</summary>
+    public string Summary
+    {
+        get
+        {
+            var freed = ModCleanup.FormatSize(Deleted.Sum(mod => mod.Bytes));
+            var text = Deleted.Count == 1
+                ? $"1 überzählige Mod gelöscht ({freed} frei)."
+                : $"{Deleted.Count} überzählige Mods gelöscht ({freed} frei).";
+            return Failed.Count == 0 ? text : $"{text} Nicht löschbar: {string.Join(", ", Failed.Select(mod => mod.Name))}.";
+        }
+    }
+}
 
 /// <summary>
 /// Hält einen eigenen Zielordner deckungsgleich mit den Servern, die ihn nutzen: Gelöscht werden nur Mods, die
