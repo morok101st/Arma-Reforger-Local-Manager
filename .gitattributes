@@ -1,0 +1,7 @@
+# Im Repo LF, im Arbeitsordner Windows-Zeilenenden, unabhängig von core.autocrlf.
+* text=auto eol=crlf
+
+# Binärdateien nie umwandeln
+*.png binary
+*.ico binary
+*.pak binary
