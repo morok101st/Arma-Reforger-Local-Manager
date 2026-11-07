@@ -43,7 +43,8 @@ public static partial class ClientArgsBuilder
     /// Startparameter für den direkten Beitritt: mit Hilfs-Mod und echtem Profil des Spielers. Beim
     /// Verbinden lädt das Spiel die Mods des Servers neu. Das Passwort steht nie darin.
     /// </summary>
-    public static IReadOnlyList<string> BuildJoin(string serverAddress, string? downloadDir, string helperRoot)
+    /// <param name="logsDir">Log-Ordner der App. Dort liegt auch die Passwortdatei, nicht in „Dokumente“, das oft in OneDrive liegt.</param>
+    public static IReadOnlyList<string> BuildJoin(string serverAddress, string? downloadDir, string helperRoot, string logsDir)
     {
         var folder = AddonPaths.NormalizeDownloadDir(downloadDir);
         return
@@ -51,6 +52,7 @@ public static partial class ClientArgsBuilder
             "-addonsDir", folder is null ? helperRoot : $"{folder},{helperRoot}",
             .. folder is null ? Array.Empty<string>() : ["-addonDownloadDir", folder],
             "-addons", HelperGuid,
+            "-logsDir", logsDir,
             "-rmsJoin", serverAddress.Trim(),
         ];
     }

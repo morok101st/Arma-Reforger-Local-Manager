@@ -2,7 +2,8 @@
 //!   -rmsServer <IP:Port>                  Mod-Liste des Servers melden
 //!   -rmsServer <IP:Port> -rmsMods "a;b"   diese Mods in der Version des Servers laden
 //!   -rmsJoin <IP:Port>                    dem Server beitreten
-//! Status steht mit Praefix [RMS] im console.log. Das Passwort kommt aus einer Datei im Profil.
+//! Status steht mit Praefix [RMS] im console.log. Das Passwort kommt aus einer Datei im Log-Ordner
+//! (-logsDir) oder im Profil, nie aus den Startparametern.
 
 enum RMS_EState
 {
@@ -251,8 +252,23 @@ class RMS_RoomReader
 			return;
 		}
 
-		m_Room = m_aRooms[0];
-		Log(string.Format("ROOM_FOUND rooms=%1 name=%2 protected=%3 authorized=%4", m_aRooms.Count(), m_Room.Name(), m_Room.PasswordProtected(), m_Room.IsAuthorized()));
+		// Das Passwort geht nur an den Server mit genau dieser Adresse, nie an einen anderen Treffer der Suche.
+		foreach (Room room : m_aRooms)
+		{
+			if (room.HostAddress() == m_sAddress)
+			{
+				m_Room = room;
+				break;
+			}
+		}
+
+		if (!m_Room)
+		{
+			Finish(string.Format("ROOM_NOT_FOUND rooms=%1 address mismatch", m_aRooms.Count()));
+			return;
+		}
+
+		Log(string.Format("ROOM_FOUND rooms=%1 name=%2 host=%3 protected=%4 authorized=%5", m_aRooms.Count(), m_Room.Name(), m_Room.HostAddress(), m_Room.PasswordProtected(), m_Room.IsAuthorized()));
 
 		m_sPassword = ReadPassword();
 		if (m_Room.IsAuthorized())
@@ -274,22 +290,32 @@ class RMS_RoomReader
 	}
 
 	//! Aus einer Datei und nicht per Startparameter, weil der Client seine Startparameter ins Log schreibt.
+	//! Beim Beitritt liegt sie im Log-Ordner der App, damit sie nie in einem Cloud-Ordner wie OneDrive landet.
 	protected string ReadPassword()
 	{
-		const string path = "$profile:rms_server_password.txt";
+		string password = ReadAndDelete("$logs:rms_server_password.txt");
+		string fromProfile = ReadAndDelete("$profile:rms_server_password.txt");
+		if (password.IsEmpty())
+			return fromProfile;
+
+		return password;
+	}
+
+	protected string ReadAndDelete(string path)
+	{
 		if (!FileIO.FileExists(path))
 			return string.Empty;
 
-		string password;
+		string content;
 		FileHandle file = FileIO.OpenFile(path, FileMode.READ);
 		if (file)
 		{
-			file.ReadLine(password);
+			file.ReadLine(content);
 			file.Close();
 		}
 
 		FileIO.DeleteFile(path);
-		return password;
+		return content;
 	}
 
 	protected void OnSearchError(BackendCallback callback)

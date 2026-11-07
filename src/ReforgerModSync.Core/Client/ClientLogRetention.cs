@@ -48,6 +48,15 @@ public static partial class ClientLogRetention
         return deleted;
     }
 
+    /// <summary>Legt den Log-Ordner für einen neuen Lauf an und lässt danach genau <see cref="KeepRuns"/> Läufe übrig.</summary>
+    public static string CreateRunFolder(string clientLogsRoot)
+    {
+        Prune(clientLogsRoot, KeepRuns - 1);
+        var folder = Path.Combine(clientLogsRoot, DateTime.Now.ToString(RunFolderFormat));
+        Directory.CreateDirectory(folder);
+        return folder;
+    }
+
     [GeneratedRegex(@"^\d{8}-\d{6}-\d{3}$")]
     private static partial Regex RunFolderRegex();
 }

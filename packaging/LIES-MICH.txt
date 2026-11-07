@@ -46,7 +46,10 @@ WICHTIG
   diesem Ordner braucht. Beim ersten Mal fragt die App nach, danach läuft das automatisch.
   Der Standardordner des Spiels bleibt unberührt.
 - Das Passwort liegt verschlüsselt im Windows-Anmeldeinformationsspeicher. Für den Abruf
-  beim Server steht es kurz in einer temporären Datei und wird danach sofort gelöscht.
+  beim Server steht es kurz in einer Datei unter %LOCALAPPDATA%\ReforgerModSync, nie in
+  "Dokumente" oder OneDrive, und wird beim Lesen sofort gelöscht.
+- Nach "Direkt beitreten" liegen die Logs dieser Spielsitzung unter
+  %LOCALAPPDATA%\ReforgerModSync\clientlogs statt unter Dokumente\My Games\ArmaReforger\logs.
 - Die Mods stammen aus dem Arma Reforger Workshop. Mit dem Download gelten für jede Mod
   deren Lizenz und die Workshop-Bedingungen von Bohemia Interactive:
   https://reforger.armaplatform.com/workshop-terms

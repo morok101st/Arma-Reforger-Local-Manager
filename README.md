@@ -89,7 +89,7 @@ Beim Schließen des Fensters wird die App beendet. Ein laufender Sync bricht dab
     - Fehlt für einen Server mit demselben Ordner die Mod-Liste, wird nichts gelöscht. Klicke dort einmal auf **Neu prüfen**. Es gilt die zuletzt geholte Liste jedes Servers.
     - Liegen im Ordner Mods von Servern, die nicht in der App eingetragen sind, gelten sie als überzählig. Nimm für solche Server einen eigenen Ordner oder trage sie ein.
     - Ordner ohne lesbare Mod-Angaben bleiben liegen.
-- **Passwort:** Es liegt verschlüsselt im Windows-Anmeldeinformationsspeicher. Für den Abruf beim Server steht es kurz in einer temporären Datei, die danach sofort gelöscht wird. Änderst du die Server-Adresse, fragt die App, ob das Passwort auch für die neue Adresse gelten soll.
+- **Passwort:** Es liegt verschlüsselt im Windows-Anmeldeinformationsspeicher. Für den Abruf beim Server steht es kurz in einer Datei im App-Ordner unter `%LOCALAPPDATA%`, nie in „Dokumente“ oder OneDrive. Die Hilfs-Mod löscht sie beim Lesen und gibt das Passwort nur an den Server mit genau der eingetragenen Adresse weiter. Änderst du die Server-Adresse, fragt die App, ob das Passwort auch für die neue Adresse gelten soll.
 - **BattlEye:** Beim Spielstart kann Windows nach Administratorrechten fragen.
 - **Lizenzen:** Die Mods stammen aus dem Arma Reforger Workshop. Für jede Mod gelten ihre Lizenz und die [Workshop-Bedingungen](https://reforger.armaplatform.com/workshop-terms) von Bohemia Interactive.
 
@@ -121,7 +121,7 @@ Die App spricht weder mit Bohemia noch mit dem Spielserver. Sie startet den Spie
 | Richtung | Schnittstelle | Inhalt |
 |---|---|---|
 | App → Hilfs-Mod | Startparameter | `-rmsServer`, `-rmsMods` oder `-rmsJoin` sagen ihr, was zu tun ist. Ohne sie macht sie nichts |
-| App → Hilfs-Mod | Datei `rms_server_password.txt` im Profilordner | Das Passwort. Die Hilfs-Mod löscht die Datei beim Lesen |
+| App → Hilfs-Mod | Datei `rms_server_password.txt` im Profil des Clients (Prüfen, Sync) oder im Log-Ordner des Laufs (Beitritt), beides unter `%LOCALAPPDATA%\ReforgerModSync` | Das Passwort. Die Hilfs-Mod löscht die Datei beim Lesen. Eine alte Datei ersetzt die App vor jedem Start |
 | Hilfs-Mod → App | `[RMS]`-Zeilen in der `console.log` des Clients | Fortschritt, Mod-Liste und Fehler |
 | Spielclient → App | Ordner `addons` im Zielordner | Die App liest die Versionen der Mods auf der Festplatte und vergleicht sie |
 | App → Spielclient | Fensternachricht `WM_CLOSE` | Beenden. Reagiert der Client nach 5 Sekunden nicht, beendet die App den Prozess |
@@ -239,7 +239,7 @@ sequenceDiagram
 
 ### Direkt beitreten
 
-Hier läuft das Spiel normal: über den BattlEye-Starter, mit deinem echten Profil und sichtbar. Die App bekommt danach keine Rückmeldung mehr, sie liest bei diesem Ablauf keine Logzeilen.
+Hier läuft das Spiel normal: über den BattlEye-Starter, mit deinem echten Profil und sichtbar. Nur die Logs dieser Sitzung landen unter `%LOCALAPPDATA%\ReforgerModSync\clientlogs`, dort liegt auch kurz die Passwortdatei. Die App bekommt danach keine Rückmeldung mehr, sie liest bei diesem Ablauf keine Logzeilen.
 
 ```mermaid
 sequenceDiagram
@@ -255,9 +255,9 @@ sequenceDiagram
         A-->>N: Rückfrage „Trotzdem beitreten“
         N->>A: Bestätigung
     end
-    A->>D: Passwort in die Passwortdatei im echten Profil schreiben
-    A->>A: Vorprüfung: Steam läuft, Spiel geschlossen, Client da
-    A->>H: ArmaReforger_BE.exe starten mit -rmsJoin IP:Port
+    A->>A: Vorprüfung: Adresse, Steam läuft,<br/>Spiel geschlossen, Client und Hilfs-Mod da
+    A->>D: Passwort in die Passwortdatei<br/>im Log-Ordner dieses Laufs schreiben
+    A->>H: ArmaReforger_BE.exe starten mit -logsDir (Log-Ordner) -rmsJoin IP:Port
     A-->>N: „Das Spiel startet und tritt dem Server bei“
     Note over A,H: Ab hier keine Verbindung mehr zwischen App und Spiel
     Note over H: Wartet bis zum Hauptmenü

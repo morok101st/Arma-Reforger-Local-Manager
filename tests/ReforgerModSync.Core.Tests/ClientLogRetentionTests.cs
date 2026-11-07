@@ -86,6 +86,19 @@ public class ClientLogRetentionTests
     }
 
     [Fact]
+    public void CreateRunFolder_keeps_exactly_the_newest_runs()
+    {
+        using var temp = new TempDirectory();
+        Enumerable.Range(0, 12).ToList().ForEach(minute => Run(temp, minute));
+
+        var folder = ClientLogRetention.CreateRunFolder(temp.Path);
+
+        Assert.True(Directory.Exists(folder));
+        Assert.Equal(ClientLogRetention.KeepRuns, Directory.GetDirectories(temp.Path).Length);
+        Assert.Contains(folder, Directory.GetDirectories(temp.Path));
+    }
+
+    [Fact]
     public void Run_folder_names_match_the_pattern()
     {
         using var temp = new TempDirectory();

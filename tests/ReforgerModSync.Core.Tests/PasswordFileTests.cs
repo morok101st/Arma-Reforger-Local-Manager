@@ -66,6 +66,22 @@ public class PasswordFileTests
     }
 
     [Fact]
+    public void Leftovers_in_join_log_folders_are_removed_but_logs_stay()
+    {
+        using var temp = new TempDirectory();
+        var paths = new AppPaths(temp.Path);
+        var run = ClientLogRetention.CreateRunFolder(paths.ClientLogs);
+        var console = Path.Combine(run, "console.log");
+        File.WriteAllText(console, "log");
+        PasswordFile.Prepare(PasswordFile.ForLogsFolder(run), "geheim");
+
+        PasswordFile.CleanUpLeftovers(paths);
+
+        Assert.False(File.Exists(PasswordFile.ForLogsFolder(run)));
+        Assert.True(File.Exists(console));
+    }
+
+    [Fact]
     public void TryDelete_reports_a_locked_file()
     {
         using var temp = new TempDirectory();

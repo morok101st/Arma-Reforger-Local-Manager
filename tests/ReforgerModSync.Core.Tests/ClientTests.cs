@@ -131,12 +131,13 @@ public class ClientTests
     [Fact]
     public void Join_uses_the_helper_and_the_players_own_profile()
     {
-        var args = ClientArgsBuilder.BuildJoin("203.0.113.10:2001", @"D:\Meine Mods", @"C:\app\helper");
+        var args = ClientArgsBuilder.BuildJoin("203.0.113.10:2001", @"D:\Meine Mods", @"C:\app\helper", @"C:\Daten\clientlogs\lauf");
 
         AssertValue(args, "-addonsDir", @"D:\Meine Mods,C:\app\helper");
         AssertValue(args, "-addonDownloadDir", @"D:\Meine Mods");
         AssertValue(args, "-addons", ClientArgsBuilder.HelperGuid);
         AssertValue(args, "-rmsJoin", "203.0.113.10:2001");
+        AssertValue(args, "-logsDir", @"C:\Daten\clientlogs\lauf");
         Assert.DoesNotContain("-profile", args);
         Assert.DoesNotContain("-client", args);
     }
@@ -144,7 +145,7 @@ public class ClientTests
     [Fact]
     public void Join_without_folder_keeps_the_games_own_mod_folder()
     {
-        var args = ClientArgsBuilder.BuildJoin("203.0.113.10:2001", null, @"C:\app\helper");
+        var args = ClientArgsBuilder.BuildJoin("203.0.113.10:2001", null, @"C:\app\helper", @"C:\Daten\clientlogs\lauf");
 
         AssertValue(args, "-addonsDir", @"C:\app\helper");
         Assert.DoesNotContain("-addonDownloadDir", args);

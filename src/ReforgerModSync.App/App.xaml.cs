@@ -93,15 +93,15 @@ public partial class App : Application
         _showWindowEvent?.Dispose();
 
         var passwordWait = _viewModel?.PasswordCleanupWait ?? TimeSpan.Zero;
-        if (passwordWait > TimeSpan.Zero)
+        if (passwordWait > TimeSpan.Zero && _viewModel?.PendingPasswordFile is { } passwordFile)
         {
             // Direkt nach dem Beitritt geschlossen: Das Spiel braucht die Datei noch, liegen bleiben darf sie aber
             // nicht. Die Sperre muss ganz geschlossen sein, ein offenes Handle hielte einen neuen Start davon ab.
             _instanceMutex?.ReleaseMutex();
             _instanceMutex?.Dispose();
             _instanceMutex = null;
-            GameLauncher.WaitUntilRemoved(PasswordFile.ForPlayerProfile, passwordWait);
-            PasswordFile.TryDelete(PasswordFile.ForPlayerProfile);
+            GameLauncher.WaitUntilRemoved(passwordFile, passwordWait);
+            PasswordFile.TryDelete(passwordFile);
         }
 
         _instanceMutex?.Dispose();

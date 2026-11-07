@@ -270,13 +270,8 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
 
     private static (string LogsDir, string ProfileDir) PrepareRunFolders()
     {
-        var logsRoot = AppPaths.Default.ClientLogs;
-
-        // Platz für den neuen Lauf lassen, damit danach genau die letzten Läufe übrig sind.
-        ClientLogRetention.Prune(logsRoot, ClientLogRetention.KeepRuns - 1);
-        var logsDir = Path.Combine(logsRoot, DateTime.Now.ToString(ClientLogRetention.RunFolderFormat));
+        var logsDir = ClientLogRetention.CreateRunFolder(AppPaths.Default.ClientLogs);
         var profileDir = AppPaths.Default.ClientProfile;
-        Directory.CreateDirectory(logsDir);
         Directory.CreateDirectory(profileDir);
         return (logsDir, profileDir);
     }

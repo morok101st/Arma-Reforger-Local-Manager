@@ -27,6 +27,7 @@ public sealed partial class MainViewModel(
     private CancellationTokenSource? _runCancel;
     private bool _initialized;
     private DateTime? _passwordCleanupDue;
+    private string? _joinPasswordFile;
 
     [ObservableProperty] private int _selectedTab;
 
@@ -52,6 +53,9 @@ public sealed partial class MainViewModel(
 
     public string SyncButtonText => IsBusy ? "Abbrechen" : "Jetzt synchronisieren";
     public bool IsNotBusy => !IsBusy;
+
+    /// <summary>Passwortdatei des letzten Beitritts, die die App spätestens beim Beenden löscht.</summary>
+    public string? PendingPasswordFile => PasswordCleanupWait > TimeSpan.Zero ? _joinPasswordFile : null;
 
     /// <summary>Wie lange die App nach einem Beitritt noch auf das Löschen der Passwortdatei achten muss.</summary>
     public TimeSpan PasswordCleanupWait => _passwordCleanupDue is { } due && due > DateTime.UtcNow
@@ -477,20 +481,18 @@ public sealed partial class MainViewModel(
             return;
         }
 
-        string? problem;
-        var hasPassword = false;
+        JoinStart start;
         try
         {
             var password = credentialStore.ReadPassword(saved.ServerAddress!, profile.Id);
-            hasPassword = !string.IsNullOrEmpty(password);
-            problem = GameLauncher.StartAndJoin(_settings, saved, password);
+            start = GameLauncher.StartAndJoin(_settings, saved, password, AppPaths.Default);
         }
         catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
         {
-            problem = ex.Message;
+            start = new JoinStart(ex.Message, null);
         }
 
-        if (problem is not null)
+        if (start.Problem is { } problem)
         {
             SetStatus(profile, problem, isError: true);
             return;
@@ -499,16 +501,17 @@ public sealed partial class MainViewModel(
         Log.Information("Direkter Beitritt gestartet für Server {Name}", saved.Name);
         SetStatus(profile, "Das Spiel startet und tritt dem Server bei. Klappt das nicht, bleibt es im Hauptmenü, und du kannst selbst beitreten.", isError: false);
 
-        if (!hasPassword)
+        if (start.PasswordFile is not { } passwordFile)
         {
             return;
         }
 
         // Die Hilfs-Mod löscht die Passwortdatei beim Start. Das ist die Absicherung, falls sie nicht dazu kommt.
         // Wird die App vorher geschlossen, übernimmt das App-Ende diese Aufgabe.
+        _joinPasswordFile = passwordFile;
         _passwordCleanupDue = DateTime.UtcNow + PasswordCleanupDelay;
         await Task.Delay(PasswordCleanupDelay);
-        PasswordFile.TryDelete(PasswordFile.ForPlayerProfile);
+        PasswordFile.TryDelete(passwordFile);
     }
 
     public void RequestCancel() => _runCancel?.Cancel();

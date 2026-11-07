@@ -13,8 +13,11 @@ public static class PasswordFile
     /// <summary>Im eigenen Profil des Clients, das Liste und Download nutzen.</summary>
     public static string ForClientProfile(string clientProfileDir) => Path.Combine(clientProfileDir, "profile", FileName);
 
-    /// <summary>Im echten Profil des Spielers, das „Direkt beitreten“ nutzt.</summary>
-    public static string ForPlayerProfile { get; } = Path.Combine(AddonPaths.ClientDefaultFolder, "profile", FileName);
+    /// <summary>Im Log-Ordner eines Laufs (<c>$logs:</c>). So liegt sie beim Beitritt nicht in „Dokumente“, das oft in OneDrive liegt.</summary>
+    public static string ForLogsFolder(string logsDir) => Path.Combine(logsDir, FileName);
+
+    /// <summary>Früherer Ort beim Beitritt, im echten Profil des Spielers. Wird nur noch aufgeräumt.</summary>
+    public static string LegacyPlayerProfile { get; } = Path.Combine(AddonPaths.ClientDefaultFolder, "profile", FileName);
 
     /// <summary>
     /// Entfernt immer zuerst eine alte Datei und schreibt nur bei einem Passwort eine neue. Sonst fände die
@@ -56,10 +59,17 @@ public static class PasswordFile
         }
     }
 
-    /// <summary>Beim App-Start: Reste aus einem abgestürzten Lauf an beiden Orten entfernen.</summary>
+    /// <summary>Beim App-Start: Reste aus abgestürzten Läufen an allen Orten entfernen.</summary>
     public static void CleanUpLeftovers(AppPaths paths)
     {
         TryDelete(ForClientProfile(paths.ClientProfile));
-        TryDelete(ForPlayerProfile);
+        TryDelete(LegacyPlayerProfile);
+        if (Directory.Exists(paths.ClientLogs))
+        {
+            foreach (var run in Directory.EnumerateDirectories(paths.ClientLogs))
+            {
+                TryDelete(ForLogsFolder(run));
+            }
+        }
     }
 }
