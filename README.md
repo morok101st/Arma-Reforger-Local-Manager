@@ -36,9 +36,13 @@ Die Testversion ist nicht signiert, deshalb warnt Windows eventuell beim ersten 
 
 ## Was muss ich einstellen?
 
+Alles stellst du in der App ein, Dateien musst du nicht bearbeiten.
+
+### Server
+
 ![Reiter Einstellungen](.github/screenshots/einstellungen.png)
 
-Alles wird im Reiter **Einstellungen** eingetragen:
+Jeder Server wird im Reiter **Einstellungen** eingetragen. Weitere Server legst du links mit **Server hinzufügen** an.
 
 | Feld | Bedeutung |
 |---|---|
@@ -54,7 +58,17 @@ Klicke danach auf **Speichern**. Dabei wird noch nicht geprüft, ob Adresse und 
 
 **Start über Steam (optional):** Mit „Direkt beitreten“ musst du nichts weiter einstellen, das Spiel nutzt deinen Zielordner automatisch. Nur wenn du das Spiel direkt über Steam startest und einen eigenen Zielordner gewählt hast, klappe „Nur beim Start über Steam“ auf und kopiere den Text in die Startoptionen (Arma Reforger › Eigenschaften › Startoptionen). Sonst lädt das Spiel beim Beitritt alles erneut.
 
-**Grundeinstellungen (optional):** Der Button **Grundeinstellungen** links unten gilt für alle Server. Dort trägst du den Spielclient (`ArmaReforgerSteam.exe`) ein, falls die App ihn nicht über Steam findet. Außerdem legst du fest, wie lange ein Sync höchstens dauern darf und nach wie vielen Minuten ohne Fortschritt der Client neu startet. Die Standardwerte passen in den meisten Fällen, **Standard wiederherstellen** setzt sie zurück.
+### Grundeinstellungen (optional)
+
+![Dialog Grundeinstellungen](.github/screenshots/grundeinstellungen.png)
+
+Der Button **Grundeinstellungen** links unten gilt für alle Server. Die Standardwerte passen in den meisten Fällen, **Standard wiederherstellen** setzt sie zurück.
+
+| Feld | Bedeutung | Standard |
+|---|---|---|
+| **Spielclient** | Pfad zu `ArmaReforgerSteam.exe`. Nur nötig, wenn die App das Spiel nicht über Steam findet. Darunter steht, welchen Client sie gefunden hat | leer, über Steam erkennen |
+| **Höchstdauer eines Syncs** | Danach bricht der Sync ab, 10 bis 600 Minuten | 120 Minuten |
+| **Neustart ohne Fortschritt** | Kommt so lange kein Fortschritt, startet der Spielclient einmal neu, ab 2 Minuten und kürzer als die Höchstdauer | 10 Minuten |
 
 ## Benutzung
 
@@ -92,7 +106,7 @@ Die App hebt die Protokolle der letzten 14 Tage und die Spiel-Logs der letzten 1
 
 ## Entfernen
 
-1. In der App das Passwort über **Server entfernen** löschen.
+1. In der App jeden Server mit **Server entfernen** löschen. Dabei werden auch die gespeicherten Passwörter gelöscht.
 2. Den Ordner der App löschen.
 3. Optional auch `%APPDATA%\ReforgerModSync` und `%LOCALAPPDATA%\ReforgerModSync` löschen.
 
@@ -196,7 +210,7 @@ sequenceDiagram
                 A-->>N: Fortschritt anzeigen
             end
         end
-        Note over A: Der Lauf endet, sobald alle Mods aktuell sind, DONE im Log steht,<br/>der Client sich beendet oder die Gesamtzeit von 120 Minuten abläuft.<br/>Nach 10 Minuten ohne Aktivität startet die App den Client einmal neu.
+        Note over A: Der Lauf endet, sobald alle Mods aktuell sind, DONE im Log steht,<br/>der Client sich beendet oder die Höchstdauer abläuft (Standard 120 Minuten).<br/>Ohne Fortschritt startet die App den Client einmal neu (Standard nach 10 Minuten).<br/>Beides lässt sich in den Grundeinstellungen ändern.
         A->>H: Client beenden
         A->>D: Passwortdatei löschen, falls noch vorhanden
         A->>D: Ordner addons ein letztes Mal vergleichen
@@ -268,9 +282,19 @@ sequenceDiagram
 
 Gebaut mit C#, .NET 10 und WPF. Benötigt wird das .NET 10 SDK unter Windows.
 
+| Ordner | Inhalt |
+|---|---|
+| `src/ReforgerModSync.Core` | Die gesamte Logik: Abgleich, Startparameter, Logzeilen, Sync, Einstellungen, Passwörter |
+| `src/ReforgerModSync.App` | Die Oberfläche (WPF), erzeugt `ReforgerSyncLaunch.exe` |
+| `src/ReforgerModSync.Cli` | Konsole zum Testen: `status` und `sync [--server <Name>]` |
+| `helper/ReforgerModSyncHelper` | Die Hilfs-Mod, die der Spielclient ungepackt lädt |
+| `tests/ReforgerModSync.Core.Tests` | Tests für Core |
+
 ```powershell
+dotnet build ReforgerModSync.slnx                                                  # App, CLI und Tests bauen
 dotnet test ReforgerModSync.slnx                                                   # Tests
-powershell -ExecutionPolicy Bypass -File scripts\build-package.ps1 -Version 0.3.2  # Paket bauen
+dotnet run --project src\ReforgerModSync.Cli -- status                             # Stand aller Server, ohne Spielstart
+powershell -ExecutionPolicy Bypass -File scripts\build-package.ps1 -Version 0.4.0  # Paket bauen
 ```
 
-Ein Tag wie `v0.3.2` baut das Paket über GitHub Actions und veröffentlicht es als Release. Die App zeigt dann genau diese Version an, lokale Builds melden `0.0.0-dev`. Versionen unter 1.0 erscheinen als Vorabversion.
+Ein Tag wie `v0.4.0` baut das Paket über GitHub Actions und veröffentlicht es als Release. Die App zeigt dann genau diese Version an, lokale Builds melden `0.0.0-dev`. Versionen unter 1.0 erscheinen als Vorabversion.
