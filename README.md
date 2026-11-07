@@ -27,7 +27,9 @@ Den Download übernimmt dein installierter Arma-Reforger-Client mit einer kleine
 ## Installation
 
 1. Die ZIP-Datei von der Seite [Releases](../../releases) herunterladen.
-2. In einen festen Ordner entpacken, zum Beispiel `C:\Spiele\ReforgerSyncLaunch`. Der Ordner `helper` muss neben der EXE bleiben.
+2. In einen festen Ordner entpacken, am besten `%LOCALAPPDATA%\Programs\ReforgerSyncLaunch` (in die Adresszeile des Explorers eingeben). Der Ordner `helper` muss neben der EXE bleiben.
+
+   Nimm keinen Ordner direkt unter `C:\`, etwa `C:\Spiele`. Dort dürfen alle Benutzer des PCs Dateien ändern und könnten die App oder die Hilfs-Mod austauschen. Dein Benutzerordner ist nur für dich beschreibbar.
 3. `ReforgerSyncLaunch.exe` starten.
 
 Die Testversion ist nicht signiert, deshalb warnt Windows eventuell beim ersten Start. Klicke dann auf „Weitere Informationen“ und „Trotzdem ausführen“.

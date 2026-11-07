@@ -9,7 +9,10 @@ VORAUSSETZUNGEN
 - IP-Adresse, Port und Passwort des Servers
 
 INSTALLATION
-1. ZIP in einen festen Ordner entpacken, zum Beispiel C:\Spiele\ReforgerSyncLaunch.
+1. ZIP in einen festen Ordner entpacken, am besten nach
+   %LOCALAPPDATA%\Programs\ReforgerSyncLaunch (in die Adresszeile des Explorers eingeben).
+   Keinen Ordner direkt unter C:\ wie C:\Spiele nehmen: Dort dürfen alle Benutzer des PCs
+   Dateien ändern und könnten die App oder die Hilfs-Mod austauschen.
    Der Ordner "helper" muss neben der EXE bleiben.
 2. ReforgerSyncLaunch.exe starten.
 3. Windows warnt eventuell ("Der Computer wurde durch Windows geschützt"), weil die
