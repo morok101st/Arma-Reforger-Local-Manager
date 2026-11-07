@@ -50,6 +50,7 @@ Bitte die Version nennen (steht in der Titelleiste und links unten in der App), 
 was du geklickt hast und was passiert ist, und diese beiden Ordner mitschicken. Darin steht kein Passwort, aber die Server-Adresse und dein Windows-Benutzername:
   %LOCALAPPDATA%\ReforgerModSync\logs
   %LOCALAPPDATA%\ReforgerModSync\clientlogs
+Aufgehoben werden die Protokolle der letzten 14 Tage und die Spiel-Logs der letzten 10 Läufe.
 
 ENTFERNEN
 Ordner der App löschen. Optional auch %APPDATA%\ReforgerModSync und

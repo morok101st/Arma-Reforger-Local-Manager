@@ -86,6 +86,8 @@ Nenne deine Version (steht in der Titelleiste und links unten in der App), besch
 %LOCALAPPDATA%\ReforgerModSync\clientlogs
 ```
 
+Die App hebt die Protokolle der letzten 14 Tage und die Spiel-Logs der letzten 10 Läufe auf, ältere löscht sie selbst. Schicke die Ordner deshalb bald nach dem Problem.
+
 ## Entfernen
 
 1. In der App das Passwort über **Server entfernen** löschen.

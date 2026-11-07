@@ -286,7 +286,11 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         var dataDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "ReforgerModSync");
-        var logsDir = Path.Combine(dataDir, "clientlogs", DateTime.Now.ToString("yyyyMMdd-HHmmss-fff"));
+        var logsRoot = Path.Combine(dataDir, "clientlogs");
+
+        // Platz für den neuen Lauf lassen, damit danach genau die letzten Läufe übrig sind.
+        ClientLogRetention.Prune(logsRoot, ClientLogRetention.KeepRuns - 1);
+        var logsDir = Path.Combine(logsRoot, DateTime.Now.ToString(ClientLogRetention.RunFolderFormat));
         var profileDir = Path.Combine(dataDir, "clientprofile");
         Directory.CreateDirectory(logsDir);
         Directory.CreateDirectory(profileDir);
