@@ -6,7 +6,7 @@ using Microsoft.Win32.SafeHandles;
 namespace ReforgerModSync.Core.Client;
 
 /// <summary>Ein laufender Client. Ein Job Object beendet ihn mit, falls das Tool abstürzt.</summary>
-public sealed class ClientSession : IDisposable
+public sealed class ClientSession : IClientProcess
 {
     private static readonly TimeSpan HideIntervalAtStart = TimeSpan.FromMilliseconds(50);
     private static readonly TimeSpan HideInterval = TimeSpan.FromMilliseconds(500);

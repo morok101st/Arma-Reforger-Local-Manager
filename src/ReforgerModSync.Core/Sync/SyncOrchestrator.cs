@@ -25,20 +25,34 @@ public sealed record SyncResult(SyncOutcome Outcome, string Message, IReadOnlyLi
 /// Zielordner und lädt die offenen Mods. Dafür läuft der Spielclient zweimal kurz. Es entsteht
 /// keine Verbindung zum Spielserver und kein Beitritt.
 /// </summary>
-public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCache cache)
+/// <param name="paths">Ablageorte der App. <c>null</c>: <see cref="AppPaths.Default"/>.</param>
+/// <param name="startClient">Startet den Client. <c>null</c>: <see cref="ClientSession.Start"/>.</param>
+public sealed class SyncOrchestrator(
+    ICredentialStore credentialStore,
+    ModListCache cache,
+    AppPaths? paths = null,
+    ClientStarter? startClient = null,
+    ServerListReader? listReader = null,
+    DownloadWatcher? watcher = null)
 {
     private const long MinimumFreeBytes = 2L * 1024 * 1024 * 1024;
-    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(3);
-    private static readonly TimeSpan ListPollInterval = TimeSpan.FromMilliseconds(500);
-    private static readonly TimeSpan ListTimeout = TimeSpan.FromMinutes(2);
 
-    private enum WatchEnd
+    private readonly AppPaths _paths = paths ?? AppPaths.Default;
+    private readonly ClientStarter _startClient = startClient ?? ClientSession.Start;
+    private readonly ServerListReader _listReader = listReader ?? ServerListReader.Default;
+    private readonly DownloadWatcher _watcher = watcher ?? DownloadWatcher.Default;
+
+    /// <summary>Alles, was ein Lauf durchreicht. Hält die Parameterlisten kurz.</summary>
+    private sealed record SyncRun(
+        AppSettings Settings,
+        ServerProfile Profile,
+        string ClientExe,
+        IProgress<SyncStatus> Progress,
+        CancellationToken Token)
     {
-        AllCurrent,
-        HelperDone,
-        ClientExited,
-        Idle,
-        TotalTimeout,
+        public string Address => Profile.ServerAddress!.Trim();
+
+        public string ModsRoot => AddonPaths.ResolveModsRoot(Profile.DownloadDir);
     }
 
     /// <summary>Holt nur die Liste und vergleicht.</summary>
@@ -54,8 +68,9 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
                 return Failed(problem);
             }
 
-            var required = await FetchListAsync(settings, profile, clientExe, progress, cancellationToken);
-            var comparison = await CompareAsync(required, AddonPaths.ResolveModsRoot(profile.DownloadDir), cancellationToken);
+            var run = new SyncRun(settings, profile, clientExe, progress, cancellationToken);
+            var required = await FetchListAsync(run);
+            var comparison = await CompareAsync(required, run.ModsRoot, cancellationToken);
             return new SyncResult(SyncOutcome.Checked, $"Liste vom Server geholt: {comparison.Count} Mods.", comparison);
         }, cancellationToken);
 
@@ -73,8 +88,9 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
                 return Failed(problem);
             }
 
-            var required = await FetchListAsync(settings, profile, clientExe, progress, cancellationToken);
-            return await DownloadAsync(settings, profile, clientExe, required, progress, cancellationToken);
+            var run = new SyncRun(settings, profile, clientExe, progress, cancellationToken);
+            var required = await FetchListAsync(run);
+            return await DownloadAsync(run, required);
         }, cancellationToken);
 
     /// <summary>Es kann immer nur ein Client laufen, die Sperre gilt deshalb profilübergreifend.</summary>
@@ -89,7 +105,7 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
 
         try
         {
-            // Nicht auf dem Thread des Aufrufers: Die Überwachung liest laufend große Mod-Ordner und würde die
+            // Nicht auf dem Thread des Aufrufers: Die Überwachung liest laufend Mod-Ordner und würde die
             // Oberfläche und damit auch das Abbrechen ausbremsen. Fortschritt meldet IProgress an die Oberfläche.
             return await Task.Run(run, CancellationToken.None);
         }
@@ -100,6 +116,11 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         catch (ServerListException ex)
         {
             return Failed(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Etwa wenn Windows den Client nicht starten konnte.
+            return Failed($"Der Spielclient konnte nicht gestartet werden: {ex.Message}");
         }
         catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException
             or System.ComponentModel.Win32Exception)
@@ -112,112 +133,20 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         }
     }
 
-    private async Task<IReadOnlyList<ModEntry>> FetchListAsync(
-        AppSettings settings,
-        ServerProfile profile,
-        string clientExe,
-        IProgress<SyncStatus> progress,
-        CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<ModEntry>> FetchListAsync(SyncRun run)
     {
-        progress.Report(new SyncStatus("Mod-Liste wird vom Server geholt …"));
-        var address = profile.ServerAddress!.Trim();
+        run.Progress.Report(new SyncStatus("Mod-Liste wird vom Server geholt …"));
         var (logsDir, profileDir) = PrepareRunFolders();
-        var passwordFile = WritePasswordFile(profile, profileDir);
-
-        try
-        {
-            var arguments = ClientArgsBuilder.BuildListRequest(address, profile.DownloadDir, settings.Client, logsDir, profileDir, AddonPaths.HelperRoot);
-            using var session = ClientSession.Start(clientExe, arguments, settings.Client.HideWindow);
-            try
-            {
-                var mods = await ReadListAsync(session, logsDir, address, cancellationToken);
-                await cache.SaveAsync(profile.Id, mods, cancellationToken);
-                return mods;
-            }
-            finally
-            {
-                await session.StopAsync();
-            }
-        }
-        finally
-        {
-            PasswordFile.TryDelete(passwordFile);
-        }
+        var arguments = ClientArgsBuilder.BuildListRequest(run.Address, run.Profile.DownloadDir, run.Settings.Client, logsDir, profileDir, AddonPaths.HelperRoot);
+        var mods = await WithClientAsync(run, arguments, profileDir, client => _listReader.ReadAsync(client, logsDir, run.Address, run.Token));
+        await cache.SaveAsync(run.Profile.Id, mods, run.Token);
+        return mods;
     }
 
-    /// <returns>Der Pfad, den der Aufrufer am Ende löscht. Die Hilfs-Mod löscht die Datei schon beim Lesen.</returns>
-    private string WritePasswordFile(ServerProfile profile, string profileDir)
+    private async Task<SyncResult> DownloadAsync(SyncRun run, IReadOnlyList<ModEntry> required)
     {
-        var passwordFile = PasswordFile.ForClientProfile(profileDir);
-        PasswordFile.Prepare(passwordFile, credentialStore.ReadPassword(profile.ServerAddress!.Trim(), profile.Id));
-        return passwordFile;
-    }
-
-    private static async Task<IReadOnlyList<ModEntry>> ReadListAsync(
-        ClientSession session,
-        string logsDir,
-        string address,
-        CancellationToken cancellationToken)
-    {
-        var mods = new List<ModEntry>();
-        var tail = new LogTail(Path.Combine(logsDir, "console.log"));
-        var deadline = DateTime.UtcNow + ListTimeout;
-        while (DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(ListPollInterval, cancellationToken);
-
-            // Erst den Prozessstand lesen: Beendet er sich gerade, stehen seine letzten Zeilen schon im Log.
-            var exited = session.HasExited;
-            foreach (var line in tail.ReadNewLines())
-            {
-                if (ClientLogParser.ParseServerMod(line) is { } mod)
-                {
-                    mods.Add(mod);
-                }
-
-                switch (ClientLogParser.ParseServerListEnd(line))
-                {
-                    case ServerListEnd.Done:
-                        // Die Liste entscheidet auch darüber, was gelöscht wird. Eine unvollständige darf nie gelten.
-                        if (ClientLogParser.ParseListDoneCount(line) is { } expected && expected != mods.Count)
-                        {
-                            throw new ServerListException($"Die Mod-Liste kam unvollständig an ({mods.Count} von {expected} Mods). Bitte erneut versuchen. Client-Logs: {logsDir}");
-                        }
-
-                        return mods;
-                    case ServerListEnd.NotFound:
-                        throw new ServerListException($"Der Server {address} wurde nicht gefunden. Läuft er, und stimmt die Adresse?");
-                    case ServerListEnd.PasswordRequired:
-                        throw new ServerListException("Der Server verlangt ein Passwort. Bitte in den Einstellungen eintragen.");
-                    case ServerListEnd.PasswordRejected:
-                        throw new ServerListException("Der Server hat das Passwort abgelehnt. Bitte in den Einstellungen prüfen.");
-                    case ServerListEnd.Failed:
-                        throw new ServerListException("Die Mod-Liste konnte nicht geladen werden. Bitte später erneut versuchen.");
-                }
-            }
-
-            if (exited)
-            {
-                var crashed = File.Exists(Path.Combine(logsDir, "crash.log"));
-                throw new ServerListException(crashed
-                    ? $"Der Spielclient ist abgestürzt. Client-Logs: {logsDir}"
-                    : $"Der Spielclient wurde beendet, bevor die Liste da war. Client-Logs: {logsDir}");
-            }
-        }
-
-        throw new ServerListException($"Die Mod-Liste kam nicht innerhalb von {ListTimeout.TotalMinutes:0} Minuten an. Client-Logs: {logsDir}");
-    }
-
-    private async Task<SyncResult> DownloadAsync(
-        AppSettings settings,
-        ServerProfile profile,
-        string clientExe,
-        IReadOnlyList<ModEntry> required,
-        IProgress<SyncStatus> progress,
-        CancellationToken cancellationToken)
-    {
-        var modsRoot = AddonPaths.ResolveModsRoot(profile.DownloadDir);
-        var comparison = await CompareAsync(required, modsRoot, cancellationToken);
+        var modsRoot = run.ModsRoot;
+        var comparison = await CompareAsync(required, modsRoot, run.Token);
         if (comparison.All(mod => mod.State == ModState.Current))
         {
             return new SyncResult(SyncOutcome.AlreadyCurrent, "Alles aktuell.", comparison);
@@ -230,20 +159,18 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
             return Failed($"Zu wenig freier Speicher im Zielordner ({freeBytes / (1024 * 1024)} MB frei).");
         }
 
-        var (logsDir, profileDir) = PrepareRunFolders();
-        var deadline = DateTime.UtcNow.AddMinutes(settings.Timeouts.TotalMinutes);
+        var deadline = DateTime.UtcNow.AddMinutes(run.Settings.Timeouts.TotalMinutes);
         var failures = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        var end = await RunClientAsync(comparison, settings, profile, clientExe, required, modsRoot, logsDir, profileDir, deadline, failures, progress, cancellationToken);
+        var (end, logsDir) = await DownloadOnceAsync(run, required, comparison, deadline, failures);
         if (end == WatchEnd.Idle)
         {
-            progress.Report(new SyncStatus("Keine Aktivität mehr, der Client wird einmal neu gestartet …"));
-            comparison = await CompareAsync(required, modsRoot, cancellationToken);
-            (logsDir, profileDir) = PrepareRunFolders();
-            end = await RunClientAsync(comparison, settings, profile, clientExe, required, modsRoot, logsDir, profileDir, deadline, failures, progress, cancellationToken);
+            run.Progress.Report(new SyncStatus("Keine Aktivität mehr, der Client wird einmal neu gestartet …"));
+            comparison = await CompareAsync(required, modsRoot, run.Token);
+            (end, logsDir) = await DownloadOnceAsync(run, required, comparison, deadline, failures);
         }
 
-        comparison = await CompareAsync(required, modsRoot, cancellationToken);
+        comparison = await CompareAsync(required, modsRoot, run.Token);
         var remaining = comparison.Where(mod => mod.State != ModState.Current).ToList();
         if (remaining.Count == 0)
         {
@@ -268,42 +195,52 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
             comparison);
     }
 
-    private static (string LogsDir, string ProfileDir) PrepareRunFolders()
-    {
-        var logsDir = ClientLogRetention.CreateRunFolder(AppPaths.Default.ClientLogs);
-        var profileDir = AppPaths.Default.ClientProfile;
-        Directory.CreateDirectory(profileDir);
-        return (logsDir, profileDir);
-    }
-
-    private async Task<WatchEnd> RunClientAsync(
-        IReadOnlyList<ModComparison> comparison,
-        AppSettings settings,
-        ServerProfile profile,
-        string clientExe,
+    /// <summary>Ein Start des Clients für alle noch offenen Mods.</summary>
+    private async Task<(WatchEnd End, string LogsDir)> DownloadOnceAsync(
+        SyncRun run,
         IReadOnlyList<ModEntry> required,
-        string modsRoot,
-        string logsDir,
-        string profileDir,
+        IReadOnlyList<ModComparison> comparison,
         DateTime deadline,
-        Dictionary<string, string> failures,
-        IProgress<SyncStatus> progress,
-        CancellationToken cancellationToken)
+        Dictionary<string, string> failures)
     {
         var open = comparison.Where(mod => mod.State != ModState.Current).Select(mod => mod.Required).ToList();
-        progress.Report(new SyncStatus($"Spielclient lädt {open.Count} Mods …"));
-        var arguments = ClientArgsBuilder.BuildDownload(profile.ServerAddress!, open, profile.DownloadDir, settings.Client, logsDir, profileDir, AddonPaths.HelperRoot);
-        var passwordFile = WritePasswordFile(profile, profileDir);
+        run.Progress.Report(new SyncStatus($"Spielclient lädt {open.Count} Mods …"));
+        var (logsDir, profileDir) = PrepareRunFolders();
+        var arguments = ClientArgsBuilder.BuildDownload(run.Address, open, run.Profile.DownloadDir, run.Settings.Client, logsDir, profileDir, AddonPaths.HelperRoot);
+        var watch = new DownloadWatch(
+            required,
+            run.ModsRoot,
+            logsDir,
+            TimeSpan.FromMinutes(run.Settings.Timeouts.IdleMinutes),
+            deadline,
+            failures,
+            run.Progress);
+        var end = await WithClientAsync(run, arguments, profileDir, client => _watcher.WatchAsync(client, watch, run.Token));
+        return (end, logsDir);
+    }
+
+    /// <summary>
+    /// Schreibt die Passwortdatei, startet den Client und räumt danach in jedem Fall auf: Client beenden,
+    /// Passwortdatei löschen. Die Hilfs-Mod löscht die Datei schon beim Lesen, das hier ist die Absicherung.
+    /// </summary>
+    private async Task<T> WithClientAsync<T>(
+        SyncRun run,
+        IReadOnlyList<string> arguments,
+        string profileDir,
+        Func<IClientProcess, Task<T>> work)
+    {
+        var passwordFile = PasswordFile.ForClientProfile(profileDir);
+        PasswordFile.Prepare(passwordFile, credentialStore.ReadPassword(run.Address, run.Profile.Id));
         try
         {
-            using var session = ClientSession.Start(clientExe, arguments, settings.Client.HideWindow);
+            using var client = _startClient(run.ClientExe, arguments, run.Settings.Client.HideWindow);
             try
             {
-                return await WatchAsync(session, required, modsRoot, logsDir, settings.Timeouts, deadline, failures, progress, cancellationToken);
+                return await work(client);
             }
             finally
             {
-                await session.StopAsync();
+                await client.StopAsync();
             }
         }
         finally
@@ -312,92 +249,11 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         }
     }
 
-    private static async Task<WatchEnd> WatchAsync(
-        ClientSession session,
-        IReadOnlyList<ModEntry> required,
-        string modsRoot,
-        string logsDir,
-        TimeoutSettings timeouts,
-        DateTime deadline,
-        Dictionary<string, string> failures,
-        IProgress<SyncStatus> progress,
-        CancellationToken cancellationToken)
+    private (string LogsDir, string ProfileDir) PrepareRunFolders()
     {
-        var tail = new LogTail(Path.Combine(logsDir, "console.log"));
-        var idleLimit = TimeSpan.FromMinutes(timeouts.IdleMinutes);
-        var lastActivity = DateTime.UtcNow;
-        var lastBytes = -1L;
-        var lastDone = -1;
-        var helperDone = false;
-
-        while (true)
-        {
-            await Task.Delay(PollInterval, cancellationToken);
-
-            foreach (var line in tail.ReadNewLines())
-            {
-                var logEvent = ClientLogParser.Classify(line);
-                if (logEvent == ClientLogEvent.None)
-                {
-                    continue;
-                }
-
-                if (logEvent != ClientLogEvent.BackendError)
-                {
-                    lastActivity = DateTime.UtcNow;
-                }
-
-                if (ClientLogParser.ParseModFailed(line) is { } failure)
-                {
-                    failures[failure.Id] = failure.Reason;
-                }
-
-                helperDone |= logEvent == ClientLogEvent.HelperDone;
-                progress.Report(new SyncStatus($"[client] {line}"));
-            }
-
-            var comparison = await CompareAsync(required, modsRoot, cancellationToken);
-            var done = comparison.Count(mod => mod.State == ModState.Current);
-            if (done != lastDone)
-            {
-                lastDone = done;
-                lastActivity = DateTime.UtcNow;
-                progress.Report(new SyncStatus($"{done} von {comparison.Count} Mods fertig", done, comparison.Count, comparison));
-            }
-
-            if (done == comparison.Count)
-            {
-                return WatchEnd.AllCurrent;
-            }
-
-            if (helperDone)
-            {
-                return WatchEnd.HelperDone;
-            }
-
-            if (session.HasExited)
-            {
-                return WatchEnd.ClientExited;
-            }
-
-            // Große Mods schreiben lange keine Logzeile, wachsende Dateien zählen deshalb als Aktivität.
-            var bytes = DownloadedBytes(modsRoot) + DownloadedBytes(Path.Combine(Path.GetTempPath(), "addons"));
-            if (bytes != lastBytes)
-            {
-                lastBytes = bytes;
-                lastActivity = DateTime.UtcNow;
-            }
-
-            if (DateTime.UtcNow - lastActivity > idleLimit)
-            {
-                return WatchEnd.Idle;
-            }
-
-            if (DateTime.UtcNow > deadline)
-            {
-                return WatchEnd.TotalTimeout;
-            }
-        }
+        var logsDir = ClientLogRetention.CreateRunFolder(_paths.ClientLogs);
+        Directory.CreateDirectory(_paths.ClientProfile);
+        return (logsDir, _paths.ClientProfile);
     }
 
     private static async Task<IReadOnlyList<ModComparison>> CompareAsync(
@@ -406,18 +262,5 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         CancellationToken cancellationToken) =>
         AddonComparer.Compare(required, await AddonScanner.ScanAsync(modsRoot, cancellationToken));
 
-    private static long DownloadedBytes(string folder)
-    {
-        if (!Directory.Exists(folder))
-        {
-            return 0;
-        }
-
-        var options = new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true };
-        return new DirectoryInfo(folder).EnumerateFiles("*", options).Sum(file => file.Length);
-    }
-
     private static SyncResult Failed(string message) => new(SyncOutcome.Failed, message, []);
-
-    private sealed class ServerListException(string message) : Exception(message);
 }

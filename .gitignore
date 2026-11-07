@@ -23,4 +23,6 @@ spike/
 
 # Laufzeitdaten, die nie eingecheckt werden dürfen
 *.log
+# Anonymisierte Beispiel-Logs für Tests (Beispiel-IPs, erfundene Mods und Server)
+!tests/ReforgerModSync.Core.Tests/Samples/*.log
 rms_server_password.txt

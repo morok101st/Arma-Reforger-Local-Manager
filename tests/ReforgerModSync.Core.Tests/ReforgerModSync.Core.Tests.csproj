@@ -12,6 +12,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Samples\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src\ReforgerModSync.Core\ReforgerModSync.Core.csproj" />
   </ItemGroup>
 </Project>

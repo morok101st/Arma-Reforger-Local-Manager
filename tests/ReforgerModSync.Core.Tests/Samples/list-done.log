@@ -1,0 +1,11 @@
+14:53:09.618 ENGINE       : Game successfully created.
+14:53:10.714 SCRIPT       : [RMS] ROOM_SEARCH 203.0.113.10:2001
+14:53:12.401 BACKEND   (E): Curl error=Could not resolve hostname
+14:53:12.464 BACKEND   (E): Http Error (SEND)
+14:53:12.797 SCRIPT       : [RMS] ROOM_FOUND rooms=1 name=Beispielserver Training host=203.0.113.10:2001 protected=1 authorized=0
+14:53:13.130 SCRIPT       : [RMS] ROOM_AUTHORIZED
+14:53:13.530 SCRIPT       : [RMS] SERVER_MOD 1A2B3C4D5E6F7001 1.4.0 Beispiel Fahrzeuge
+14:53:13.530 SCRIPT       : [RMS] SERVER_MOD 1A2B3C4D5E6F7002 2.1.3 Beispiel Karte Nord
+14:53:13.531 SCRIPT       : [RMS] SERVER_MOD 1A2B3C4D5E6F7003  Beispiel ohne Version
+14:53:13.531 SCRIPT       : [RMS] LIST_DONE mods=3
+14:53:14.063 RESOURCES (E): UI/Imagesets/default.edds   1

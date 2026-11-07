@@ -22,8 +22,15 @@ public sealed record InstalledAddon(string Id, string? Name, string? Version, st
 /// <summary>Liest die vom Client gepflegte Datei <c>meta</c> jedes Mod-Ordners, ohne etwas zu verändern.</summary>
 public static partial class AddonScanner
 {
+    public static Task<IReadOnlyList<InstalledAddon>> ScanAsync(
+        string modsRoot,
+        CancellationToken cancellationToken = default) =>
+        ScanAsync(modsRoot, null, cancellationToken);
+
+    /// <param name="onlyIds">Nur diese Mods lesen. Spart während eines Downloads das Lesen aller übrigen Mods.</param>
     public static async Task<IReadOnlyList<InstalledAddon>> ScanAsync(
         string modsRoot,
+        IReadOnlySet<string>? onlyIds,
         CancellationToken cancellationToken = default)
     {
         if (!Directory.Exists(modsRoot))
@@ -35,7 +42,7 @@ public static partial class AddonScanner
         foreach (var folder in Directory.EnumerateDirectories(modsRoot))
         {
             var match = AddonFolderRegex().Match(Path.GetFileName(folder));
-            if (match.Success)
+            if (match.Success && (onlyIds is null || onlyIds.Contains(match.Groups["id"].Value)))
             {
                 addons.Add(await ReadAddonAsync(folder, match.Groups["id"].Value, cancellationToken));
             }
@@ -124,6 +131,13 @@ public static partial class AddonScanner
         }
 
         return AddonHealth.Ok;
+    }
+
+    /// <summary>Die Mod-ID aus einem Ordnernamen wie <c>Name_0123456789ABCDEF</c>, sonst <c>null</c>.</summary>
+    public static string? IdOfFolder(string folder)
+    {
+        var match = AddonFolderRegex().Match(Path.GetFileName(folder));
+        return match.Success ? match.Groups["id"].Value : null;
     }
 
     [GeneratedRegex("^.+_(?<id>[0-9A-Fa-f]{16})$")]

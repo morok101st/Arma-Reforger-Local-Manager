@@ -1,0 +1,5 @@
+14:53:10.714 SCRIPT       : [RMS] ROOM_SEARCH 203.0.113.10:2001
+14:53:12.797 SCRIPT       : [RMS] ROOM_FOUND rooms=1 name=Beispielserver Training host=203.0.113.10:2001 protected=0 authorized=1
+14:53:13.130 SCRIPT       : [RMS] ROOM_AUTHORIZED
+14:53:13.530 SCRIPT       : [RMS] SERVER_MOD 1A2B3C4D5E6F7001 1.4.0 Beispiel Fahrzeuge
+14:53:13.531 SCRIPT       : [RMS] LIST_DONE mods=2
