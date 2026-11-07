@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using ReforgerModSync.Core;
 using ReforgerModSync.Core.Client;
 using ReforgerModSync.Core.Credentials;
 using ReforgerModSync.Core.Settings;
@@ -63,7 +64,7 @@ public partial class App : Application
             }
         };
 
-        GameLauncher.DeletePasswordFile();
+        PasswordFile.CleanUpLeftovers(AppPaths.Default);
 
         var credentials = new WindowsCredentialStore();
         var cache = new ModListCache(ModListCache.DefaultFolder);
@@ -99,8 +100,8 @@ public partial class App : Application
             _instanceMutex?.ReleaseMutex();
             _instanceMutex?.Dispose();
             _instanceMutex = null;
-            GameLauncher.WaitUntilRemoved(GameLauncher.PasswordFile, passwordWait);
-            GameLauncher.DeletePasswordFile();
+            GameLauncher.WaitUntilRemoved(PasswordFile.ForPlayerProfile, passwordWait);
+            PasswordFile.TryDelete(PasswordFile.ForPlayerProfile);
         }
 
         _instanceMutex?.Dispose();

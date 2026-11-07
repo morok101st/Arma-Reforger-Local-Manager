@@ -2,7 +2,6 @@ using ReforgerModSync.Core.Addons;
 using ReforgerModSync.Core.Client;
 using ReforgerModSync.Core.Credentials;
 using ReforgerModSync.Core.Settings;
-using ReforgerModSync.Core.Steam;
 
 namespace ReforgerModSync.Core.Sync;
 
@@ -29,7 +28,6 @@ public sealed record SyncResult(SyncOutcome Outcome, string Message, IReadOnlyLi
 public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCache cache)
 {
     private const long MinimumFreeBytes = 2L * 1024 * 1024 * 1024;
-    private const string PasswordFileName = "rms_server_password.txt";
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(3);
     private static readonly TimeSpan ListPollInterval = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan ListTimeout = TimeSpan.FromMinutes(2);
@@ -51,7 +49,7 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         CancellationToken cancellationToken) =>
         RunExclusiveAsync(async () =>
         {
-            if (Precheck(settings, profile, out var clientExe) is { } problem)
+            if (ClientPrecheck.Check(settings, profile, out var clientExe) is { } problem)
             {
                 return Failed(problem);
             }
@@ -70,7 +68,7 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         RunExclusiveAsync(async () =>
         {
             progress.Report(new SyncStatus("Vorprüfung …"));
-            if (Precheck(settings, profile, out var clientExe) is { } problem)
+            if (ClientPrecheck.Check(settings, profile, out var clientExe) is { } problem)
             {
                 return Failed(problem);
             }
@@ -124,7 +122,7 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         progress.Report(new SyncStatus("Mod-Liste wird vom Server geholt …"));
         var address = profile.ServerAddress!.Trim();
         var (logsDir, profileDir) = PrepareRunFolders();
-        var passwordFile = await WritePasswordFileAsync(profile, profileDir, cancellationToken);
+        var passwordFile = WritePasswordFile(profile, profileDir);
 
         try
         {
@@ -143,26 +141,15 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         }
         finally
         {
-            File.Delete(passwordFile);
+            PasswordFile.TryDelete(passwordFile);
         }
     }
 
-    /// <summary>Bewusst nicht als Startparameter: Der Client schreibt seine Startparameter ins Log.</summary>
     /// <returns>Der Pfad, den der Aufrufer am Ende löscht. Die Hilfs-Mod löscht die Datei schon beim Lesen.</returns>
-    private async Task<string> WritePasswordFileAsync(
-        ServerProfile profile,
-        string profileDir,
-        CancellationToken cancellationToken)
+    private string WritePasswordFile(ServerProfile profile, string profileDir)
     {
-        var password = credentialStore.ReadPassword(profile.ServerAddress!.Trim(), profile.Id);
-        var profileData = Path.Combine(profileDir, "profile");
-        Directory.CreateDirectory(profileData);
-        var passwordFile = Path.Combine(profileData, PasswordFileName);
-        if (!string.IsNullOrEmpty(password))
-        {
-            await File.WriteAllTextAsync(passwordFile, password, cancellationToken);
-        }
-
+        var passwordFile = PasswordFile.ForClientProfile(profileDir);
+        PasswordFile.Prepare(passwordFile, credentialStore.ReadPassword(profile.ServerAddress!.Trim(), profile.Id));
         return passwordFile;
     }
 
@@ -283,51 +270,15 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
 
     private static (string LogsDir, string ProfileDir) PrepareRunFolders()
     {
-        var dataDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "ReforgerModSync");
-        var logsRoot = Path.Combine(dataDir, "clientlogs");
+        var logsRoot = AppPaths.Default.ClientLogs;
 
         // Platz für den neuen Lauf lassen, damit danach genau die letzten Läufe übrig sind.
         ClientLogRetention.Prune(logsRoot, ClientLogRetention.KeepRuns - 1);
         var logsDir = Path.Combine(logsRoot, DateTime.Now.ToString(ClientLogRetention.RunFolderFormat));
-        var profileDir = Path.Combine(dataDir, "clientprofile");
+        var profileDir = AppPaths.Default.ClientProfile;
         Directory.CreateDirectory(logsDir);
         Directory.CreateDirectory(profileDir);
         return (logsDir, profileDir);
-    }
-
-    private static string? Precheck(AppSettings settings, ServerProfile profile, out string clientExe)
-    {
-        clientExe = "";
-        if (!ClientArgsBuilder.IsValidServerAddress(profile.ServerAddress))
-        {
-            return "Es ist keine gültige Server-Adresse hinterlegt (IP:Port).";
-        }
-
-        if (!SteamLocator.IsSteamRunning())
-        {
-            return "Bitte zuerst Steam starten.";
-        }
-
-        if (SteamLocator.IsGameRunning())
-        {
-            return "Arma Reforger läuft bereits. Bitte das Spiel zuerst schließen.";
-        }
-
-        var exe = SteamLocator.ResolveClientExe(settings.ReforgerExe);
-        if (exe is null || !File.Exists(exe))
-        {
-            return "Arma Reforger wurde nicht gefunden.";
-        }
-
-        if (!File.Exists(Path.Combine(AddonPaths.HelperRoot, "ReforgerModSyncHelper", "addon.gproj")))
-        {
-            return "Die Hilfs-Mod fehlt neben der App. Bitte die App neu installieren.";
-        }
-
-        clientExe = exe;
-        return null;
     }
 
     private async Task<WatchEnd> RunClientAsync(
@@ -347,7 +298,7 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         var open = comparison.Where(mod => mod.State != ModState.Current).Select(mod => mod.Required).ToList();
         progress.Report(new SyncStatus($"Spielclient lädt {open.Count} Mods …"));
         var arguments = ClientArgsBuilder.BuildDownload(profile.ServerAddress!, open, profile.DownloadDir, settings.Client, logsDir, profileDir, AddonPaths.HelperRoot);
-        var passwordFile = await WritePasswordFileAsync(profile, profileDir, cancellationToken);
+        var passwordFile = WritePasswordFile(profile, profileDir);
         try
         {
             using var session = ClientSession.Start(clientExe, arguments, settings.Client.HideWindow);
@@ -362,7 +313,7 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
         }
         finally
         {
-            File.Delete(passwordFile);
+            PasswordFile.TryDelete(passwordFile);
         }
     }
 

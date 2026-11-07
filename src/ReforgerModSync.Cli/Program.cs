@@ -58,7 +58,7 @@ static async Task<int> SyncAsync(AppSettings settings, ICredentialStore credenti
 static async Task<int> StatusAsync(AppSettings settings, ICredentialStore credentialStore, ModListCache cache)
 {
     var steamPath = SteamLocator.ReadSteamPathFromRegistry();
-    var clientExe = settings.ReforgerExe ?? (steamPath is null ? null : SteamLocator.FindClientExe(steamPath));
+    var clientExe = SteamLocator.ResolveClientExe(settings.ReforgerExe);
     Console.WriteLine($"Steam:  {steamPath ?? "nicht gefunden"} ({(SteamLocator.IsSteamRunning() ? "läuft" : "läuft nicht")})");
     Console.WriteLine($"Client: {clientExe ?? "nicht gefunden"} ({(SteamLocator.IsGameRunning() ? "läuft" : "läuft nicht")})");
     Console.WriteLine($"Server: {settings.Profiles.Count}");

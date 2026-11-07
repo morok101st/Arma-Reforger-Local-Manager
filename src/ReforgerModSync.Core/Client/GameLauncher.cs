@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using ReforgerModSync.Core.Addons;
 using ReforgerModSync.Core.Settings;
-using ReforgerModSync.Core.Steam;
 
 namespace ReforgerModSync.Core.Client;
 
@@ -13,46 +12,25 @@ namespace ReforgerModSync.Core.Client;
 public static class GameLauncher
 {
     private const string BattlEyeStarter = "ArmaReforger_BE.exe";
-    private const string PasswordFileName = "rms_server_password.txt";
-
-    public static string PasswordFile => Path.Combine(AddonPaths.ClientDefaultFolder, "profile", PasswordFileName);
 
     /// <summary>Startet das Spiel und lässt die Hilfs-Mod dem Server beitreten.</summary>
     /// <returns><c>null</c> bei Erfolg, sonst eine Meldung für den Nutzer.</returns>
     public static string? StartAndJoin(AppSettings settings, ServerProfile profile, string? password)
     {
-        if (!File.Exists(Path.Combine(AddonPaths.HelperRoot, "ReforgerModSyncHelper", "addon.gproj")))
+        // Erst alles prüfen, dann die Passwortdatei schreiben: Sie soll nur existieren, wenn das Spiel auch startet.
+        if (ClientPrecheck.Check(settings, profile, out var exe) is { } problem)
         {
-            return "Die Hilfs-Mod fehlt neben der App. Bitte die App neu installieren.";
+            return problem;
         }
 
-        // Bewusst nicht als Startparameter: Der Client schreibt seine Startparameter ins Log.
-        if (!string.IsNullOrEmpty(password))
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(PasswordFile)!);
-            File.WriteAllText(PasswordFile, password);
-        }
-
-        var problem = Launch(settings, ClientArgsBuilder.BuildJoin(profile.ServerAddress!, profile.DownloadDir, AddonPaths.HelperRoot));
+        PasswordFile.Prepare(PasswordFile.ForPlayerProfile, password);
+        problem = Launch(exe, ClientArgsBuilder.BuildJoin(profile.ServerAddress!, profile.DownloadDir, AddonPaths.HelperRoot));
         if (problem is not null)
         {
-            DeletePasswordFile();
+            PasswordFile.TryDelete(PasswordFile.ForPlayerProfile);
         }
 
         return problem;
-    }
-
-    /// <summary>Die Hilfs-Mod löscht die Datei beim Lesen. Das hier ist die Absicherung, falls sie nicht dazu kommt.</summary>
-    public static void DeletePasswordFile()
-    {
-        try
-        {
-            File.Delete(PasswordFile);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            // Wird beim nächsten App-Start erneut versucht.
-        }
     }
 
     /// <summary>Wartet, bis die Datei weg ist, längstens <paramref name="maxWait"/>. Blockiert, nur für das App-Ende gedacht.</summary>
@@ -73,24 +51,8 @@ public static class GameLauncher
         return true;
     }
 
-    private static string? Launch(AppSettings settings, IReadOnlyList<string> arguments)
+    private static string? Launch(string exe, IReadOnlyList<string> arguments)
     {
-        if (!SteamLocator.IsSteamRunning())
-        {
-            return "Bitte zuerst Steam starten.";
-        }
-
-        if (SteamLocator.IsGameRunning())
-        {
-            return "Arma Reforger läuft bereits. Bitte das Spiel zuerst schließen.";
-        }
-
-        var exe = SteamLocator.ResolveClientExe(settings.ReforgerExe);
-        if (exe is null || !File.Exists(exe))
-        {
-            return "Arma Reforger wurde nicht gefunden.";
-        }
-
         var folder = Path.GetDirectoryName(exe)!;
         var starter = Path.Combine(folder, BattlEyeStarter);
         var useStarter = File.Exists(starter);

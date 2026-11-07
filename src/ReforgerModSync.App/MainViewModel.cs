@@ -508,7 +508,7 @@ public sealed partial class MainViewModel(
         // Wird die App vorher geschlossen, übernimmt das App-Ende diese Aufgabe.
         _passwordCleanupDue = DateTime.UtcNow + PasswordCleanupDelay;
         await Task.Delay(PasswordCleanupDelay);
-        GameLauncher.DeletePasswordFile();
+        PasswordFile.TryDelete(PasswordFile.ForPlayerProfile);
     }
 
     public void RequestCancel() => _runCancel?.Cancel();

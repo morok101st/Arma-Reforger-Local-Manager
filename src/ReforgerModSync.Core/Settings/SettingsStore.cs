@@ -18,7 +18,7 @@ public sealed class SettingsStore(string filePath)
 
     public string FilePath { get; } = filePath;
 
-    /// <summary>Lädt die Einstellungen. Fehlt die Datei, gelten die Standardwerte.</summary>
+    /// <summary>Lädt die Einstellungen. Fehlt die Datei, gelten die Standardwerte, ungültige Werte werden ersetzt.</summary>
     /// <exception cref="SettingsException">Die Datei ist kein gültiges JSON. Sie bleibt unverändert.</exception>
     public async Task<AppSettings> LoadAsync(CancellationToken cancellationToken = default)
     {
@@ -30,8 +30,8 @@ public sealed class SettingsStore(string filePath)
         await using var stream = File.OpenRead(FilePath);
         try
         {
-            return await JsonSerializer.DeserializeAsync<AppSettings>(stream, JsonOptions, cancellationToken)
-                ?? new AppSettings();
+            var settings = await JsonSerializer.DeserializeAsync<AppSettings>(stream, JsonOptions, cancellationToken);
+            return settings is null ? new AppSettings() : AppSettingsSanitizer.Sanitize(settings);
         }
         catch (JsonException ex)
         {
