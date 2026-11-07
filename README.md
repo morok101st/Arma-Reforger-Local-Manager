@@ -54,6 +54,8 @@ Klicke danach auf **Speichern**. Dabei wird noch nicht geprüft, ob Adresse und 
 
 **Start über Steam (optional):** Mit „Direkt beitreten“ musst du nichts weiter einstellen, das Spiel nutzt deinen Zielordner automatisch. Nur wenn du das Spiel direkt über Steam startest und einen eigenen Zielordner gewählt hast, klappe „Nur beim Start über Steam“ auf und kopiere den Text in die Startoptionen (Arma Reforger › Eigenschaften › Startoptionen). Sonst lädt das Spiel beim Beitritt alles erneut.
 
+**Grundeinstellungen (optional):** Der Button **Grundeinstellungen** links unten gilt für alle Server. Dort trägst du den Spielclient (`ArmaReforgerSteam.exe`) ein, falls die App ihn nicht über Steam findet. Außerdem legst du fest, wie groß das ausgeblendete Spielfenster beim Sync ist und mit wie vielen Bildern pro Sekunde es läuft, wie lange ein Sync höchstens dauern darf und nach wie vielen Minuten ohne Fortschritt der Client neu startet. Die Standardwerte passen in den meisten Fällen, **Standard wiederherstellen** setzt sie zurück.
+
 ## Benutzung
 
 1. Das Spiel schließen.

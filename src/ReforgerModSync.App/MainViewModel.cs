@@ -616,7 +616,47 @@ public sealed partial class MainViewModel(
         return count == 0 ? "" : $"{count} {label}";
     }
 
-    private async Task PersistAsync()
+    /// <summary>Werte der Grundeinstellungen, wie sie gespeichert sind.</summary>
+    public BasicSettingsInput BasicSettings => BasicSettingsInput.From(_settings);
+
+    /// <summary>Der Client, den ein Sync ohne eingetragenen Pfad nutzen würde.</summary>
+    public static string? DetectClientExe() => SteamLocator.ResolveClientExe(null);
+
+    /// <summary>Prüft und speichert die Grundeinstellungen. Liefert eine Meldung, wenn das nicht geht.</summary>
+    public async Task<string?> SaveBasicSettingsAsync(BasicSettingsInput input)
+    {
+        if (IsBusy)
+        {
+            return "Während eines Vorgangs lassen sich die Grundeinstellungen nicht ändern.";
+        }
+
+        var result = BasicSettingsValidator.Apply(_settings, input);
+        if (!result.IsValid)
+        {
+            return "Bitte die markierten Felder prüfen.";
+        }
+
+        var previous = _settings;
+        _settings = result.Settings!;
+        if (await PersistAsync(showOnProfile: false) is { } problem)
+        {
+            _settings = previous;
+            return problem;
+        }
+
+        Log.Information(
+            "Grundeinstellungen gespeichert: Client {Client}, Fenster {Width}x{Height}, {Fps} FPS, {Total} min, Neustart nach {Idle} min",
+            _settings.ReforgerExe ?? "automatisch",
+            _settings.Client.Width,
+            _settings.Client.Height,
+            _settings.Client.MaxFps,
+            _settings.Timeouts.TotalMinutes,
+            _settings.Timeouts.IdleMinutes);
+        return null;
+    }
+
+    /// <returns>Eine Meldung, wenn das Speichern scheiterte.</returns>
+    private async Task<string?> PersistAsync(bool showOnProfile = true)
     {
         await _saveGate.WaitAsync();
         try
@@ -627,14 +667,18 @@ public sealed partial class MainViewModel(
                 SelectedProfileId = SelectedProfile?.Id,
             };
             await settingsStore.SaveAsync(_settings);
+            return null;
         }
         catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
         {
             Log.Warning("Einstellungen konnten nicht gespeichert werden: {Message}", ex.Message);
-            if (SelectedProfile is { } profile)
+            var message = $"Die Einstellungen konnten nicht gespeichert werden: {ex.Message}";
+            if (showOnProfile && SelectedProfile is { } profile)
             {
-                ShowSettingsMessage(profile, $"Die Einstellungen konnten nicht gespeichert werden: {ex.Message}", isError: true);
+                ShowSettingsMessage(profile, message, isError: true);
             }
+
+            return message;
         }
         finally
         {

@@ -130,6 +130,9 @@
                             HorizontalAlignment="Stretch" Padding="8,7" />
                     <Button Content="Server entfernen" Click="OnRemoveProfileClick"
                             HorizontalAlignment="Stretch" Padding="8,7" Margin="0,6,0,0" />
+                    <Button Content="Grundeinstellungen" Click="OnBasicSettingsClick"
+                            HorizontalAlignment="Stretch" Padding="8,7" Margin="0,6,0,0"
+                            ToolTip="Spielclient, Spielfenster beim Sync und Zeitlimits, gilt für alle Server" />
                 </StackPanel>
 
                 <!-- Gilt für die App, nicht für einen Server, und bleibt deshalb auch während eines Syncs bedienbar. -->

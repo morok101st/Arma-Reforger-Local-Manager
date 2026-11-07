@@ -144,6 +144,9 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OnBasicSettingsClick(object sender, RoutedEventArgs e) =>
+        BasicSettingsDialog.Show(this, _viewModel.BasicSettings, MainViewModel.DetectClientExe(), _viewModel.SaveBasicSettingsAsync);
+
     private void OnBrowseClick(object sender, RoutedEventArgs e)
     {
         if (_viewModel.SelectedProfile is not { } profile)

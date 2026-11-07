@@ -315,8 +315,7 @@ public sealed class SyncOrchestrator(ICredentialStore credentialStore, ModListCa
             return "Arma Reforger läuft bereits. Bitte das Spiel zuerst schließen.";
         }
 
-        var steamPath = SteamLocator.ReadSteamPathFromRegistry();
-        var exe = settings.ReforgerExe ?? (steamPath is null ? null : SteamLocator.FindClientExe(steamPath));
+        var exe = SteamLocator.ResolveClientExe(settings.ReforgerExe);
         if (exe is null || !File.Exists(exe))
         {
             return "Arma Reforger wurde nicht gefunden.";

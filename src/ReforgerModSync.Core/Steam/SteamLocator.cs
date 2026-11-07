@@ -7,7 +7,30 @@ namespace ReforgerModSync.Core.Steam;
 public static partial class SteamLocator
 {
     private const string ReforgerAppId = "1874880";
-    private const string ClientExeName = "ArmaReforgerSteam.exe";
+    public const string ClientExeName = "ArmaReforgerSteam.exe";
+
+    /// <summary>Prüft einen von Hand eingetragenen Client-Pfad. <c>null</c>: in Ordnung.</summary>
+    public static string? CheckClientExe(string path)
+    {
+        if (!string.Equals(Path.GetFileName(path), ClientExeName, StringComparison.OrdinalIgnoreCase))
+        {
+            return $"Bitte die Datei {ClientExeName} aus dem Spielordner wählen.";
+        }
+
+        return File.Exists(path) ? null : "Die Datei gibt es nicht.";
+    }
+
+    /// <summary>Client aus den Einstellungen, sonst über Steam erkannt. <c>null</c>: nicht gefunden.</summary>
+    public static string? ResolveClientExe(string? configured)
+    {
+        if (configured is not null)
+        {
+            return configured;
+        }
+
+        var steamPath = ReadSteamPathFromRegistry();
+        return steamPath is null ? null : FindClientExe(steamPath);
+    }
 
     public static string? ReadSteamPathFromRegistry()
     {
