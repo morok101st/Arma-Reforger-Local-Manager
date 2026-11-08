@@ -27,6 +27,20 @@ public class ClientLogRetentionTests
     }
 
     [Fact]
+    public void Also_removes_run_folders_without_milliseconds()
+    {
+        using var temp = new TempDirectory();
+        var old = Directory.CreateDirectory(Path.Combine(temp.Path, "20261001-120000")).FullName;
+        var newer = Run(temp, 1);
+
+        var deleted = ClientLogRetention.Prune(temp.Path, 1);
+
+        Assert.Equal(1, deleted);
+        Assert.False(Directory.Exists(old));
+        Assert.True(Directory.Exists(newer));
+    }
+
+    [Fact]
     public void Sorts_by_name_not_by_write_time()
     {
         using var temp = new TempDirectory();
