@@ -2,10 +2,12 @@
 
 pub mod addons;
 pub mod client;
+pub mod credentials;
 pub mod paths;
 pub mod settings;
 pub mod steam;
 pub mod sync;
+mod win;
 
 /// Version des Pakets, wie sie in der App angezeigt wird.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

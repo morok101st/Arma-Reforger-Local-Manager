@@ -1,4 +1,4 @@
-//! Findet den Spielclient in den Steam-Bibliotheken. Registry und Prozessliste folgen mit den Windows-Teilen.
+//! Findet Steam und den Spielclient und prüft, ob beide laufen.
 
 use std::collections::HashSet;
 use std::fs;
@@ -6,8 +6,14 @@ use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 
 use regex::Regex;
+use windows::Win32::Foundation::ERROR_SUCCESS;
+use windows::Win32::System::Diagnostics::ToolHelp::{
+    CreateToolhelp32Snapshot, PROCESSENTRY32W, Process32FirstW, Process32NextW, TH32CS_SNAPPROCESS,
+};
+use windows::Win32::System::Registry::{HKEY_CURRENT_USER, RRF_RT_REG_SZ, RegGetValueW};
 
 use crate::paths::full_path;
+use crate::win::{OwnedHandle, pcwstr, wide};
 
 const REFORGER_APP_ID: &str = "1874880";
 pub const CLIENT_EXE_NAME: &str = "ArmaReforgerSteam.exe";
@@ -23,6 +29,69 @@ pub fn check_client_exe(path: &Path) -> Option<String> {
     }
 
     if path.is_file() { None } else { Some("Die Datei gibt es nicht.".into()) }
+}
+
+/// Client aus den Einstellungen, sonst über Steam erkannt. `None`: nicht gefunden.
+pub fn resolve_client_exe(configured: Option<&str>) -> Option<PathBuf> {
+    match configured {
+        Some(configured) => Some(PathBuf::from(configured)),
+        None => find_client_exe(&read_steam_path_from_registry()?),
+    }
+}
+
+/// `HKCU\Software\Valve\Steam\SteamPath`.
+pub fn read_steam_path_from_registry() -> Option<PathBuf> {
+    let key = wide(r"Software\Valve\Steam");
+    let value = wide("SteamPath");
+    let mut buffer = vec![0u16; 1024];
+    let mut size = u32::try_from(buffer.len() * 2).expect("klein");
+    // SAFETY: Puffer und Größe passen zusammen, der Wert wird als nullterminierter Text gelesen.
+    let result = unsafe {
+        RegGetValueW(
+            HKEY_CURRENT_USER,
+            pcwstr(&key),
+            pcwstr(&value),
+            RRF_RT_REG_SZ,
+            None,
+            Some(buffer.as_mut_ptr().cast()),
+            Some(&raw mut size),
+        )
+    };
+    if result != ERROR_SUCCESS {
+        return None;
+    }
+
+    let length = buffer.iter().position(|&unit| unit == 0).unwrap_or(buffer.len());
+    let path = String::from_utf16_lossy(&buffer[..length]);
+    (!path.is_empty()).then(|| full_path(Path::new(&path)))
+}
+
+pub fn is_steam_running() -> bool {
+    is_process_running("steam.exe")
+}
+
+pub fn is_game_running() -> bool {
+    is_process_running(CLIENT_EXE_NAME)
+}
+
+fn is_process_running(exe_name: &str) -> bool {
+    // SAFETY: Schnappschuss der Prozessliste, das Handle schließt die Hülle.
+    let Ok(snapshot) = (unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) }) else {
+        return false;
+    };
+    let snapshot = OwnedHandle(snapshot);
+    let mut entry = PROCESSENTRY32W { dwSize: u32::try_from(size_of::<PROCESSENTRY32W>()).expect("klein"), ..Default::default() };
+    // SAFETY: `entry` hat die angegebene Größe.
+    let mut more = unsafe { Process32FirstW(snapshot.0, &raw mut entry) }.is_ok();
+    while more {
+        let length = entry.szExeFile.iter().position(|&unit| unit == 0).unwrap_or(entry.szExeFile.len());
+        if String::from_utf16_lossy(&entry.szExeFile[..length]).eq_ignore_ascii_case(exe_name) {
+            return true;
+        }
+        // SAFETY: wie oben.
+        more = unsafe { Process32NextW(snapshot.0, &raw mut entry) }.is_ok();
+    }
+    false
 }
 
 /// Durchsucht alle Steam-Bibliotheken nach dem Reforger-Client.

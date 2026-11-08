@@ -6,7 +6,7 @@ mod scanner;
 mod summary;
 
 pub use comparer::{ModComparison, ModState, compare, compare_versions};
-pub use paths::{client_default_folder, folder_key, is_default_folder, normalize_download_dir, resolve_mods_root};
+pub use paths::{client_default_folder, folder_key, helper_root, is_default_folder, normalize_download_dir, resolve_mods_root};
 pub use scanner::{AddonHealth, InstalledAddon, id_of_folder, scan, scan_only};
 pub use summary::{ModSummary, sort_open_first, state_text};
 

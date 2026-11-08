@@ -43,6 +43,11 @@ pub fn is_default_folder(download_dir: Option<&str>) -> bool {
     folder_key(download_dir) == folder_key(None)
 }
 
+/// Ordner, der die mitgelieferte Hilfs-Mod enthält: `helper` neben der EXE.
+pub fn helper_root() -> PathBuf {
+    std::env::current_exe().ok().and_then(|exe| exe.parent().map(|folder| folder.join("helper"))).unwrap_or_else(|| PathBuf::from("helper"))
+}
+
 /// Ordner, in dem die Mod-Ordner liegen. Beobachtet an einer echten Installation.
 pub fn resolve_mods_root(download_dir: Option<&str>) -> PathBuf {
     normalize_download_dir(download_dir).map_or_else(client_default_folder, PathBuf::from).join("addons")
