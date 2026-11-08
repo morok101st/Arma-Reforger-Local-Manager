@@ -302,3 +302,22 @@ powershell -ExecutionPolicy Bypass -File scripts\build-package.ps1 -Version 0.4.
 ```
 
 Ein Tag wie `v0.4.0` baut das Paket über GitHub Actions und veröffentlicht es als Release. Die App zeigt dann genau diese Version an, lokale Builds melden `0.0.0-dev`. Versionen unter 1.0 erscheinen als Vorabversion.
+
+### Vorschau mit Rust und Tauri
+
+Unter `tauri/` liegt ein Nachbau mit Rust und Tauri. Er kann dasselbe, nutzt dieselben Einstellungen, Passwörter und dieselbe Sperre und lässt sich parallel zur WPF-App verwenden. Das Paket ist rund 2 MB groß statt rund 54 MB. Benötigt werden Rust (rustup mit MSVC, dazu die Visual Studio Build Tools mit C++) und Node.js.
+
+| Ordner | Inhalt |
+|---|---|
+| `tauri/crates/rms-core` | Die gesamte Logik, entspricht `ReforgerModSync.Core` |
+| `tauri/crates/rms-cli` | Konsole: `status`, `check` und `sync [--server <Name>]` |
+| `tauri/app/src-tauri` | Tauri-Backend, erzeugt `ReforgerSyncLaunch-Tauri.exe` |
+| `tauri/app/ui` | Oberfläche (TypeScript, HTML, CSS) |
+
+```powershell
+cd tauri; cargo test --workspace                                                           # Tests, nutzen die Beispiel-Logs aus tests/
+cd tauri\app; npm ci; npx tauri dev                                                        # App mit Neuladen beim Ändern
+powershell -ExecutionPolicy Bypass -File scripts\build-tauri-package.ps1 -Version 0.1.0    # Paket nach publish\tauri
+```
+
+Ein Tag wie `tauri-v0.1.0` baut das Paket über GitHub Actions und veröffentlicht es als Vorabversion. Die Oberfläche darf nur die eigenen Befehle der App aufrufen, keine Datei-, Shell- oder Netzwerk-Plugins.

@@ -9,8 +9,11 @@ pub mod steam;
 pub mod sync;
 mod win;
 
-/// Version des Pakets, wie sie in der App angezeigt wird.
-pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+/// Version, wie sie in der App angezeigt wird. Das Build-Skript setzt sie über `RMS_VERSION`, etwa `0.1.0-test`.
+pub const VERSION: &str = match option_env!("RMS_VERSION") {
+    Some(version) => version,
+    None => env!("CARGO_PKG_VERSION"),
+};
 
 /// Projektseite und Releases für die Anzeige in der App.
 pub const REPOSITORY_URL: &str = "https://github.com/morok101st/Arma-Reforger-Local-Manager";

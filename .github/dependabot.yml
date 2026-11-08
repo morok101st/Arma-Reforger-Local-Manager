@@ -12,3 +12,17 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+  # Tauri-Vorschau. Dependabot liest diese Datei nur vom Standard-Branch, die Einträge wirken also erst,
+  # wenn sie dort ankommen. Ziel ist dann der Branch, auf dem die Vorschau liegt.
+  - package-ecosystem: cargo
+    directory: /tauri
+    target-branch: tauri
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: npm
+    directory: /tauri/app
+    target-branch: tauri
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

@@ -1,0 +1,83 @@
+Reforger Sync & Launch (Vorschau mit Rust und Tauri)
+===================================================
+
+Lädt die Mods eines Reforger-Servers vorab, damit der Beitritt ohne Wartezeit klappt.
+Diese Vorschau kann dasselbe wie die bisherige App, ist aber neu gebaut (Rust und Tauri)
+und deutlich kleiner. Sie dient dazu, Erfahrung zu sammeln. Rückmeldungen sind willkommen.
+
+VORAUSSETZUNGEN
+- Windows 10 oder 11, 64 Bit
+- Microsoft Edge WebView2 Runtime. Unter Windows 11 ist sie dabei, unter Windows 10
+  meist auch (mit Microsoft Edge). Fehlt sie, meldet die App das beim Start.
+- Steam läuft, Arma Reforger ist installiert
+- IP-Adresse, Port und Passwort des Servers
+
+PARALLEL ZUR BISHERIGEN APP
+- Beide Apps nutzen dieselben Einstellungen und Passwörter. Server, die du in der einen
+  einträgst, siehst du auch in der anderen.
+- Es läuft immer nur ein Sync gleichzeitig, auch über beide Apps hinweg.
+- Bitte nicht beide Apps gleichzeitig offen haben und in beiden Einstellungen ändern:
+  Es gilt dann, was zuletzt gespeichert wurde.
+
+INSTALLATION
+1. ZIP in einen festen Ordner entpacken, am besten nach
+   %LOCALAPPDATA%\Programs\ReforgerSyncLaunchTauri (in die Adresszeile des Explorers eingeben).
+   Keinen Ordner direkt unter C:\ wie C:\Spiele nehmen: Dort dürfen alle Benutzer des PCs
+   Dateien ändern und könnten die App oder die Hilfs-Mod austauschen.
+   Der Ordner "helper" muss neben der EXE bleiben.
+2. ReforgerSyncLaunch-Tauri.exe starten.
+3. Windows warnt eventuell ("Der Computer wurde durch Windows geschützt"), weil die
+   Vorschau nicht signiert ist: "Weitere Informationen" und "Trotzdem ausführen".
+
+EINRICHTUNG
+1. Im Reiter "Einstellungen" Name, IP-Adresse, Port und Server-Passwort eintragen.
+2. Zielordner wählen: Die Mods liegen darin im Unterordner "addons". Wähle den Ordner,
+   der deinen vorhandenen Ordner "addons" enthält, sonst wird alles neu geladen. Ohne
+   eigene Startoptionen in Steam lässt du das Feld einfach leer.
+3. "Speichern" klicken. Ob Adresse und Passwort stimmen, zeigt sich erst in der Übersicht
+   mit "Neu prüfen" oder "Jetzt synchronisieren". Beides braucht einen laufenden Server.
+4. Optional: "Grundeinstellungen" links unten gilt für alle Server. Dort trägst du den
+   Spielclient ein, falls er nicht über Steam gefunden wird, und änderst die Zeitlimits
+   des Syncs. Die Standardwerte passen in den meisten Fällen.
+
+BENUTZUNG
+- "Jetzt synchronisieren" lädt fehlende Mods und bringt alle auf die Version des Servers.
+  Das Spielfenster bleibt dabei ausgeblendet. Das erste Mal kann das lange dauern.
+- "Direkt beitreten" startet das Spiel und verbindet mit dem Server.
+- Das Spiel muss für den Sync geschlossen sein.
+- Beim Schließen des Fensters wird die App beendet. Ein laufender Sync bricht dabei ab,
+  vorher fragt die App nach. Das Spiel läuft nach "Direkt beitreten" auch ohne die App weiter.
+- Beim Spielstart kann Windows nach Administratorrechten für BattlEye fragen.
+
+WICHTIG
+- Ein Sync bringt Mods auf die Version des Servers, auch zurück auf eine ältere. Das gilt
+  für den gewählten Zielordner. Wer auf anderen Servern andere Versionen braucht, nimmt
+  einen eigenen Zielordner.
+- In einem eigenen Zielordner löscht der Sync alle Mods, die kein eingetragener Server mit
+  diesem Ordner braucht. Beim ersten Mal fragt die App nach, danach läuft das automatisch.
+  Der Standardordner des Spiels bleibt unberührt.
+- Das Passwort liegt verschlüsselt im Windows-Anmeldeinformationsspeicher. Für den Abruf
+  beim Server steht es kurz in einer Datei unter %LOCALAPPDATA%\ReforgerModSync, nie in
+  "Dokumente" oder OneDrive, und wird beim Lesen sofort gelöscht.
+- Nach "Direkt beitreten" liegen die Logs dieser Spielsitzung unter
+  %LOCALAPPDATA%\ReforgerModSync\clientlogs statt unter Dokumente\My Games\ArmaReforger\logs.
+- Die Mods stammen aus dem Arma Reforger Workshop. Mit dem Download gelten für jede Mod
+  deren Lizenz und die Workshop-Bedingungen von Bohemia Interactive:
+  https://reforger.armaplatform.com/workshop-terms
+
+RÜCKMELDUNG BEI PROBLEMEN
+Bitte dazuschreiben, dass es um die Vorschau geht, und die Version nennen (steht in der
+Titelleiste und links unten in der App). Beschreiben, was du geklickt hast und was passiert
+ist, und diese beiden Ordner mitschicken. Darin steht kein Passwort, aber die Server-Adresse
+und dein Windows-Benutzername:
+  %LOCALAPPDATA%\ReforgerModSync\logs        (Dateien app-tauri.*.log)
+  %LOCALAPPDATA%\ReforgerModSync\clientlogs
+Aufgehoben werden die Protokolle der letzten 14 Tage und die Spiel-Logs der letzten 10 Läufe.
+
+ENTFERNEN
+Ordner der App löschen. Die Einstellungen teilt sie mit der bisherigen App, sie bleiben
+deshalb liegen. Ohne die bisherige App kannst du auch %APPDATA%\ReforgerModSync und
+%LOCALAPPDATA%\ReforgerModSync löschen. Das Passwort entfernst du vorher in der App über
+"Server entfernen". Die geladenen Mods bleiben erhalten.
+WebView2 legt außerdem den Ordner %LOCALAPPDATA%\de.morok.reforgersynclaunch.tauri an,
+der ebenfalls gelöscht werden kann.
