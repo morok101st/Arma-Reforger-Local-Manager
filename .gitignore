@@ -26,3 +26,9 @@ spike/
 # Anonymisierte Beispiel-Logs für Tests (Beispiel-IPs, erfundene Mods und Server)
 !tests/ReforgerModSync.Core.Tests/Samples/*.log
 rms_server_password.txt
+
+# Rust/Tauri (Branch tauri)
+/tauri/target/
+/tauri/app/node_modules/
+/tauri/app/ui/dist/
+/tauri/app/src-tauri/gen/

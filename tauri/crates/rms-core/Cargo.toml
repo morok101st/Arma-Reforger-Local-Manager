@@ -1,0 +1,8 @@
+[package]
+name = "rms-core"
+description = "Logik von Reforger Sync & Launch ohne Oberfläche"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]

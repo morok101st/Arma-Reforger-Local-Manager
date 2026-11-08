@@ -1,0 +1,13 @@
+[package]
+name = "rms-cli"
+description = "Kommandozeile von Reforger Sync & Launch"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "reforger-sync-cli"
+path = "src/main.rs"
+
+[dependencies]
+rms-core = { path = "../rms-core" }
