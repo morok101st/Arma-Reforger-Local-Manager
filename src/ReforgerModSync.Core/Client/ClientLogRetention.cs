@@ -57,6 +57,7 @@ public static partial class ClientLogRetention
         return folder;
     }
 
-    [GeneratedRegex(@"^\d{8}-\d{6}-\d{3}$")]
+    // Ordner aus Versionen vor 0.4.0 haben keine Millisekunden und werden mit aufgeräumt.
+    [GeneratedRegex(@"^[0-9]{8}-[0-9]{6}(-[0-9]{3})?$")]
     private static partial Regex RunFolderRegex();
 }
