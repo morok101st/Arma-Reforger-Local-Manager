@@ -205,7 +205,7 @@ function renderTabs() {
 }
 
 function renderBusy() {
-  document.body.classList.toggle("busy", state.busy);
+  document.body.classList.toggle("running", state.busy);
   ui.sync.textContent = state.busy ? "Abbrechen" : "Jetzt synchronisieren";
   ui.sync.disabled = state.busy && !state.cancellable;
   ui.refresh.disabled = state.busy;
