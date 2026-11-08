@@ -43,6 +43,19 @@ fn keeps_only_the_newest_runs() {
 }
 
 #[test]
+fn old_run_folders_without_milliseconds_are_pruned_first() {
+    let temp = common::temp_dir();
+    let old = temp.path().join("20261104-112808");
+    fs::create_dir(&old).unwrap();
+    let newer = run(temp.path(), 1);
+
+    assert_eq!(retention::prune(temp.path(), 1), 1);
+
+    assert!(!old.exists());
+    assert!(newer.exists());
+}
+
+#[test]
 fn leaves_other_folders_and_files_alone() {
     let temp = common::temp_dir();
     let foreign = temp.path().join("eigene Notizen");

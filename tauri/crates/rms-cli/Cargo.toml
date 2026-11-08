@@ -11,3 +11,5 @@ path = "src/main.rs"
 
 [dependencies]
 rms-core = { path = "../rms-core" }
+tokio = { version = "1.54.1", features = ["rt-multi-thread", "macros", "signal"] }
+tokio-util = "0.7.20"

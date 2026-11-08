@@ -77,7 +77,9 @@ fn read_addon(folder: PathBuf, folder_id: String) -> InstalledAddon {
 
     // Der Client schreibt während des Downloads in diese Datei. Rust öffnet Dateien unter Windows
     // mit Freigabe für Lesen, Schreiben und Löschen, das Tool blockiert ihn also nie.
-    let Some(meta) = fs::read(folder.join("meta")).ok().and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok()) else {
+    // Der Client schreibt `meta` mit UTF-8-BOM, serde_json erwartet sie nicht.
+    let parse = |bytes: Vec<u8>| serde_json::from_slice::<Value>(bytes.strip_prefix(b"\xEF\xBB\xBF").unwrap_or(&bytes)).ok();
+    let Some(meta) = fs::read(folder.join("meta")).ok().and_then(parse) else {
         return unknown(None, folder, folder_id);
     };
 

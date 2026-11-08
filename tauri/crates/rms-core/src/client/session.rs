@@ -3,7 +3,7 @@
 use std::io;
 use std::os::windows::io::AsRawHandle;
 use std::path::Path;
-use std::process::{Child, Command};
+use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -38,7 +38,8 @@ impl ClientSession {
     pub fn start(exe: &Path, arguments: &[String], hide_window: bool) -> io::Result<Self> {
         let job = create_kill_on_close_job()?;
         let mut command = Command::new(exe);
-        command.args(arguments);
+        // Die Konsolenausgabe des Clients (u. a. die Steam-ID) gehört nicht in Ausgabe oder Logs der App.
+        command.args(arguments).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
         if let Some(folder) = exe.parent() {
             command.current_dir(folder);
         }

@@ -14,7 +14,8 @@ pub const KEEP_RUNS: usize = 10;
 /// Format der Ordnernamen je Lauf, sortiert sich als Text zeitlich richtig. Gleich wie bei der WPF-App.
 pub const RUN_FOLDER_FORMAT: &str = "%Y%m%d-%H%M%S-%3f";
 
-static RUN_FOLDER: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[0-9]{8}-[0-9]{6}-[0-9]{3}$").unwrap());
+/// Auch das ältere Format ohne Millisekunden (vor 0.4.0), damit diese Ordner nicht ewig liegen bleiben.
+static RUN_FOLDER: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[0-9]{8}-[0-9]{6}(-[0-9]{3})?$").unwrap());
 
 /// Löscht die ältesten Lauf-Ordner, bis höchstens `keep` übrig sind. Ein gesperrter Ordner, etwa weil ein Client
 /// noch schreibt, bleibt liegen und wird beim nächsten Lauf erneut versucht. Liefert die Anzahl gelöschter Ordner.

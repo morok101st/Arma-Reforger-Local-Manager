@@ -61,6 +61,17 @@ fn reads_id_name_and_selected_version() {
     );
 }
 
+/// Der echte Client schreibt `meta` mit UTF-8-BOM.
+#[test]
+fn reads_meta_written_with_a_byte_order_mark() {
+    let temp = common::temp_dir();
+    let folder = Addon::default().write(temp.path());
+    let meta = fs::read(folder.join("meta")).unwrap();
+    fs::write(folder.join("meta"), [b"\xEF\xBB\xBF".as_slice(), &meta].concat()).unwrap();
+
+    assert_eq!(single_health(temp.path()), AddonHealth::Ok);
+}
+
 #[test]
 fn skips_folders_without_mod_id_like_saves() {
     let temp = common::temp_dir();
