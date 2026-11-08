@@ -50,6 +50,25 @@ pub fn start_and_join(
     Ok(JoinStart { password_file: has_password.then_some(password_file) })
 }
 
+/// Öffnet eine feste Adresse der App (Projektseite, Versionen) im Standardbrowser.
+pub fn open_url(url: &str) -> Result<(), String> {
+    if !url.starts_with("https://") {
+        return Err("Nur https-Adressen werden geöffnet.".into());
+    }
+
+    let file = wide(url);
+    let verb = wide("open");
+    let mut info = SHELLEXECUTEINFOW {
+        cbSize: u32::try_from(size_of::<SHELLEXECUTEINFOW>()).expect("klein"),
+        lpVerb: pcwstr(&verb),
+        lpFile: pcwstr(&file),
+        nShow: SW_SHOWNORMAL.0,
+        ..Default::default()
+    };
+    // SAFETY: Texte nullterminiert und bis nach dem Aufruf gültig.
+    unsafe { ShellExecuteExW(&raw mut info) }.map_err(|error| error.message())
+}
+
 fn launch(exe: &Path, arguments: &[String]) -> Result<(), String> {
     let folder = exe.parent().unwrap_or(Path::new("."));
     let starter = folder.join(BATTLEYE_STARTER);

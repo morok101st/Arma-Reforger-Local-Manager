@@ -14,10 +14,10 @@
     "windows": [
       {
         "title": "Reforger Sync & Launch (Vorschau)",
-        "width": 1100,
-        "height": 720,
-        "minWidth": 900,
-        "minHeight": 600,
+        "width": 1080,
+        "height": 830,
+        "minWidth": 820,
+        "minHeight": 540,
         "center": true
       }
     ],
