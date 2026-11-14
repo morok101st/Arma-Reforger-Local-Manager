@@ -76,7 +76,7 @@ fn http_status_becomes_a_clear_message() {
 fn request_goes_to_host_port_and_endpoint() {
     let link = ArmmLink { base_url: "https://armm.example.com:8443".into(), modset_id: 42 };
     assert_eq!(host_and_port(&link), ("armm.example.com".into(), 8443));
-    assert_eq!(request_path(&link), "/api/sync/modsets/42");
+    assert_eq!(request_path(&link), "/api/sync/modsets/42/export");
     let link = ArmmLink { base_url: "https://armm.example.com".into(), modset_id: 7 };
     assert_eq!(host_and_port(&link), ("armm.example.com".into(), 443));
 }

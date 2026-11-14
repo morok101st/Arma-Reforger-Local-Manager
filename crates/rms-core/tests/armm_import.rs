@@ -43,7 +43,7 @@ fn reads_the_example_from_armm() {
 fn modset_url_follows_the_agreed_endpoint() {
     let link = ArmmLink { base_url: "https://armm.example.com:8443".into(), modset_id: 42 };
 
-    assert_eq!(link.modset_url(), "https://armm.example.com:8443/api/sync/modsets/42");
+    assert_eq!(link.modset_url(), "https://armm.example.com:8443/api/sync/modsets/42/export");
     assert_eq!(link.host(), "armm.example.com:8443");
 }
 

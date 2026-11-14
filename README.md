@@ -141,7 +141,7 @@ Die App spricht weder mit Bohemia noch mit dem Spielserver. Sie startet den Spie
 |---|---|---|
 | App → Hilfs-Mod | Startparameter | `-rmsServer`, `-rmsMods`, `-rmsModset` oder `-rmsJoin` sagen ihr, was zu tun ist. Ohne sie macht sie nichts |
 | App → Hilfs-Mod | Datei `rms_modset.txt` im Profil des Clients (nur ARMM-Server) | Die Mods aus ARMM, je Zeile ID, Version, Name und ob sie zu laden ist. Nichts Geheimes, die App löscht sie nach dem Lauf |
-| App → ARMM | HTTPS `GET {baseUrl}/api/sync/modsets/{modsetId}` mit `Authorization: Bearer <Schlüssel>` (nur ARMM-Server) | Die Mod-Liste des Modsets. Nur `https`, keine Umleitung auf `http`, Zeitlimit 15 s |
+| App → ARMM | HTTPS `GET {baseUrl}/api/sync/modsets/{modsetId}/export` mit `Authorization: Bearer <Schlüssel>` (nur ARMM-Server) | Die Mod-Liste des Modsets. Nur `https`, keine Umleitung auf `http`, Zeitlimit 15 s |
 | App → Hilfs-Mod | Datei `rms_server_password.txt` im Profil des Clients (Prüfen, Sync) oder im Log-Ordner des Laufs (Beitritt), beides unter `%LOCALAPPDATA%\ReforgerModSync` | Das Passwort. Die Hilfs-Mod löscht die Datei beim Lesen. Eine alte Datei ersetzt die App vor jedem Start |
 | Hilfs-Mod → App | `[RMS]`-Zeilen in der `console.log` des Clients | Fortschritt, Mod-Liste und Fehler |
 | Spielclient → App | Ordner `addons` im Zielordner | Die App liest die Versionen der Mods auf der Festplatte und vergleicht sie |
@@ -199,7 +199,7 @@ sequenceDiagram
 
     N->>A: Klick auf „Neu prüfen“
     A->>W: Zugangsschlüssel lesen
-    A->>R: GET /api/sync/modsets/{id}<br/>Authorization: Bearer …
+    A->>R: GET /api/sync/modsets/{id}/export<br/>Authorization: Bearer …
     R-->>A: Mod-Liste (modId, name, version)
     A->>A: Liste streng prüfen,<br/>bei Fehlern verwerfen
     A->>A: Mit dem Zielordner vergleichen
@@ -361,7 +361,7 @@ Ein Tag wie `v0.6.0` baut das Paket über GitHub Actions und veröffentlicht es 
 - `gameServer` ist optional. Ein Feld `password` mit Wert lehnt die App ab, `null` ist erlaubt.
 - Eine höhere `formatVersion` lehnt die App mit dem Hinweis ab, sie zu aktualisieren.
 
-**Mod-Liste:** `GET {baseUrl}/api/sync/modsets/{modsetId}` mit `Authorization: Bearer {accessKey}`. Antwort `200` mit dem `mods`-Array der Serverkonfiguration, alternativ der ganzen Serverkonfiguration (`game.mods`):
+**Mod-Liste:** `GET {baseUrl}/api/sync/modsets/{modsetId}/export` mit `Authorization: Bearer {accessKey}`. Antwort `200` mit dem `mods`-Array der Serverkonfiguration, alternativ der ganzen Serverkonfiguration (`game.mods`):
 
 ```json
 [ { "modId": "65AD7D2E9866FA6E", "name": "ACE Finger Dev", "version": "1.5.40" } ]

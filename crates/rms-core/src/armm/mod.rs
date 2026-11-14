@@ -30,7 +30,7 @@ pub struct ArmmLink {
 impl ArmmLink {
     /// Adresse, unter der ARMM die Mod-Liste des Modsets liefert.
     pub fn modset_url(&self) -> String {
-        format!("{}/api/sync/modsets/{}", self.base_url, self.modset_id)
+        format!("{}/api/sync/modsets/{}/export", self.base_url, self.modset_id)
     }
 
     /// Nur der Host mit Port, für Anzeige und Logs.
