@@ -45,6 +45,11 @@ pub fn default_settings_file() -> PathBuf {
     dirs::config_dir().unwrap_or_else(|| PathBuf::from(".")).join(DATA_FOLDER).join("settings.json")
 }
 
+/// Ordner „Downloads“ des Nutzers, auch wenn er umgeleitet ist. Dort landen Importdateien aus ARMM.
+pub fn downloads_dir() -> Option<PathBuf> {
+    dirs::download_dir()
+}
+
 /// Ordner „Dokumente“ des Nutzers, auch wenn er umgeleitet ist (z. B. nach OneDrive).
 pub fn documents_dir() -> PathBuf {
     dirs::document_dir().unwrap_or_else(|| PathBuf::from("."))

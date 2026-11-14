@@ -613,13 +613,12 @@ pub async fn pick_armm_import(app: AppHandle, state: State<'_, AppState>) -> Com
     if state.is_busy() {
         return Err(busy_error());
     }
-    let chosen = app
-        .dialog()
-        .file()
-        .set_title("ARMM-Importdatei wählen")
-        .add_filter("ARMM-Importdatei (armm-sync.json)", &["json"])
-        .blocking_pick_file()
-        .and_then(|path| path.into_path().ok());
+    let mut dialog = app.dialog().file().set_title("ARMM-Importdatei wählen").add_filter("ARMM-Importdatei (armm-sync.json)", &["json"]);
+    // Dateien aus ARMM kommen meist aus dem Browser, der Dialog startet deshalb immer in „Downloads“.
+    if let Some(downloads) = rms_core::paths::downloads_dir().filter(|folder| folder.is_dir()) {
+        dialog = dialog.set_directory(downloads);
+    }
+    let chosen = dialog.blocking_pick_file().and_then(|path| path.into_path().ok());
     let Some(path) = chosen else {
         return Ok(None);
     };
