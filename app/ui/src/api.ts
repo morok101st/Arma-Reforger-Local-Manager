@@ -1,4 +1,5 @@
 // Aufrufe ins Rust-Backend. Passwörter gehen nur bei saveProfile hinein und kommen nie zurück.
+// ARMM-Zugangsschlüssel sieht die Oberfläche nie, das Backend liest sie selbst aus der Importdatei.
 import { invoke } from "@tauri-apps/api/core";
 
 export interface ModRow {
@@ -31,6 +32,30 @@ export interface ProfileView {
   downloadDir: string | null;
   hasPassword: boolean;
   overview: Overview | null;
+  armm: ArmmView | null;
+}
+
+export interface ArmmView {
+  host: string;
+  modsetId: number;
+  hasAccessKey: boolean;
+}
+
+export interface ImportPreview {
+  name: string;
+  armmHost: string;
+  modsetId: number;
+  gameServer: string | null;
+  passwordRequired: boolean;
+  existing: string | null;
+}
+
+export interface ImportResult {
+  profile: ProfileView;
+  created: boolean;
+  needsPassword: boolean;
+  needsAddress: boolean;
+  message: string;
 }
 
 export interface AppView {
@@ -115,5 +140,9 @@ export const api = {
   browseFolder: (current: string) => invoke<string | null>("browse_folder", { current }),
   browseExe: (current: string) => invoke<string | null>("browse_exe", { current }),
   openLink: (target: "repository" | "releases") => invoke<void>("open_link", { target }),
+  pickArmmImport: () => invoke<ImportPreview | null>("pick_armm_import"),
+  cancelArmmImport: () => invoke<void>("cancel_armm_import"),
+  applyArmmImport: () => invoke<ImportResult>("apply_armm_import"),
+  disconnectArmm: (id: string) => invoke<ProfileView>("disconnect_armm", { id }),
   quitApp: () => invoke<void>("quit_app"),
 };

@@ -1,4 +1,4 @@
-//! Daten, die zwischen Backend und Oberfläche wandern. Passwörter stehen nie darin.
+//! Daten, die zwischen Backend und Oberfläche wandern. Passwörter und ARMM-Schlüssel stehen nie darin.
 
 use std::collections::BTreeMap;
 
@@ -57,10 +57,12 @@ pub struct ProfileView {
     pub download_dir: Option<String>,
     pub has_password: bool,
     pub overview: Option<Overview>,
+    /// Nur bei aus ARMM importierten Servern.
+    pub armm: Option<ArmmView>,
 }
 
 impl ProfileView {
-    pub fn new(profile: &ServerProfile, has_password: bool, overview: Option<Overview>) -> Self {
+    pub fn new(profile: &ServerProfile, has_password: bool, has_access_key: bool, overview: Option<Overview>) -> Self {
         Self {
             id: profile.id.clone(),
             name: profile.name.clone(),
@@ -68,8 +70,42 @@ impl ProfileView {
             download_dir: profile.download_dir.clone(),
             has_password,
             overview,
+            armm: profile.armm.as_ref().map(|link| ArmmView { host: link.host().into(), modset_id: link.modset_id, has_access_key }),
         }
     }
+}
+
+/// ARMM-Verbindung eines Servers für die Anzeige.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ArmmView {
+    pub host: String,
+    pub modset_id: u64,
+    pub has_access_key: bool,
+}
+
+/// Was eine gewählte `armm-sync.json` anlegen würde. Der Schlüssel bleibt im Backend.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportPreview {
+    pub name: String,
+    pub armm_host: String,
+    pub modset_id: u64,
+    pub game_server: Option<String>,
+    pub password_required: bool,
+    /// Name des vorhandenen Servers mit derselben Verbindung. Er wird dann nur aktualisiert.
+    pub existing: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportResult {
+    pub profile: ProfileView,
+    /// Neu angelegt (sonst aktualisiert).
+    pub created: bool,
+    pub needs_password: bool,
+    pub needs_address: bool,
+    pub message: String,
 }
 
 #[derive(Debug, Clone, Serialize)]

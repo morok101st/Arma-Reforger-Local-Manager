@@ -547,6 +547,10 @@ details summary {
   font-weight: 600;
 }
 
+.saved-mark.error {
+  color: var(--danger);
+}
+
 .dir-extra {
   margin-top: 12px;
 }

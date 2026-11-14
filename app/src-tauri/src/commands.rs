@@ -7,6 +7,7 @@ use std::time::{Duration, Instant};
 
 use chrono::Local;
 use rms_core::addons::{ModEntry, compare, normalize_download_dir, resolve_mods_root, scan};
+use rms_core::armm::{ArmmImport, ImportedGameServer, MAX_IMPORT_BYTES, parse_sync_file};
 use rms_core::client::args::{combine_server_address, is_valid_server_address, steam_launch_options};
 use rms_core::client::{launcher, password_file};
 use rms_core::credentials::{CredentialStore, ProfilePasswords, WindowsCredentialStore};
@@ -22,10 +23,11 @@ use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 use tokio_util::sync::CancellationToken;
 use tracing::{info, warn};
+use zeroize::Zeroize;
 
 use crate::dto::{
-    AppView, BasicSettingsSaveResult, BasicSettingsView, CleanupQuestion, Message, Overview, ProfileInput, ProfileView, RunResult,
-    RunStatus, SaveProfileResult,
+    AppView, BasicSettingsSaveResult, BasicSettingsView, CleanupQuestion, ImportPreview, ImportResult, Message, Overview, ProfileInput,
+    ProfileView, RunResult, RunStatus, SaveProfileResult,
 };
 
 const PASSWORD_CLEANUP_DELAY: Duration = Duration::from_secs(120);
@@ -43,6 +45,8 @@ pub struct AppState {
     pending_cleanup: Mutex<Option<PendingCleanup>>,
     join_password: Mutex<Option<(PathBuf, Instant)>>,
     load_problem: Mutex<Option<String>>,
+    /// Geprüfte Importdatei bis zur Bestätigung. Der Schlüssel darin wird beim Verwerfen überschrieben.
+    pending_import: Mutex<Option<ArmmImport>>,
 }
 
 struct PendingCleanup {
@@ -70,6 +74,7 @@ impl AppState {
             pending_cleanup: Mutex::new(None),
             join_password: Mutex::new(None),
             load_problem: Mutex::new(load_problem),
+            pending_import: Mutex::new(None),
         }
     }
 
@@ -107,14 +112,19 @@ impl AppState {
         self.passwords().has_password(profile.server_address.as_deref(), &profile.id).unwrap_or(false)
     }
 
+    fn has_access_key(&self, profile: &ServerProfile) -> bool {
+        profile.armm.is_some() && self.credentials.read_access_key(&profile.id).is_ok_and(|key| key.is_some())
+    }
+
     fn cached_overview(&self, profile: &ServerProfile) -> Option<Overview> {
         let list = self.cache.load(&profile.id)?;
         let installed = scan(&resolve_mods_root(profile.download_dir.as_deref()));
-        Some(Overview::from_comparison(&compare(&list.mods, &installed), format!("Liste vom {}", list.fetched_at.format("%d.%m.%Y %H:%M"))))
+        let stand = format!("Liste vom {}{}", list.fetched_at.format("%d.%m.%Y %H:%M"), source_suffix(profile));
+        Some(Overview::from_comparison(&compare(&list.mods, &installed), stand))
     }
 
     fn view(&self, profile: &ServerProfile) -> ProfileView {
-        ProfileView::new(profile, self.has_password(profile), self.cached_overview(profile))
+        ProfileView::new(profile, self.has_password(profile), self.has_access_key(profile), self.cached_overview(profile))
     }
 
     /// Speichert die Einstellungen. Liefert eine Meldung, wenn das scheitert.
@@ -318,14 +328,19 @@ fn emit_status(app: &AppHandle, profile: &ServerProfile) -> Progress {
     })
 }
 
-fn now_stand() -> String {
-    format!("Liste vom {}", Local::now().format("%d.%m.%Y %H:%M"))
+/// Herkunft der Liste in der Übersicht, nur bei ARMM-Servern.
+fn source_suffix(profile: &ServerProfile) -> &'static str {
+    if profile.armm.is_some() { " (ARMM)" } else { "" }
 }
 
-fn finish(result: &SyncResult, ok_outcome: bool) -> RunResult {
+fn now_stand(profile: &ServerProfile) -> String {
+    format!("Liste vom {}{}", Local::now().format("%d.%m.%Y %H:%M"), source_suffix(profile))
+}
+
+fn finish(result: &SyncResult, ok_outcome: bool, profile: &ServerProfile) -> RunResult {
     let cancelled = result.outcome == SyncOutcome::Cancelled;
     let has_mods = !result.mods.is_empty();
-    let overview = has_mods.then(|| Overview::from_comparison(&result.mods, now_stand()));
+    let overview = has_mods.then(|| Overview::from_comparison(&result.mods, now_stand(profile)));
     let list_status = match (&overview, result.outcome) {
         (Some(overview), _) => overview.summary.list_status.clone(),
         (None, SyncOutcome::Cancelled) => "abgebrochen".into(),
@@ -342,14 +357,14 @@ fn finish(result: &SyncResult, ok_outcome: bool) -> RunResult {
     }
 }
 
-/// Holt nur die Liste vom Server und vergleicht.
+/// Holt nur die Liste (vom Server oder aus ARMM) und vergleicht.
 #[tauri::command]
 pub async fn check_profile(app: AppHandle, state: State<'_, AppState>, id: String) -> CommandResult<RunResult> {
     let profile = state.profile(&id).ok_or("Bitte den Server zuerst in den Einstellungen speichern.")?;
     let run = state.begin_run().ok_or_else(busy_error)?;
     let settings = state.settings();
     let result = state.orchestrator.check(&settings, &profile, &emit_status(&app, &profile), &run.cancel).await;
-    let mut view = finish(&result, result.outcome == SyncOutcome::Checked);
+    let mut view = finish(&result, result.outcome == SyncOutcome::Checked, &profile);
     if view.ok {
         view.message = String::new();
     }
@@ -363,7 +378,7 @@ pub async fn sync_profile(app: AppHandle, state: State<'_, AppState>, id: String
     let settings = state.settings();
     let result = state.orchestrator.run(&settings, &profile, &emit_status(&app, &profile), &run.cancel).await;
     info!("Sync {} beendet: {:?} - {}", profile.name, result.outcome, result.message);
-    let mut view = finish(&result, matches!(result.outcome, SyncOutcome::Completed | SyncOutcome::AlreadyCurrent));
+    let mut view = finish(&result, matches!(result.outcome, SyncOutcome::Completed | SyncOutcome::AlreadyCurrent), &profile);
 
     // Nur nach einem vollständigen Lauf: Sonst ist nicht sicher, dass die Liste und der Ordner stimmen.
     // Weicht die ARMM-Liste vom Server ab, bleibt alles liegen. Der Lauf bleibt belegt, bis auch das
@@ -577,4 +592,131 @@ pub fn open_link(target: String) -> CommandResult<()> {
 pub fn quit_app(app: AppHandle, state: State<'_, AppState>) {
     state.request_cancel();
     app.exit(0);
+}
+
+// --- Import aus ARMM ---
+
+/// Neue Profil-ID im selben Format wie die der Oberfläche (32 Hex-Zeichen).
+fn new_profile_id() -> String {
+    let nanos = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|time| time.as_nanos()).unwrap_or_default();
+    format!("{:032x}", nanos ^ (u128::from(std::process::id()) << 96))
+}
+
+fn find_same_link(settings: &AppSettings, import: &ArmmImport) -> Option<ServerProfile> {
+    settings.profiles.iter().find(|profile| profile.armm.as_ref().is_some_and(|link| link.same_as(&import.link))).cloned()
+}
+
+/// Lässt eine `armm-sync.json` wählen und prüft sie. `None`: Auswahl abgebrochen. Der Schlüssel bleibt im
+/// Backend, die Oberfläche bekommt nur die Vorschau.
+#[tauri::command]
+pub async fn pick_armm_import(app: AppHandle, state: State<'_, AppState>) -> CommandResult<Option<ImportPreview>> {
+    if state.is_busy() {
+        return Err(busy_error());
+    }
+    let chosen = app
+        .dialog()
+        .file()
+        .set_title("ARMM-Importdatei wählen")
+        .add_filter("ARMM-Importdatei (armm-sync.json)", &["json"])
+        .blocking_pick_file()
+        .and_then(|path| path.into_path().ok());
+    let Some(path) = chosen else {
+        return Ok(None);
+    };
+
+    let too_large = std::fs::metadata(&path).is_ok_and(|meta| meta.len() > MAX_IMPORT_BYTES as u64);
+    if too_large {
+        return Err("Die Datei ist zu groß für eine ARMM-Importdatei.".into());
+    }
+    let mut bytes = std::fs::read(&path).map_err(|error| format!("Die Datei konnte nicht gelesen werden: {error}"))?;
+    let parsed = parse_sync_file(&bytes);
+    bytes.zeroize();
+    let import = parsed.map_err(|error| error.to_string())?;
+
+    let preview = ImportPreview {
+        name: import.name.clone(),
+        armm_host: import.link.host().into(),
+        modset_id: import.link.modset_id,
+        game_server: import.game_server.as_ref().map(ImportedGameServer::address),
+        password_required: import.game_server.as_ref().is_some_and(|server| server.password_required),
+        existing: find_same_link(&state.settings(), &import).map(|profile| profile.name),
+    };
+    info!("ARMM-Importdatei gelesen: Modset {} auf {}", import.link.modset_id, import.link.host());
+    *state.pending_import.lock().unwrap() = Some(import);
+    Ok(Some(preview))
+}
+
+#[tauri::command]
+pub fn cancel_armm_import(state: State<'_, AppState>) {
+    state.pending_import.lock().unwrap().take();
+}
+
+/// Legt den Server aus der geprüften Datei an. Gibt es die Verbindung schon, bekommt dieser Server nur den
+/// neuen Schlüssel; Name, Adresse, Passwort und Zielordner bleiben, wie der Nutzer sie eingestellt hat.
+#[tauri::command]
+pub fn apply_armm_import(state: State<'_, AppState>) -> CommandResult<ImportResult> {
+    if state.is_busy() {
+        return Err(busy_error());
+    }
+    let import = state.pending_import.lock().unwrap().take().ok_or("Es wartet keine Importdatei.")?;
+
+    let (profile, created) = match find_same_link(&state.settings(), &import) {
+        Some(profile) => (profile, false),
+        None => {
+            let profile = ServerProfile {
+                id: new_profile_id(),
+                name: import.name.clone(),
+                server_address: import.game_server.as_ref().map(ImportedGameServer::address),
+                download_dir: None,
+                armm: Some(import.link.clone()),
+                ..ServerProfile::default()
+            };
+            (profile, true)
+        }
+    };
+
+    state
+        .credentials
+        .save_access_key(&profile.id, &import.access_key)
+        .map_err(|error| format!("Der Zugangsschlüssel konnte nicht gespeichert werden: {error}"))?;
+    if created {
+        let new = profile.clone();
+        if let Err(problem) = state.persist(|settings| {
+            settings.selected_profile_id = Some(new.id.clone());
+            settings.profiles.push(new);
+        }) {
+            let _ = state.credentials.delete_access_key(&profile.id);
+            return Err(problem);
+        }
+    }
+    let action = if created { "importiert" } else { "aktualisiert" };
+    info!("ARMM-Server {action}: {} (Modset {} auf {})", profile.name, import.link.modset_id, import.link.host());
+
+    let needs_password = import.game_server.as_ref().is_some_and(|server| server.password_required) && !state.has_password(&profile);
+    let needs_address = profile.server_address.is_none();
+    let message = if created {
+        "Server importiert. Bitte noch den Zielordner prüfen und, falls nötig, das Server-Passwort eingeben. Die Importdatei kannst du jetzt löschen, sie enthält den Zugangsschlüssel."
+    } else {
+        "Neuer Zugangsschlüssel übernommen. Die Importdatei kannst du jetzt löschen."
+    };
+    Ok(ImportResult { profile: state.view(&profile), created, needs_password, needs_address, message: message.into() })
+}
+
+/// Löst die Verbindung zu ARMM. Der Server bleibt als manuell angelegter Server erhalten.
+#[tauri::command]
+pub fn disconnect_armm(state: State<'_, AppState>, id: String) -> CommandResult<ProfileView> {
+    if state.is_busy() {
+        return Err(busy_error());
+    }
+    let _ = state.credentials.delete_access_key(&id);
+    state.persist(|settings| {
+        if let Some(profile) = settings.profiles.iter_mut().find(|profile| profile.id == id) {
+            profile.armm = None;
+        }
+    })?;
+    // Die gemerkte Liste stammte aus ARMM. Ab jetzt gilt die des Servers.
+    let _ = state.cache.delete(&id);
+    let profile = state.profile(&id).ok_or("Der Server ist nicht gespeichert.")?;
+    info!("ARMM-Verbindung getrennt: {}", profile.name);
+    Ok(state.view(&profile))
 }

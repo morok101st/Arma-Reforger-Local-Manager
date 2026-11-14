@@ -71,6 +71,9 @@ const ui = {
   steamOptions: $<HTMLInputElement>("#steam-options"),
   save: $<HTMLButtonElement>("#save"),
   settingsMessage: $("#settings-message"),
+  armmSection: $("#armm-section"),
+  armmTarget: $("#armm-target"),
+  armmKey: $("#armm-key"),
 };
 
 /** Wie `normalize_address_input` im Backend: Schema, Pfad und Punkt am Ende weg, Kleinbuchstaben. */
@@ -222,6 +225,8 @@ function renderBusy() {
   ui.refresh.disabled = state.busy;
   ui.join.disabled = state.busy;
   ui.save.disabled = state.busy;
+  $<HTMLButtonElement>("#import-server").disabled = state.busy;
+  $<HTMLButtonElement>("#armm-disconnect").disabled = state.busy;
 }
 
 function renderOverview() {
@@ -295,6 +300,13 @@ function renderSettingsState() {
       ? "Neues Passwort eingeben und unten speichern. Es ersetzt das bisherige."
       : "Leer lassen, wenn der Server kein Passwort hat.";
   ui.dirExtra.hidden = !profile.draft.downloadDir.trim();
+  const armm = profile.saved?.armm ?? null;
+  ui.armmSection.hidden = !armm;
+  if (armm) {
+    ui.armmTarget.textContent = `Modset ${armm.modsetId} auf ${armm.host}`;
+    ui.armmKey.textContent = armm.hasAccessKey ? "✓ Schlüssel gespeichert" : "Schlüssel fehlt, bitte neu importieren";
+    ui.armmKey.classList.toggle("error", !armm.hasAccessKey);
+  }
   ui.settingsMessage.textContent = profile.settingsMessage;
   ui.settingsMessage.classList.toggle("error", profile.settingsIsError);
 }
@@ -338,6 +350,109 @@ function addProfile() {
   ui.name.focus();
 }
 
+/** Legt einen Server aus einer armm-sync.json an. Den Zugangsschlüssel liest nur das Backend. */
+async function importServer() {
+  if (state.busy) {
+    return;
+  }
+  let preview;
+  try {
+    preview = await api.pickArmmImport();
+  } catch (problem) {
+    await informDialog("Importdatei nicht verwendbar", String(problem));
+    return;
+  }
+  if (!preview) {
+    return;
+  }
+
+  const lines = [
+    `Name: ${preview.name}`,
+    `ARMM: ${preview.armmHost}, Modset ${preview.modsetId}`,
+    `Spielserver: ${preview.gameServer ?? "nicht angegeben, bitte danach in den Einstellungen eintragen"}`,
+  ];
+  if (preview.passwordRequired) {
+    lines.push("", "Der Spielserver hat ein Passwort. Du gibst es danach in den Einstellungen ein, es steht nie in der Datei.");
+  }
+  if (preview.existing) {
+    lines.push("", `„${preview.existing}“ ist schon mit diesem Modset verbunden und bekommt nur den neuen Zugangsschlüssel. Name, Adresse, Passwort und Zielordner bleiben.`);
+  }
+  const confirmed = await confirmDialog(
+    preview.existing ? "ARMM-Verbindung aktualisieren?" : "Server aus ARMM importieren?",
+    lines.join("\n"),
+    preview.existing ? "Aktualisieren" : "Importieren",
+  );
+  if (!confirmed) {
+    await api.cancelArmmImport();
+    return;
+  }
+
+  let result;
+  try {
+    result = await api.applyArmmImport();
+  } catch (problem) {
+    await informDialog("Import fehlgeschlagen", String(problem));
+    return;
+  }
+
+  let profile = state.profiles.find((candidate) => candidate.id === result.profile.id);
+  if (profile) {
+    profile.saved = result.profile;
+  } else {
+    profile = newProfile(result.profile);
+    // Ein leerer, nie gespeicherter Platzhalter wird durch den importierten Server ersetzt.
+    const placeholder = state.profiles.length === 1 && !state.profiles[0].saved && !hasContent(state.profiles[0]);
+    if (placeholder) {
+      state.profiles = [profile];
+    } else {
+      state.profiles.push(profile);
+    }
+  }
+  state.selectedId = profile.id;
+  state.tab = 1;
+  profile.editingPassword = result.needsPassword;
+  const extra = result.needsAddress ? " Die Importdatei nennt keinen Spielserver: Bitte Adresse und Port eintragen." : "";
+  setSettingsMessage(profile, result.message + extra, false);
+  fillForm();
+  render();
+  void refreshSteamOptions();
+  if (result.needsAddress) {
+    ui.ip.focus();
+  } else if (result.needsPassword) {
+    ui.password.focus();
+  }
+  await api.selectProfile(profile.id).catch(() => undefined);
+}
+
+function hasContent(profile: Profile): boolean {
+  const draft = profile.draft;
+  return Boolean(draft.name.trim() || draft.ip.trim() || draft.port.trim() || draft.downloadDir.trim());
+}
+
+async function disconnectArmm() {
+  const profile = selected();
+  if (!profile?.saved?.armm || state.busy) {
+    return;
+  }
+  const confirmed = await confirmDialog(
+    "Verbindung zu ARMM trennen?",
+    "Der Server bleibt erhalten und holt seine Mod-Liste danach wieder vom laufenden Spielserver. Der gespeicherte Zugangsschlüssel wird gelöscht.",
+    "Trennen",
+    { danger: true },
+  );
+  if (!confirmed) {
+    return;
+  }
+  try {
+    profile.saved = await api.disconnectArmm(profile.id);
+    resetOverview(profile);
+    setSettingsMessage(profile, "Verbindung zu ARMM getrennt. Die Mod-Liste kommt jetzt vom Spielserver.", false);
+  } catch (problem) {
+    setSettingsMessage(profile, String(problem), true);
+  }
+  render();
+}
+
 async function removeProfile() {
   const profile = selected();
   if (!profile || state.busy) {
@@ -345,7 +460,9 @@ async function removeProfile() {
   }
   const confirmed = await confirmDialog(
     `Server „${displayName(profile)}“ entfernen?`,
-    "Der Eintrag und sein gespeichertes Passwort werden gelöscht. Die geladenen Mods bleiben auf der Festplatte.",
+    profile.saved?.armm
+      ? "Der Eintrag, sein gespeichertes Passwort und der ARMM-Zugangsschlüssel werden gelöscht. Die geladenen Mods bleiben auf der Festplatte."
+      : "Der Eintrag und sein gespeichertes Passwort werden gelöscht. Die geladenen Mods bleiben auf der Festplatte.",
     "Entfernen",
     { danger: true },
   );
@@ -455,7 +572,7 @@ async function refresh() {
     return;
   }
   profile.listStatus = "wird geprüft …";
-  setStatus(profile, "Mod-Liste wird vom Server geholt …", false);
+  setStatus(profile, profile.saved.armm ? "Mod-Liste wird aus ARMM geholt …" : "Mod-Liste wird vom Server geholt …", false);
   beginRun(false);
   try {
     applyRunResult(profile, await api.checkProfile(profile.id));
@@ -684,6 +801,8 @@ function bindSidebar() {
     }
   });
   $("#add-server").addEventListener("click", addProfile);
+  $("#import-server").addEventListener("click", () => void importServer());
+  $("#armm-disconnect").addEventListener("click", () => void disconnectArmm());
   $("#remove-server").addEventListener("click", () => void removeProfile());
   $("#basic-settings").addEventListener("click", () => void basicSettingsDialog());
   document.querySelectorAll<HTMLAnchorElement>("[data-link]").forEach((link) =>

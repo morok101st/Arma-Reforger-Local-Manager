@@ -4,7 +4,7 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use rms_core::addons::{ModState, ModSummary, compare, resolve_mods_root, scan, sort_open_first, state_text};
-use rms_core::credentials::{ProfilePasswords, WindowsCredentialStore};
+use rms_core::credentials::{CredentialStore, ProfilePasswords, WindowsCredentialStore};
 use rms_core::paths::{AppPaths, default_settings_file};
 use rms_core::settings::{AppSettings, ServerProfile, SettingsStore};
 use rms_core::steam::{is_game_running, is_steam_running, read_steam_path_from_registry, resolve_client_exe};
@@ -112,10 +112,22 @@ fn status(settings: &AppSettings) -> ExitCode {
         println!("[{}]", profile.name);
         println!("  Adresse:    {}", profile.server_address.as_deref().unwrap_or("nicht hinterlegt"));
         println!("  Passwort:   {}", if has_password { "hinterlegt" } else { "nicht hinterlegt" });
+        match &profile.armm {
+            Some(link) => {
+                let has_key = store.read_access_key(&profile.id).is_ok_and(|key| key.is_some());
+                println!(
+                    "  Quelle:     ARMM, Modset {} auf {} (Schlüssel {})",
+                    link.modset_id,
+                    link.host(),
+                    if has_key { "hinterlegt" } else { "fehlt" }
+                );
+            }
+            None => println!("  Quelle:     Spielserver"),
+        }
         println!("  Mod-Ordner: {} ({} Mods)", mods_root.display(), addons.len());
 
         let Some(list) = cache.load(&profile.id) else {
-            println!("  Modset:     noch nicht vom Server geholt");
+            println!("  Modset:     noch nicht geholt");
             continue;
         };
 

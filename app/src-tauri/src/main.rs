@@ -76,6 +76,10 @@ fn main() {
             commands::save_basic_settings,
             commands::browse_folder,
             commands::browse_exe,
+            commands::pick_armm_import,
+            commands::cancel_armm_import,
+            commands::apply_armm_import,
+            commands::disconnect_armm,
             commands::open_link,
             commands::quit_app,
         ])
