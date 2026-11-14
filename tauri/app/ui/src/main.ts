@@ -1,4 +1,4 @@
-// Oberfläche der Vorschau. Gespeicherte Einstellungen liegen im Backend, hier nur Entwürfe und die Anzeige.
+// Oberfläche der App. Gespeicherte Einstellungen liegen im Backend, hier nur Entwürfe und die Anzeige.
 import { listen } from "@tauri-apps/api/event";
 import { api, type Overview, type ProfileInput, type ProfileView, type RunResult, type RunStatus } from "./api";
 import { basicSettingsDialog, confirmDialog, informDialog } from "./dialogs";
@@ -712,8 +712,8 @@ async function start() {
   bindInputs();
 
   const app = await api.loadApp();
-  ui.version.textContent = `Version ${app.version} (Vorschau)`;
-  document.title = `Reforger Sync & Launch ${app.version} (Vorschau)`;
+  ui.version.textContent = `Version ${app.version}`;
+  document.title = `Reforger Sync & Launch ${app.version}`;
   state.profiles = app.profiles.map(newProfile);
   if (state.profiles.length === 0) {
     state.profiles.push(newProfile(null));

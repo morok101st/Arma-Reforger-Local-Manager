@@ -1,10 +1,5 @@
-# .NET
-bin/
-obj/
+# Build-Ausgaben
 publish/
-*.user
-.vs/
-TestResults/
 
 # Lokale Einstellungen und Spike-Daten (ungeprüfte Logs nicht einchecken)
 appsettings.Development.json
@@ -24,10 +19,10 @@ spike/
 # Laufzeitdaten, die nie eingecheckt werden dürfen
 *.log
 # Anonymisierte Beispiel-Logs für Tests (Beispiel-IPs, erfundene Mods und Server)
-!tests/ReforgerModSync.Core.Tests/Samples/*.log
+!tauri/crates/rms-core/tests/samples/*.log
 rms_server_password.txt
 
-# Rust/Tauri (Branch tauri)
+# Rust und Tauri
 /tauri/target/
 /tauri/app/node_modules/
 /tauri/app/ui/dist/

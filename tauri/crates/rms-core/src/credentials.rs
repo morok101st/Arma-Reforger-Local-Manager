@@ -1,5 +1,5 @@
 //! Server-Passwörter gehören zu einem Profil und seiner Adresse: Sie werden nie für ein anderes Profil und
-//! ohne Zustimmung des Nutzers nie für eine andere Adresse verwendet. Gleiche Einträge wie die WPF-App.
+//! ohne Zustimmung des Nutzers nie für eine andere Adresse verwendet. Gleiche Einträge wie die C#-Vorgängerversion.
 
 use std::io;
 

@@ -1,4 +1,4 @@
-/* Farben der App wie bei der WPF-Ausgabe: dunkle Flächen, Gold als Akzent. */
+/* Farben der App wie bei der C#-Vorgängerversion: dunkle Flächen, Gold als Akzent. */
 :root {
   --gold: #ffc720;
   --gold-light: #ffda66;
@@ -367,7 +367,7 @@ body.running .sidebar-actions {
   font-weight: 600;
 }
 
-/* Ladeanzeige: drei Balken, wie bei der WPF-Ausgabe. */
+/* Ladeanzeige: drei Balken, wie bei der C#-Vorgängerversion. */
 .busy {
   display: none;
   gap: 5px;

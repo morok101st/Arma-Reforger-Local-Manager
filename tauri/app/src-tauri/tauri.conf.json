@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Reforger Sync & Launch (Vorschau)",
-  "mainBinaryName": "ReforgerSyncLaunch-Tauri",
+  "productName": "Reforger Sync & Launch",
+  "mainBinaryName": "ReforgerSyncLaunch",
   "identifier": "de.morok.reforgersynclaunch.tauri",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -13,7 +13,7 @@
     "withGlobalTauri": false,
     "windows": [
       {
-        "title": "Reforger Sync & Launch (Vorschau)",
+        "title": "Reforger Sync & Launch",
         "width": 1080,
         "height": 830,
         "minWidth": 820,

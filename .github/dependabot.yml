@@ -1,4 +1,4 @@
-# Schlägt Updates für die Actions im Release-Workflow und die NuGet-Pakete vor, als Pull Request gegen dev.
+# Schlägt Updates für die Actions im Release-Workflow und die Rust- und npm-Pakete vor, als Pull Request gegen dev.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -6,23 +6,15 @@ updates:
     target-branch: dev
     schedule:
       interval: weekly
-  - package-ecosystem: nuget
-    directory: /
-    target-branch: dev
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
-  # Tauri-Vorschau. Dependabot liest diese Datei nur vom Standard-Branch, die Einträge wirken also erst,
-  # wenn sie dort ankommen. Ziel ist dann der Branch, auf dem die Vorschau liegt.
   - package-ecosystem: cargo
     directory: /tauri
-    target-branch: tauri
+    target-branch: dev
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
   - package-ecosystem: npm
     directory: /tauri/app
-    target-branch: tauri
+    target-branch: dev
     schedule:
       interval: weekly
     open-pull-requests-limit: 5

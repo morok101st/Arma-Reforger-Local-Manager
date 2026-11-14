@@ -26,7 +26,7 @@ impl ClientProcess for FakeClient {
 }
 
 pub fn samples_dir() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../tests/ReforgerModSync.Core.Tests/Samples")
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/samples")
 }
 
 pub fn sample(name: &str) -> String {

@@ -11,7 +11,7 @@ use regex::Regex;
 
 pub const KEEP_RUNS: usize = 10;
 
-/// Format der Ordnernamen je Lauf, sortiert sich als Text zeitlich richtig. Gleich wie bei der WPF-App.
+/// Format der Ordnernamen je Lauf, sortiert sich als Text zeitlich richtig. Gleich wie bei der C#-Vorgängerversion.
 pub const RUN_FOLDER_FORMAT: &str = "%Y%m%d-%H%M%S-%3f";
 
 /// Auch das ältere Format ohne Millisekunden (vor 0.4.0), damit diese Ordner nicht ewig liegen bleiben.

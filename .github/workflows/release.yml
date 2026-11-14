@@ -1,7 +1,5 @@
-# Baut bei einem Versions-Tag (z. B. v0.1.0) das Paket und veröffentlicht es als Release.
-# Versionen unter 1.0 erscheinen als Vorabversion.
+# Baut bei einem Tag wie v0.5.0 das Paket und veröffentlicht es. Versionen unter 1.0 erscheinen als Vorabversion.
 # Actions sind per Commit-SHA eingebunden, damit ein verschobener Tag nichts Fremdes ausführt.
-# Dependabot (.github/dependabot.yml) schlägt neue Versionen vor.
 name: Release
 
 on:
@@ -22,12 +20,29 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          dotnet-version: 10.0.x
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tauri/app/package-lock.json
 
-      - name: Tests
-        run: dotnet test ReforgerModSync.slnx -c Release --nologo
+      - name: Rust
+        shell: powershell
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy
+          rustup default stable
+
+      - name: Tests und Clippy
+        working-directory: tauri
+        run: |
+          cargo clippy --workspace --all-targets --locked -- -D warnings
+          cargo test --workspace --locked
+
+      - name: Bekannte Sicherheitslücken in Abhängigkeiten
+        working-directory: tauri
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit
 
       - name: Paket bauen
         shell: powershell
@@ -45,8 +60,7 @@ jobs:
           $hash = (Get-FileHash $zip.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           $hashFile = "$($zip.FullName).sha256"
           [IO.File]::WriteAllText($hashFile, "$hash  $($zip.Name)`n")
-          $notes = "Installation: ZIP nach %LOCALAPPDATA%\Programs\ReforgerSyncLaunch entpacken und ReforgerSyncLaunch.exe starten. Alles Weitere steht in LIES-MICH.txt im Paket. Voraussetzungen: Windows 10 oder 11 (64 Bit), Steam und Arma Reforger.`n`nSHA-256 von $($zip.Name):`n``$hash``"
-          $options = @()
-          if ($tag.StartsWith('v0.')) { $options += '--prerelease' }
-          & gh release create $tag $zip.FullName $hashFile --verify-tag --title "Reforger Sync & Launch $tag" --notes $notes @options
+          $notes = "Installation: ZIP nach %LOCALAPPDATA%\Programs\ReforgerSyncLaunch entpacken und ReforgerSyncLaunch.exe starten. Einstellungen und Passwörter früherer Versionen bleiben erhalten. Alles Weitere steht in LIES-MICH.txt im Paket. Voraussetzungen: Windows 10 oder 11 (64 Bit), WebView2, Steam und Arma Reforger.`n`nSHA-256 von $($zip.Name):`n``$hash``"
+          $prerelease = if ($tag -match '^v0\.') { @('--prerelease') } else { @() }
+          & gh release create $tag $zip.FullName $hashFile --verify-tag @prerelease --title "Reforger Sync & Launch $tag" --notes $notes
           if ($LASTEXITCODE -ne 0) { throw 'Release konnte nicht erstellt werden' }

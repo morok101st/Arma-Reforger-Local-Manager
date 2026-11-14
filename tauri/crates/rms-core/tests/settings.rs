@@ -262,7 +262,7 @@ fn damaged_file_is_reported_and_left_untouched() {
     assert_eq!(fs::read_to_string(&path).unwrap(), "{ kaputt");
 }
 
-/// Beide Ausgaben teilen sich die Datei. Eine Datei der WPF-App muss gleich gelesen und ohne Verlust geschrieben werden.
+/// Eine Datei der C#-Vorgängerversion muss gleich gelesen und ohne Verlust geschrieben werden.
 #[test]
 fn a_file_written_by_the_wpf_app_round_trips_unchanged() {
     let wpf = r#"{
@@ -367,7 +367,7 @@ fn damaged_cache_counts_as_not_fetched() {
     assert!(ModListCache::new(temp.path()).load("a").is_none());
 }
 
-/// So schreibt die WPF-App den Zwischenspeicher (System.Text.Json ohne Optionen).
+/// So schreibt die C#-Vorgängerversion den Zwischenspeicher (System.Text.Json ohne Optionen).
 #[test]
 fn reads_the_cache_of_the_wpf_app() {
     let temp = common::temp_dir();

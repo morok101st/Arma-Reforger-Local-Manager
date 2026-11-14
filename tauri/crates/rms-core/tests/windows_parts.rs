@@ -270,7 +270,7 @@ fn two_profiles_on_the_same_server_have_separate_passwords() {
     assert_eq!(store.read_password(OTHER_ADDRESS, &profiles.0[0]).unwrap(), None);
 }
 
-/// Gleicher Eintrag wie bei der WPF-App: Ein dort gespeichertes Passwort gilt auch hier.
+/// Gleicher Eintrag wie bei der C#-Vorgängerversion: Ein dort gespeichertes Passwort gilt auch hier.
 #[test]
 fn target_name_matches_the_wpf_app() {
     assert_eq!(rms_core::credentials::target_name(" 203.0.113.10:2001 ", "abc"), "ReforgerModSync:Server:203.0.113.10:2001:abc");

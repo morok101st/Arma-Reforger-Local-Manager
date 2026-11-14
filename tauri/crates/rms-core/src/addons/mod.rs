@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 
 /// Eine Mod aus der Liste des Servers. Ohne Version zählt jede vollständige lokale Version als aktuell.
 ///
-/// Die Feldnamen entsprechen dem Zwischenspeicher der WPF-App (`modlists\<id>.json`).
+/// Die Feldnamen entsprechen dem Zwischenspeicher der C#-Vorgängerversion (`modlists\<id>.json`).
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ModEntry {

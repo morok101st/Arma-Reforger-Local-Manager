@@ -21,7 +21,7 @@ fn main() {
     if tauri::webview_version().is_err() {
         show_error(
             "Microsoft Edge WebView2 fehlt",
-            "Reforger Sync & Launch (Vorschau) braucht die Microsoft Edge WebView2 Runtime. Unter Windows 11 ist sie dabei, \
+            "Reforger Sync & Launch braucht die Microsoft Edge WebView2 Runtime. Unter Windows 11 ist sie dabei, \
              unter Windows 10 lässt sie sich kostenlos bei Microsoft herunterladen (\"WebView2 Runtime\").",
         );
         return;
@@ -29,7 +29,7 @@ fn main() {
 
     let paths = AppPaths::default_for_user();
     let _log_guard = start_logging(&paths);
-    info!("Reforger Sync & Launch (Vorschau) {} gestartet", rms_core::VERSION);
+    info!("Reforger Sync & Launch {} gestartet", rms_core::VERSION);
     password_file::clean_up_leftovers(&paths);
 
     let state = AppState::new(SettingsStore::new(default_settings_file()), paths);
@@ -46,7 +46,7 @@ fn main() {
         .manage(state)
         .setup(|app| {
             if let Some(window) = app.get_webview_window("main") {
-                let _ = window.set_title(&format!("Reforger Sync & Launch {} (Vorschau)", rms_core::VERSION));
+                let _ = window.set_title(&format!("Reforger Sync & Launch {}", rms_core::VERSION));
                 // Nie höher als der Arbeitsbereich des Bildschirms.
                 if let (Ok(Some(monitor)), Ok(size)) = (window.current_monitor(), window.outer_size()) {
                     let available = monitor.work_area().size.height;
@@ -113,7 +113,7 @@ fn main() {
     });
 }
 
-/// Tägliche Logdatei neben denen der WPF-App, mit eigenem Namen.
+/// Tägliche Logdatei neben denen der C#-Vorgängerversion, mit eigenem Namen.
 fn start_logging(paths: &AppPaths) -> Option<tracing_appender::non_blocking::WorkerGuard> {
     let appender = tracing_appender::rolling::Builder::new()
         .rotation(tracing_appender::rolling::Rotation::DAILY)
@@ -127,7 +127,7 @@ fn start_logging(paths: &AppPaths) -> Option<tracing_appender::non_blocking::Wor
     Some(guard)
 }
 
-/// Ortszeit wie in den Logs der WPF-App, nicht UTC.
+/// Ortszeit wie in den Logs der C#-Vorgängerversion, nicht UTC.
 struct LocalTime;
 
 impl tracing_subscriber::fmt::time::FormatTime for LocalTime {

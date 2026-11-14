@@ -187,7 +187,7 @@ fn to_profile(input: &ProfileInput, previous: Option<&ServerProfile>) -> ServerP
         name: input.name.trim().to_string(),
         server_address: combine_server_address(Some(&input.ip), Some(&input.port)),
         download_dir: normalize_download_dir(Some(&input.download_dir)),
-        // Felder, die nur die WPF-App kennt, bleiben erhalten.
+        // Felder, die nur die C#-Vorgängerversion kennt, bleiben erhalten.
         extra: previous.map(|profile| profile.extra.clone()).unwrap_or_default(),
     }
 }

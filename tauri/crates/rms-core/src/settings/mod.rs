@@ -1,7 +1,7 @@
-//! Einstellungen pro Windows-Benutzer, im selben JSON-Format wie die WPF-App.
+//! Einstellungen pro Windows-Benutzer, im selben JSON-Format wie die C#-Vorgängerversion.
 //!
-//! Beide Ausgaben teilen sich die Datei. Felder, die diese Ausgabe nicht kennt, bleiben beim Speichern
-//! erhalten. Die WPF-App verwirft unbekannte Felder, deshalb fügt diese Ausgabe keine eigenen hinzu.
+//! Die C#-Vorgängerversion nutzte dieselbe Datei. Felder, die diese Ausgabe nicht kennt, bleiben beim Speichern
+//! erhalten. Die C#-Vorgängerversion verwirft unbekannte Felder, deshalb fügt diese Ausgabe keine eigenen hinzu.
 
 mod basic;
 mod profile_input;
@@ -128,7 +128,7 @@ impl TimeoutSettings {
     }
 }
 
-/// `null` in der Datei gilt wie ein fehlender Wert, so wie bei der WPF-App nach der Bereinigung.
+/// `null` in der Datei gilt wie ein fehlender Wert, so wie bei der C#-Vorgängerversion nach der Bereinigung.
 fn null_as_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
     D: Deserializer<'de>,

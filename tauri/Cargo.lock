@@ -2654,7 +2654,7 @@ dependencies = [
 
 [[package]]
 name = "reforger-sync-launch"
-version = "0.1.0"
+version = "0.5.0"
 dependencies = [
  "chrono",
  "rms-core",
@@ -2763,7 +2763,7 @@ dependencies = [
 
 [[package]]
 name = "rms-cli"
-version = "0.1.0"
+version = "0.5.0"
 dependencies = [
  "rms-core",
  "tokio",
@@ -2772,7 +2772,7 @@ dependencies = [
 
 [[package]]
 name = "rms-core"
-version = "0.1.0"
+version = "0.5.0"
 dependencies = [
  "chrono",
  "dirs",

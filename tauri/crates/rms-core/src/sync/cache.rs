@@ -1,5 +1,5 @@
 //! Merkt sich die zuletzt geholte Liste, damit die Übersicht beim App-Start ohne Spielfenster auskommt.
-//! Gleiches Format wie die WPF-App (`modlists\<Profil-ID>.json`), damit beide denselben Stand zeigen.
+//! Gleiches Format wie die C#-Vorgängerversion (`modlists\<Profil-ID>.json`), damit beide denselben Stand zeigen.
 
 use std::fs;
 use std::io;
@@ -18,12 +18,12 @@ pub struct CachedModList {
     pub mods: Vec<ModEntry>,
 }
 
-/// Mikrosekunden mit Zeitzone, so liest auch die WPF-App den Wert.
+/// Mikrosekunden mit Zeitzone, so liest auch die C#-Vorgängerversion den Wert.
 fn write_time<S: Serializer>(time: &DateTime<FixedOffset>, serializer: S) -> Result<S::Ok, S::Error> {
     serializer.serialize_str(&time.to_rfc3339_opts(SecondsFormat::Micros, false))
 }
 
-/// Die WPF-App schreibt bis zu sieben Nachkommastellen und die Zeitzone, ältere Einträge auch ohne Zeitzone.
+/// Die C#-Vorgängerversion schreibt bis zu sieben Nachkommastellen und die Zeitzone, ältere Einträge auch ohne Zeitzone.
 fn read_time<'de, D: Deserializer<'de>>(deserializer: D) -> Result<DateTime<FixedOffset>, D::Error> {
     let text = String::deserialize(deserializer)?;
     DateTime::parse_from_rfc3339(&text)

@@ -1,5 +1,5 @@
-//! Es kann immer nur ein Client laufen. Die Sperre gilt profilübergreifend und auch zwischen der WPF-App
-//! und dieser Ausgabe, deshalb derselbe Name.
+//! Es kann immer nur ein Client laufen. Die Sperre gilt profilübergreifend und auch gegenüber der C#-Vorgängerversion
+//! (falls sie noch installiert ist), deshalb derselbe Name.
 
 use windows::Win32::Foundation::WAIT_OBJECT_0;
 use windows::Win32::System::Threading::{CreateSemaphoreW, ReleaseSemaphore, WaitForSingleObject};

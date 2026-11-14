@@ -36,7 +36,7 @@ impl SettingsStore {
             Err(source) => return Err(self.io_error(source)),
         };
 
-        // Die WPF-App schreibt eine BOM nicht, ein Editor vielleicht schon.
+        // Die C#-Vorgängerversion schreibt eine BOM nicht, ein Editor vielleicht schon.
         let text = text.strip_prefix('\u{feff}').unwrap_or(&text);
         let settings: Option<AppSettings> =
             serde_json::from_str(text).map_err(|source| SettingsError::Damaged { path: self.file_path.clone(), source })?;

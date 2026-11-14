@@ -20,6 +20,7 @@ Den Download übernimmt dein installierter Arma-Reforger-Client mit einer kleine
 ## Voraussetzungen
 
 - Windows 10 oder 11, 64 Bit
+- Microsoft Edge WebView2 Runtime (unter Windows 11 dabei, unter Windows 10 meist mit Edge installiert; fehlt sie, meldet die App das beim Start)
 - Steam läuft, Arma Reforger ist installiert
 - IP-Adresse, Port und gegebenenfalls Passwort des Servers
 - Zum Prüfen und Synchronisieren muss der Server laufen, sonst wird sein Eintrag bei Bohemia nicht gefunden
@@ -112,7 +113,7 @@ Die App hebt die Protokolle der letzten 14 Tage und die Spiel-Logs der letzten 1
 
 1. In der App jeden Server mit **Server entfernen** löschen. Dabei werden auch die gespeicherten Passwörter gelöscht.
 2. Den Ordner der App löschen.
-3. Optional auch `%APPDATA%\ReforgerModSync` und `%LOCALAPPDATA%\ReforgerModSync` löschen.
+3. Optional auch `%APPDATA%\ReforgerModSync` und `%LOCALAPPDATA%\ReforgerModSync` löschen, dazu den Ordner `%LOCALAPPDATA%\de.morok.reforgersynclaunch.tauri` von WebView2.
 
 Die geladenen Mods bleiben erhalten.
 
@@ -284,40 +285,24 @@ sequenceDiagram
 
 ## Entwicklung
 
-Gebaut mit C#, .NET 10 und WPF. Benötigt wird das .NET 10 SDK unter Windows.
+Gebaut mit Rust und Tauri 2, die Oberfläche mit TypeScript, HTML und CSS. Benötigt werden Rust (rustup mit MSVC, dazu die Visual Studio Build Tools mit C++) und Node.js.
 
 | Ordner | Inhalt |
 |---|---|
-| `src/ReforgerModSync.Core` | Die gesamte Logik: Abgleich, Startparameter, Logzeilen, Sync, Einstellungen, Passwörter |
-| `src/ReforgerModSync.App` | Die Oberfläche (WPF), erzeugt `ReforgerSyncLaunch.exe` |
-| `src/ReforgerModSync.Cli` | Konsole zum Testen: `status` und `sync [--server <Name>]` |
-| `helper/ReforgerModSyncHelper` | Die Hilfs-Mod, die der Spielclient ungepackt lädt |
-| `tests/ReforgerModSync.Core.Tests` | Tests für Core |
-
-```powershell
-dotnet build ReforgerModSync.slnx                                                  # App, CLI und Tests bauen
-dotnet test ReforgerModSync.slnx                                                   # Tests
-dotnet run --project src\ReforgerModSync.Cli -- status                             # Stand aller Server, ohne Spielstart
-powershell -ExecutionPolicy Bypass -File scripts\build-package.ps1 -Version 0.4.0  # Paket bauen
-```
-
-Ein Tag wie `v0.4.0` baut das Paket über GitHub Actions und veröffentlicht es als Release. Die App zeigt dann genau diese Version an, lokale Builds melden `0.0.0-dev`. Versionen unter 1.0 erscheinen als Vorabversion.
-
-### Vorschau mit Rust und Tauri
-
-Unter `tauri/` liegt ein Nachbau mit Rust und Tauri. Er kann dasselbe, nutzt dieselben Einstellungen, Passwörter und dieselbe Sperre und lässt sich parallel zur WPF-App verwenden. Das Paket ist rund 2 MB groß statt rund 54 MB. Benötigt werden Rust (rustup mit MSVC, dazu die Visual Studio Build Tools mit C++) und Node.js.
-
-| Ordner | Inhalt |
-|---|---|
-| `tauri/crates/rms-core` | Die gesamte Logik, entspricht `ReforgerModSync.Core` |
+| `tauri/crates/rms-core` | Die gesamte Logik: Abgleich, Startparameter, Logzeilen, Sync, Einstellungen, Passwörter |
+| `tauri/crates/rms-core/tests` | Tests, mit anonymisierten Beispiel-Logs unter `samples` |
 | `tauri/crates/rms-cli` | Konsole: `status`, `check` und `sync [--server <Name>]` |
-| `tauri/app/src-tauri` | Tauri-Backend, erzeugt `ReforgerSyncLaunch-Tauri.exe` |
+| `tauri/app/src-tauri` | Tauri-Backend, erzeugt `ReforgerSyncLaunch.exe` |
 | `tauri/app/ui` | Oberfläche (TypeScript, HTML, CSS) |
+| `helper/ReforgerModSyncHelper` | Die Hilfs-Mod, die der Spielclient ungepackt lädt |
 
 ```powershell
-cd tauri; cargo test --workspace                                                           # Tests, nutzen die Beispiel-Logs aus tests/
-cd tauri\app; npm ci; npx tauri dev                                                        # App mit Neuladen beim Ändern
-powershell -ExecutionPolicy Bypass -File scripts\build-tauri-package.ps1 -Version 0.1.0    # Paket nach publish\tauri
+cd tauri; cargo test --workspace                                                     # Tests
+cd tauri; cargo run -p rms-cli -- status                                             # Stand aller Server, ohne Spielstart
+cd tauri\app; npm ci; npx tauri dev                                                  # App mit Neuladen beim Ändern
+powershell -ExecutionPolicy Bypass -File scripts\build-package.ps1 -Version 0.5.0    # Paket nach publish
 ```
 
-Ein Tag wie `tauri-v0.1.0` baut das Paket über GitHub Actions und veröffentlicht es als Vorabversion. Die Oberfläche darf nur die eigenen Befehle der App aufrufen, keine Datei-, Shell- oder Netzwerk-Plugins.
+Ein Tag wie `v0.5.0` baut das Paket über GitHub Actions und veröffentlicht es als Release. Versionen unter 1.0 erscheinen als Vorabversion. Die Oberfläche darf nur die eigenen Befehle der App aufrufen, keine Datei-, Shell- oder Netzwerk-Plugins.
+
+Bis Version 0.4 war die App in C# mit WPF gebaut. Die heutige Version liest deren Einstellungen, Passwörter und gemerkte Mod-Listen unverändert weiter.

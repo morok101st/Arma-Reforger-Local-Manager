@@ -1,4 +1,4 @@
-//! Kommandozeile der Vorschau. Server, Passwörter und Zielordner werden in der App hinterlegt.
+//! Kommandozeile. Server, Passwörter und Zielordner werden in der App hinterlegt.
 
 use std::process::ExitCode;
 use std::sync::Arc;

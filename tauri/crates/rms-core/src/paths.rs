@@ -1,8 +1,8 @@
-//! Ablageorte der App. Dieselben Ordner wie die WPF-App, damit beide dieselben Daten nutzen.
+//! Ablageorte der App. Dieselben Ordner wie die C#-Vorgängerversion, damit beide dieselben Daten nutzen.
 
 use std::path::{Path, PathBuf};
 
-/// Name des Datenordners, gemeinsam mit der WPF-App.
+/// Name des Datenordners, gemeinsam mit der C#-Vorgängerversion.
 pub const DATA_FOLDER: &str = "ReforgerModSync";
 
 /// Ablageorte unter `%LOCALAPPDATA%\ReforgerModSync`. Tests übergeben einen eigenen Basisordner.
@@ -40,7 +40,7 @@ impl AppPaths {
     }
 }
 
-/// `%APPDATA%\ReforgerModSync\settings.json`, dieselbe Datei wie bei der WPF-App.
+/// `%APPDATA%\ReforgerModSync\settings.json`, dieselbe Datei wie bei der C#-Vorgängerversion.
 pub fn default_settings_file() -> PathBuf {
     dirs::config_dir().unwrap_or_else(|| PathBuf::from(".")).join(DATA_FOLDER).join("settings.json")
 }
