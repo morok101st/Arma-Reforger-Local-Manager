@@ -2,6 +2,7 @@
 //!   -rmsServer <IP:Port>                  Mod-Liste des Servers melden
 //!   -rmsServer <IP:Port> -rmsMods "a;b"   diese Mods in der Version des Servers laden
 //!   -rmsJoin <IP:Port>                    dem Server beitreten
+//!   -rmsModset                            Mods aus $profile:rms_modset.txt laden, ohne Server (RMS_Modset.c)
 //! Status steht mit Praefix [RMS] im console.log. Das Passwort kommt aus einer Datei im Log-Ordner
 //! (-logsDir) oder im Profil, nie aus den Startparametern.
 
@@ -409,6 +410,7 @@ modded class ArmaReforgerScripted
 {
 	protected ref RMS_Downloader m_RmsDownloader;
 	protected ref RMS_RoomReader m_RmsRoomReader;
+	protected ref RMS_ModsetDownloader m_RmsModsetDownloader;
 	protected bool m_bRmsChecked;
 
 	override void OnUpdate(BaseWorld world, float timeslice)
@@ -420,7 +422,11 @@ modded class ArmaReforgerScripted
 			m_bRmsChecked = true;
 
 			string server;
-			if (System.GetCLIParam("rmsJoin", server))
+			if (System.IsCLIParam("rmsModset"))
+			{
+				m_RmsModsetDownloader = new RMS_ModsetDownloader();
+			}
+			else if (System.GetCLIParam("rmsJoin", server))
 			{
 				m_RmsRoomReader = new RMS_RoomReader(server, true, null);
 			}
@@ -439,5 +445,8 @@ modded class ArmaReforgerScripted
 
 		if (m_RmsRoomReader)
 			m_RmsRoomReader.Tick();
+
+		if (m_RmsModsetDownloader)
+			m_RmsModsetDownloader.Tick(timeslice);
 	}
 }
