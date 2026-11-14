@@ -1,0 +1,457 @@
+[
+  {
+    "modId": "B425EAF04B1E631E",
+    "name": "10RR GM Garrison",
+    "version": "1.0.4"
+  },
+  {
+    "modId": "629B2BA37EFFD577",
+    "name": "WCS_Armaments",
+    "version": "9.0.2"
+  },
+  {
+    "modId": "659551902A4F0D0C",
+    "name": "RVX_Core",
+    "version": "1.0.21"
+  },
+  {
+    "modId": "64C912EF952E1075",
+    "name": "ToH ReCharacters Core",
+    "version": "1.2.2"
+  },
+  {
+    "modId": "65FB50F7FA33DECA",
+    "name": "ToH ReCharacters African",
+    "version": "1.2.0"
+  },
+  {
+    "modId": "65FB5184A09FE8A1",
+    "name": "ToH ReCharacters Asian",
+    "version": "1.2.0"
+  },
+  {
+    "modId": "65FB4A6CFFC4079C",
+    "name": "ToH ReCharacters European",
+    "version": "1.2.0"
+  },
+  {
+    "modId": "65FB51CDA61F1071",
+    "name": "ToH ReCharacters Greek",
+    "version": "1.2.0"
+  },
+  {
+    "modId": "65FB5234B4A8E20B",
+    "name": "ToH ReCharacters Livonian",
+    "version": "1.2.0"
+  },
+  {
+    "modId": "65FB762EB503CCF9",
+    "name": "ToH ReCharacters Persian",
+    "version": "1.2.0"
+  },
+  {
+    "modId": "65FB5265B4F72F4B",
+    "name": "ToH ReCharacters Russian",
+    "version": "1.2.0"
+  },
+  {
+    "modId": "65FB52DAABB24B05",
+    "name": "ToH ReCharacters Tanoan",
+    "version": "1.2.0"
+  },
+  {
+    "modId": "596330D9AF34AF38",
+    "name": "ToH ReCharacters Man",
+    "version": "1.2.0"
+  },
+  {
+    "modId": "62AB03B09CC4344F",
+    "name": "ToH ReCharacters All",
+    "version": "1.2.0"
+  },
+  {
+    "modId": "64B73652C12170E6",
+    "name": "ToH ReCharacters Woman",
+    "version": "1.2.0"
+  },
+  {
+    "modId": "69C55255199FEB2C",
+    "name": "15th MEU CruiseControl",
+    "version": "1.2.1"
+  },
+  {
+    "modId": "65AD7D0D9941A380",
+    "name": "ACE Core Dev",
+    "version": "1.5.41"
+  },
+  {
+    "modId": "65AD7C139EB4C1A1",
+    "name": "ACE Backblast Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "68F77A54920B80AF",
+    "name": "ACE Ballistics Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "65AD7C249E4ECDFB",
+    "name": "ACE Captives Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "65AD7C379CBD394D",
+    "name": "ACE Carrying Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "65AD7BCC9F6B3B4E",
+    "name": "ACE Chopping Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "65AD7CF69FAF1FDD",
+    "name": "ACE Compass Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "664AFDC993C9CE1A",
+    "name": "ACE Cook-Off Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "65AD7D1E9EEAFA53",
+    "name": "ACE Explosives Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "65AD7D2E9866FA6E",
+    "name": "ACE Finger Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "65AD7D4099944EBD",
+    "name": "ACE Magazine Repack Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "6586079789278413",
+    "name": "ACE Medical Core Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "65AD7D4F994EA327",
+    "name": "ACE Medical Circulation Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "65B343F799FB521B",
+    "name": "ACE Medical Hitzones Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "65B8EA178A3E94E3",
+    "name": "ACE Overheating Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "65AD7CB89F219E38",
+    "name": "ACE Tactical Ladder Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "65AD7CD09CAEC4E2",
+    "name": "ACE Tactical Periscope Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "65AD7CE59E8DB349",
+    "name": "ACE Trenches Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "667B230F9505C8BA",
+    "name": "ACE Weather Dev",
+    "version": "1.5.40"
+  },
+  {
+    "modId": "66DF6C37335B0554",
+    "name": "AHC Fuel Systems",
+    "version": "0.1.5"
+  },
+  {
+    "modId": "6276E6E3CC97A22B",
+    "name": "AUS_CORE",
+    "version": "0.1.16"
+  },
+  {
+    "modId": "6624E618B9058265",
+    "name": "Coalition VON",
+    "version": "3.0.7"
+  },
+  {
+    "modId": "5F268647F8A1A1F4",
+    "name": "CRX Enfusion A.I.",
+    "version": "1.3.75"
+  },
+  {
+    "modId": "68FAFAEBDEB4C6C7",
+    "name": "CRX Enfusion A.I. Translation",
+    "version": "1.0.8"
+  },
+  {
+    "modId": "5F2944B7474F043F",
+    "name": "Disable Game Master Budgets",
+    "version": "1.0.5"
+  },
+  {
+    "modId": "62E0BA06F6046CC7",
+    "name": "Earplugs",
+    "version": "1.0.2"
+  },
+  {
+    "modId": "60CC94C046837439",
+    "name": "Game Master Copy Paste",
+    "version": "1.0.5"
+  },
+  {
+    "modId": "5964E0B3BB7410CE",
+    "name": "Game Master Enhanced",
+    "version": "1.3.9"
+  },
+  {
+    "modId": "5994AD5A9F33BE57",
+    "name": "Game Master FX",
+    "version": "1.9.0"
+  },
+  {
+    "modId": "628B48364AFD286C",
+    "name": "GM Editable Intel",
+    "version": "1.7.0"
+  },
+  {
+    "modId": "64EE818E08AFCF94",
+    "name": "MFD Framework",
+    "version": "0.5.10"
+  },
+  {
+    "modId": "6A1A34CAC30229CF",
+    "name": "M240H",
+    "version": "0.0.2"
+  },
+  {
+    "modId": "61957C5C6FB7A773",
+    "name": "H-47 Chinook",
+    "version": "0.7.35"
+  },
+  {
+    "modId": "62FB310E11068295",
+    "name": "HESCO V1",
+    "version": "1.0.9"
+  },
+  {
+    "modId": "632F64CB7D65D1FC",
+    "name": "TraceVehCore",
+    "version": "1.0.67"
+  },
+  {
+    "modId": "69F415A5B15EC350",
+    "name": "Hmmwv Variants",
+    "version": "2.0.0"
+  },
+  {
+    "modId": "620E426C34BE0D17",
+    "name": "Laser Rangefinder",
+    "version": "1.0.12"
+  },
+  {
+    "modId": "613B4DD4A91CA144",
+    "name": "LM Suppression",
+    "version": "1.8.0"
+  },
+  {
+    "modId": "61C2509A023211FE",
+    "name": "M4 MAAWS",
+    "version": "0.9.12"
+  },
+  {
+    "modId": "5F0D245931200FD1",
+    "name": "Railway Generator",
+    "version": "1.0.5"
+  },
+  {
+    "modId": "5DE612963E4B005A",
+    "name": "Rail Enfusion Redux",
+    "version": "1.0.12"
+  },
+  {
+    "modId": "672166DE5926F11F",
+    "name": "Minus Building Pack",
+    "version": "1.0.69"
+  },
+  {
+    "modId": "5B1CD0C293D38C98",
+    "name": "ZBK",
+    "version": "1.0.20"
+  },
+  {
+    "modId": "59CF333B3A309D6E",
+    "name": "Mussalo",
+    "version": "0.9.71"
+  },
+  {
+    "modId": "68E13DB914127404",
+    "name": "Operations Briefing System",
+    "version": "1.1.5"
+  },
+  {
+    "modId": "61110CC4F1FF9C8A",
+    "name": "Placeables for GM byHeine",
+    "version": "3.1.5"
+  },
+  {
+    "modId": "1337C0DE5DABBEEF",
+    "name": "RHS - Content Pack 01",
+    "version": "0.17.5281"
+  },
+  {
+    "modId": "BADC0DEDABBEDA5E",
+    "name": "RHS - Content Pack 02",
+    "version": "0.17.5281"
+  },
+  {
+    "modId": "595F2BF2F44836FB",
+    "name": "RHS - Status Quo",
+    "version": "0.17.5281"
+  },
+  {
+    "modId": "5ABD0CB57F7E9EB1",
+    "name": "RIS Laser Attachments",
+    "version": "1.8.0"
+  },
+  {
+    "modId": "5E329785BB8B38F2",
+    "name": "Shoot Houses BETA",
+    "version": "0.0.4"
+  },
+  {
+    "modId": "60ED3CC6E7E40221",
+    "name": "Sikorsky H60 Project",
+    "version": "0.6.58"
+  },
+  {
+    "modId": "6718FE4BBDA71C7C",
+    "name": "SkyMap-X",
+    "version": "1.0.120"
+  },
+  {
+    "modId": "69F4BEC16D4801EE",
+    "name": "SIDC-Framework",
+    "version": "1.0.31"
+  },
+  {
+    "modId": "6B10A0E1B21D6E02",
+    "name": "SIDC-SMX-Bridge",
+    "version": "1.0.4"
+  },
+  {
+    "modId": "6A72FCCF5AAD7050",
+    "name": "SIDC-SecondMap",
+    "version": "1.0.14"
+  },
+  {
+    "modId": "6B10A0E1B21D6E01",
+    "name": "SIDC-SecondMap-SMX-Bridge",
+    "version": "1.0.5"
+  },
+  {
+    "modId": "68D349BB64AE5A97",
+    "name": "SpeedUI for Player and Vehicle",
+    "version": "1.0.17"
+  },
+  {
+    "modId": "628EDA2ABC937159",
+    "name": "Structures For GM byHeine",
+    "version": "1.2.29"
+  },
+  {
+    "modId": "6956FBD66C7A5A4E",
+    "name": "Throw Back Grenade",
+    "version": "1.0.6"
+  },
+  {
+    "modId": "5E389BB9F58B79A6",
+    "name": "WCS_SpaceCore",
+    "version": "9.0.1"
+  },
+  {
+    "modId": "5C721177A220B42F",
+    "name": "WCS_JLTV",
+    "version": "9.0.1"
+  },
+  {
+    "modId": "62F364B35E9B51B0",
+    "name": "Wirecutters 2",
+    "version": "1.1.12"
+  },
+  {
+    "modId": "69D749AA6B0012EB",
+    "name": "Recondos Accessible Packs",
+    "version": "1.0.4"
+  },
+  {
+    "modId": "672B195EAD3036D4",
+    "name": "Coop Slots Lobby",
+    "version": "0.4.8"
+  },
+  {
+    "modId": "69CB347A8B737FAD",
+    "name": "CoopSlotLobby CVON Module",
+    "version": "0.1.5"
+  },
+  {
+    "modId": "6AD93510879C73DF",
+    "name": "CoopSlotLobby-ToHRe Characters",
+    "version": "1.0.0"
+  },
+  {
+    "modId": "66ECC2B3CED2EC75",
+    "name": "101st Airborne Content Pack",
+    "version": "0.1.14"
+  },
+  {
+    "modId": "6942303003FAB9A9",
+    "name": "Airborne Weapons Pack Assets",
+    "version": "0.4.5"
+  },
+  {
+    "modId": "6942423806D8DC1A",
+    "name": "Airborne Weapons Pack Config",
+    "version": "0.4.5"
+  },
+  {
+    "modId": "64F0EB575E3F64E2",
+    "name": "101st Airborne Faction",
+    "version": "0.4.5"
+  },
+  {
+    "modId": "660E395AD366D1F7",
+    "name": "101st Airborne - Gameplay",
+    "version": "0.2.4"
+  },
+  {
+    "modId": "6AB7374BA1EB1B9A",
+    "name": "101stAirborne GameMasterAddons",
+    "version": "0.1.0"
+  },
+  {
+    "modId": "6886DC53C2285571",
+    "name": "101stAirborne MissionTemplates",
+    "version": "0.3.10"
+  },
+  {
+    "modId": "68B8F8E5238EEA07",
+    "name": "101st Airborne Trainings",
+    "version": "0.3.5"
+  }
+]
