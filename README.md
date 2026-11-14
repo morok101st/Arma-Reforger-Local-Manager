@@ -14,6 +14,7 @@ Beim Beitritt zu einem Server lädt Arma Reforger fehlende Mods erst dann, und d
 - **Mods laden:** Bringt alle Mods auf die Version des Servers. Das Spielfenster bleibt dabei ausgeblendet.
 - **Direkt beitreten:** Startet das Spiel und verbindet dich mit dem Server.
 - **Mehrere Server verwalten:** Jeder Server hat seine eigene Adresse, sein Passwort und seinen Zielordner. Weitere Server legst du links mit **Server hinzufügen** an.
+- **Server aus ARMM importieren:** Mit einer Datei `armm-sync.json` aus ARMM legst du einen Server per Klick an. Seine Mod-Liste kommt dann direkt aus ARMM: Prüfen geht in Sekunden ohne Spielstart, und laden kannst du auch, wenn der Spielserver gerade aus ist.
 
 Den Download übernimmt dein installierter Arma-Reforger-Client mit einer kleinen Hilfs-Mod, die dem Paket beiliegt. Das Tool spricht nicht selbst mit dem Bohemia Workshop.
 
@@ -23,7 +24,7 @@ Den Download übernimmt dein installierter Arma-Reforger-Client mit einer kleine
 - Microsoft Edge WebView2 Runtime (unter Windows 11 dabei, unter Windows 10 meist mit Edge installiert; fehlt sie, meldet die App das beim Start)
 - Steam läuft, Arma Reforger ist installiert
 - Adresse (Name oder IP), Port und gegebenenfalls Passwort des Servers
-- Zum Prüfen und Synchronisieren muss der Server laufen, sonst wird sein Eintrag bei Bohemia nicht gefunden
+- Zum Prüfen und Synchronisieren muss der Server laufen, sonst wird sein Eintrag bei Bohemia nicht gefunden. Bei einem aus ARMM importierten Server nicht, siehe [Server aus ARMM importieren](#server-aus-armm-importieren)
 
 ## Installation
 
@@ -62,6 +63,21 @@ Klicke danach auf **Speichern**. Dabei wird noch nicht geprüft, ob Adresse und 
 **Zielordner:** Die Mods liegen darin im Unterordner `addons`. Wähle den Ordner, der deinen vorhandenen `addons`-Ordner enthält, sonst wird alles neu geladen. Achtung: In einem eigenen Zielordner löscht der Sync alle Mods, die kein eingetragener Server mit diesem Ordner braucht, siehe [Gut zu wissen](#gut-zu-wissen).
 
 **Start über Steam (optional):** Mit „Direkt beitreten“ musst du nichts weiter einstellen, das Spiel nutzt deinen Zielordner automatisch. Nur wenn du das Spiel direkt über Steam startest und einen eigenen Zielordner gewählt hast, klappe „Nur beim Start über Steam“ auf und kopiere den Text in die Startoptionen (Arma Reforger › Eigenschaften › Startoptionen). Sonst lädt das Spiel beim Beitritt alles erneut.
+
+### Server aus ARMM importieren
+
+Betreibt ihr ARMM, bekommst du dort eine Datei `armm-sync.json`. Klicke links auf **Server importieren** und wähle die Datei. Die App zeigt dir, was sie anlegt: Name, ARMM-Adresse, Modset und Spielserver. Mit **Importieren** entsteht ein neuer Server, danach öffnen sich seine Einstellungen.
+
+![Vorschau beim Import aus ARMM](.github/screenshots/armm-import.png)
+
+- **Passwort und Zielordner** trägst du danach wie gewohnt ein. Das Server-Passwort steht nie in der Importdatei.
+- **Zugangsschlüssel:** Die Datei enthält deinen persönlichen Schlüssel für ARMM. Die App legt ihn verschlüsselt im Windows-Anmeldeinformationsspeicher ab, danach kannst du die Datei löschen. Gib sie nicht weiter.
+- **Neuer Schlüssel:** Importierst du später eine neue Datei für dasselbe Modset, bekommt der vorhandene Server nur den neuen Schlüssel. Name, Adresse, Passwort und Zielordner bleiben.
+- **Verbindung trennen:** In den Einstellungen unter **ARMM-Verbindung**. Der Server bleibt erhalten und holt seine Mod-Liste danach wieder vom laufenden Spielserver.
+
+![Einstellungen eines aus ARMM importierten Servers](.github/screenshots/armm-einstellungen.png)
+
+Ein importierter Server holt seine Mod-Liste per HTTPS aus ARMM. **Neu prüfen** startet dafür kein Spiel. **Jetzt synchronisieren** lädt die Mods auch, wenn der Spielserver aus ist: Die Hilfs-Mod findet sie im Workshop über ihren Namen oder über andere Mods des Modsets, die auf sie verweisen. Nur wenn eine Mod so nicht erreichbar ist, etwa weil der Server eine sehr alte Version verlangt, lädt die App sie über den Eintrag des laufenden Servers nach. Weicht die Liste aus ARMM dabei von der des Servers ab, warnt die App und löscht nichts.
 
 ### Grundeinstellungen (optional)
 
@@ -119,11 +135,13 @@ Die geladenen Mods bleiben erhalten.
 
 ## Abläufe und Schnittstellen
 
-Die App spricht weder mit Bohemia noch mit dem Spielserver. Sie startet den Spielclient, und die Hilfs-Mod in diesem Client erledigt den Rest. App und Hilfs-Mod verständigen sich nur über Startparameter und Dateien:
+Die App spricht weder mit Bohemia noch mit dem Spielserver. Sie startet den Spielclient, und die Hilfs-Mod in diesem Client erledigt den Rest. Einzige Ausnahme: Bei einem aus ARMM importierten Server ruft die App die Mod-Liste per HTTPS aus ARMM ab, sonst stellt sie keine Anfragen ins Netz. App und Hilfs-Mod verständigen sich nur über Startparameter und Dateien:
 
 | Richtung | Schnittstelle | Inhalt |
 |---|---|---|
-| App → Hilfs-Mod | Startparameter | `-rmsServer`, `-rmsMods` oder `-rmsJoin` sagen ihr, was zu tun ist. Ohne sie macht sie nichts |
+| App → Hilfs-Mod | Startparameter | `-rmsServer`, `-rmsMods`, `-rmsModset` oder `-rmsJoin` sagen ihr, was zu tun ist. Ohne sie macht sie nichts |
+| App → Hilfs-Mod | Datei `rms_modset.txt` im Profil des Clients (nur ARMM-Server) | Die Mods aus ARMM, je Zeile ID, Version, Name und ob sie zu laden ist. Nichts Geheimes, die App löscht sie nach dem Lauf |
+| App → ARMM | HTTPS `GET {baseUrl}/api/sync/modsets/{modsetId}` mit `Authorization: Bearer <Schlüssel>` (nur ARMM-Server) | Die Mod-Liste des Modsets. Nur `https`, keine Umleitung auf `http`, Zeitlimit 15 s |
 | App → Hilfs-Mod | Datei `rms_server_password.txt` im Profil des Clients (Prüfen, Sync) oder im Log-Ordner des Laufs (Beitritt), beides unter `%LOCALAPPDATA%\ReforgerModSync` | Das Passwort. Die Hilfs-Mod löscht die Datei beim Lesen. Eine alte Datei ersetzt die App vor jedem Start |
 | Hilfs-Mod → App | `[RMS]`-Zeilen in der `console.log` des Clients | Fortschritt, Mod-Liste und Fehler |
 | Spielclient → App | Ordner `addons` im Zielordner | Die App liest die Versionen der Mods auf der Festplatte und vergleicht sie |
@@ -169,6 +187,24 @@ sequenceDiagram
 ```
 
 Statt `LIST_DONE` kann die Hilfs-Mod auch `ROOM_NOT_FOUND`, `ROOM_PASSWORD_REQUIRED`, `ROOM_PASSWORD_REJECTED` oder einen anderen Fehler melden. Die App zeigt dann eine passende Meldung.
+
+### Neu prüfen bei einem ARMM-Server
+
+```mermaid
+sequenceDiagram
+    actor N as Du
+    participant A as App
+    participant W as Windows-Anmeldeinformationsspeicher
+    participant R as ARMM
+
+    N->>A: Klick auf „Neu prüfen“
+    A->>W: Zugangsschlüssel lesen
+    A->>R: GET /api/sync/modsets/{id}<br/>Authorization: Bearer …
+    R-->>A: Mod-Liste (modId, name, version)
+    A->>A: Liste streng prüfen,<br/>bei Fehlern verwerfen
+    A->>A: Mit dem Zielordner vergleichen
+    A-->>N: Übersicht, kein Spielstart
+```
 
 ### Jetzt synchronisieren
 
@@ -302,9 +338,35 @@ Gebaut mit Rust und Tauri 2, die Oberfläche mit TypeScript, HTML und CSS. Benö
 cargo test --workspace                                                               # Tests
 cargo run -p rms-cli -- status                                                       # Stand aller Server, ohne Spielstart
 cd app; npm ci; npx tauri dev                                                        # App mit Neuladen beim Ändern
-powershell -ExecutionPolicy Bypass -File scripts\build-package.ps1 -Version 0.5.0    # Paket nach publish
+powershell -ExecutionPolicy Bypass -File scripts\build-package.ps1 -Version 0.6.0    # Paket nach publish
 ```
 
-Ein Tag wie `v0.5.0` baut das Paket über GitHub Actions und veröffentlicht es als Release. Versionen unter 1.0 erscheinen als Vorabversion. Die Oberfläche darf nur die eigenen Befehle der App aufrufen, keine Datei-, Shell- oder Netzwerk-Plugins.
+Ein Tag wie `v0.6.0` baut das Paket über GitHub Actions und veröffentlicht es als Release. Versionen unter 1.0 erscheinen als Vorabversion. Die Oberfläche darf nur die eigenen Befehle der App aufrufen, keine Datei-, Shell- oder Netzwerk-Plugins.
+
+### Schnittstelle zu ARMM
+
+**Importdatei `armm-sync.json`**, erzeugt von ARMM:
+
+```json
+{
+  "format": "armm-sync",
+  "formatVersion": 1,
+  "name": "Community Server",
+  "armm": { "baseUrl": "https://armm.example.com", "modsetId": 42, "accessKey": "…" },
+  "gameServer": { "host": "gameserver.example.com", "port": 2001, "passwordRequired": true }
+}
+```
+
+- `baseUrl`: nur `https://host` oder `https://host:port`, ohne Pfad. `modsetId`: positive Zahl. `accessKey`: Pflicht.
+- `gameServer` ist optional. Ein Feld `password` mit Wert lehnt die App ab, `null` ist erlaubt.
+- Eine höhere `formatVersion` lehnt die App mit dem Hinweis ab, sie zu aktualisieren.
+
+**Mod-Liste:** `GET {baseUrl}/api/sync/modsets/{modsetId}` mit `Authorization: Bearer {accessKey}`. Antwort `200` mit dem `mods`-Array der Serverkonfiguration, alternativ der ganzen Serverkonfiguration (`game.mods`):
+
+```json
+[ { "modId": "65AD7D2E9866FA6E", "name": "ACE Finger Dev", "version": "1.5.40" } ]
+```
+
+Die Liste muss vollständig sein, mit allen Abhängigkeiten, und jede Mod braucht ID, Namen und Version. Ein fehlerhafter Eintrag verwirft die ganze Liste. `401`/`403` meldet die App als ungültigen Schlüssel, `404` als unbekanntes Modset.
 
 Bis Version 0.4 war die App in C# mit WPF gebaut. Die heutige Version liest deren Einstellungen, Passwörter und gemerkte Mod-Listen unverändert weiter.
