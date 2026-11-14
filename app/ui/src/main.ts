@@ -74,6 +74,7 @@ const ui = {
   armmSection: $("#armm-section"),
   armmTarget: $("#armm-target"),
   armmKey: $("#armm-key"),
+  addressHint: $("#address-hint"),
 };
 
 /** Wie `normalize_address_input` im Backend: Schema, Pfad und Punkt am Ende weg, Kleinbuchstaben. */
@@ -142,6 +143,11 @@ function resetOverview(profile: Profile) {
   profile.progressDone = 0;
   profile.progressTotal = 1;
 }
+
+const SERVER_ADDRESS_HINT =
+  "Name oder IP-Adresse des Servers, zum Beispiel arma.example.de oder 203.0.113.10, dazu der Port, etwa 2001. Darüber wird der Server bei Bohemia gefunden, von dort kommt die Mod-Liste. Der Server muss dafür laufen.";
+const ARMM_ADDRESS_HINT =
+  "Name oder IP-Adresse des Servers, dazu der Port. Gebraucht für „Direkt beitreten“ und als Rückfall, falls eine Mod ohne Server nicht erreichbar ist. Die Mod-Liste kommt aus ARMM.";
 
 const selected = () => state.profiles.find((profile) => profile.id === state.selectedId) ?? null;
 const displayName = (profile: Profile) => profile.draft.name.trim() || "Neuer Server";
@@ -302,6 +308,7 @@ function renderSettingsState() {
   ui.dirExtra.hidden = !profile.draft.downloadDir.trim();
   const armm = profile.saved?.armm ?? null;
   ui.armmSection.hidden = !armm;
+  ui.addressHint.textContent = armm ? ARMM_ADDRESS_HINT : SERVER_ADDRESS_HINT;
   if (armm) {
     ui.armmTarget.textContent = `Modset ${armm.modsetId} auf ${armm.host}`;
     ui.armmKey.textContent = armm.hasAccessKey ? "✓ Schlüssel gespeichert" : "Schlüssel fehlt, bitte neu importieren";
