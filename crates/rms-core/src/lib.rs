@@ -1,6 +1,7 @@
 //! Logik von Reforger Sync & Launch. Oberfläche und Kommandozeile rufen nur diese Bibliothek auf.
 
 pub mod addons;
+pub mod armm;
 pub mod client;
 pub mod credentials;
 pub mod paths;
