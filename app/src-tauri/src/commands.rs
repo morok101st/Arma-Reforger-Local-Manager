@@ -467,7 +467,7 @@ pub async fn join_server(state: State<'_, AppState>, id: String) -> CommandResul
     }
     let profile = state.profile(&id).ok_or("Bitte den Server zuerst in den Einstellungen speichern.")?;
     if !is_valid_server_address(profile.server_address.as_deref()) {
-        return Ok(Message::error("Es ist keine gültige Server-Adresse hinterlegt (IP:Port)."));
+        return Ok(Message::error("Es ist keine gültige Server-Adresse hinterlegt (Adresse und Port)."));
     }
 
     let address = profile.server_address.clone().unwrap_or_default();

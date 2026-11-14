@@ -14,7 +14,7 @@ pub fn is_helper_installed() -> bool {
 /// Liefert den Spielclient, wenn er starten darf. Sonst eine Meldung für den Nutzer.
 pub fn check(settings: &AppSettings, profile: &ServerProfile) -> Result<PathBuf, String> {
     if !is_valid_server_address(profile.server_address.as_deref()) {
-        return Err("Es ist keine gültige Server-Adresse hinterlegt (IP:Port).".into());
+        return Err("Es ist keine gültige Server-Adresse hinterlegt (Adresse und Port).".into());
     }
 
     if !is_helper_installed() {

@@ -15,7 +15,7 @@ use zeroize::Zeroize;
 use super::watcher::{DownloadWatch, DownloadWatcher, WatchEnd};
 use super::{ModListCache, ServerListError, ServerListReader, SyncLock};
 use crate::addons::{ModComparison, ModEntry, ModState, compare, helper_root, resolve_mods_root, scan};
-use crate::client::args::{build_download, build_list_request};
+use crate::client::args::{build_download, build_list_request, resolve_server_address};
 use crate::client::{ClientProcess, ClientStarter, default_starter, password_file, precheck, retention};
 use crate::credentials::CredentialStore;
 use crate::paths::AppPaths;
@@ -92,13 +92,25 @@ struct SyncRun<'a> {
     settings: &'a AppSettings,
     profile: &'a ServerProfile,
     client_exe: PathBuf,
+    /// Adresse für den Spielclient, ein Name ist hier schon in die IPv4-Adresse aufgelöst.
+    client_address: String,
     progress: &'a Progress,
     cancel: &'a CancellationToken,
 }
 
 impl SyncRun<'_> {
+    /// Gespeicherte Adresse wie eingegeben, daran hängt das Passwort.
     fn address(&self) -> &str {
         self.profile.server_address.as_deref().unwrap_or_default().trim()
+    }
+
+    /// Für Meldungen: der Name und, falls aufgelöst, die IP dahinter.
+    fn display_address(&self) -> String {
+        if self.address() == self.client_address {
+            self.client_address.clone()
+        } else {
+            format!("{} ({})", self.address(), self.client_address)
+        }
     }
 
     fn mods_root(&self) -> PathBuf {
@@ -205,7 +217,12 @@ impl SyncOrchestrator {
         cancel: &'a CancellationToken,
     ) -> Result<SyncRun<'a>, Stop> {
         let client_exe = (self.precheck)(settings, profile).map_err(Stop::Failed)?;
-        Ok(SyncRun { settings, profile, client_exe, progress, cancel })
+        let client_address = resolve_server_address(profile.server_address.as_deref().unwrap_or_default()).map_err(Stop::Failed)?;
+        let run = SyncRun { settings, profile, client_exe, client_address, progress, cancel };
+        if run.address() != run.client_address {
+            run.report(format!("{} zeigt auf {}.", run.address(), run.client_address));
+        }
+        Ok(run)
     }
 
     /// Es kann immer nur ein Client laufen, die Sperre gilt deshalb profil- und app-übergreifend.
@@ -226,7 +243,7 @@ impl SyncOrchestrator {
         run.report("Mod-Liste wird vom Server geholt …");
         let (logs_dir, profile_dir) = self.prepare_run_folders()?;
         let arguments = build_list_request(
-            run.address(),
+            &run.client_address,
             run.profile.download_dir.as_deref(),
             &run.settings.client,
             &logs_dir.to_string_lossy(),
@@ -234,7 +251,7 @@ impl SyncOrchestrator {
             &self.helper_root.to_string_lossy(),
         );
         let client = self.start_client(run, &arguments, &profile_dir)?;
-        let mods = self.list_reader.read(client.client.as_ref(), &logs_dir, run.address(), run.cancel).await;
+        let mods = self.list_reader.read(client.client.as_ref(), &logs_dir, &run.display_address(), run.cancel).await;
         client.finish().await;
         let mods = mods?;
         self.cache.save(&run.profile.id, &mods)?;
@@ -320,7 +337,7 @@ impl SyncOrchestrator {
         run.report(format!("Spielclient lädt {} Mods …", open.len()));
         let (logs_dir, profile_dir) = self.prepare_run_folders()?;
         let arguments = build_download(
-            run.address(),
+            &run.client_address,
             &open,
             run.profile.download_dir.as_deref(),
             &run.settings.client,

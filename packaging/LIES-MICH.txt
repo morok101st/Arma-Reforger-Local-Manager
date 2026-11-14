@@ -8,7 +8,7 @@ VORAUSSETZUNGEN
 - Microsoft Edge WebView2 Runtime. Unter Windows 11 ist sie dabei, unter Windows 10
   meist auch (mit Microsoft Edge). Fehlt sie, meldet die App das beim Start.
 - Steam läuft, Arma Reforger ist installiert
-- IP-Adresse, Port und Passwort des Servers
+- Adresse (Name oder IP), Port und Passwort des Servers
 
 UMSTIEG VON VERSION 0.4 ODER ÄLTER
 - Server, Passwörter und Zielordner werden übernommen, nichts muss neu eingetragen werden.
@@ -26,7 +26,8 @@ INSTALLATION
    App nicht signiert ist: "Weitere Informationen" und "Trotzdem ausführen".
 
 EINRICHTUNG
-1. Im Reiter "Einstellungen" Name, IP-Adresse, Port und Server-Passwort eintragen.
+1. Im Reiter "Einstellungen" Name, Adresse, Port und Server-Passwort eintragen.
+   Als Adresse geht der Name des Servers (z. B. arma.example.de) oder seine IP-Adresse.
 2. Zielordner wählen: Die Mods liegen darin im Unterordner "addons". Wähle den Ordner,
    der deinen vorhandenen Ordner "addons" enthält, sonst wird alles neu geladen. Ohne
    eigene Startoptionen in Steam lässt du das Feld einfach leer.

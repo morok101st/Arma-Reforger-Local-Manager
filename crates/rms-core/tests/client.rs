@@ -5,8 +5,9 @@ use std::io::Write;
 
 use rms_core::addons::ModEntry;
 use rms_core::client::args::{
-    HELPER_GUID, build_download, build_join, build_list_request, clean_port_input, combine_server_address, is_valid_ip, is_valid_port,
-    is_valid_server_address, split_server_address, steam_launch_options, to_command_line,
+    HELPER_GUID, build_download, build_join, build_list_request, clean_port_input, combine_server_address, is_valid_host, is_valid_ip,
+    is_valid_port, is_valid_server_address, normalize_address_input, resolve_server_address, split_server_address, steam_launch_options,
+    to_command_line,
 };
 use rms_core::client::log::{ClientLogEvent, LogTail, ServerListEnd, classify, parse_mod_failed, parse_server_list_end, parse_server_mod};
 use rms_core::settings::ClientWindowSettings;
@@ -226,15 +227,17 @@ fn default_folder_needs_no_steam_launch_options() {
 // --- Adresse ---
 
 #[test]
-fn server_address_needs_ip_and_port() {
+fn server_address_needs_host_and_port() {
     let cases = [
         (Some("203.0.113.10:2001"), true),
         (Some(" 203.0.113.10:2001 "), true),
-        (Some("server.example.org:2001"), false),
+        (Some("server.example.org:2001"), true),
         (Some("203.0.113.10"), false),
         (Some(""), false),
         (None, false),
         (Some("999.1.1.1:2001"), false),
+        (Some("arma.example.de:2001"), true),
+        (Some("arma.example.de"), false),
         (Some("203.0.113.10:70000"), false),
         (Some("203.0.113.10:0"), false),
         (Some("203.0.113.10:"), false),
@@ -262,6 +265,58 @@ fn ip_must_be_a_real_ipv4_address() {
     for (ip, valid) in cases {
         assert_eq!(is_valid_ip(ip), valid, "{ip:?}");
     }
+}
+
+#[test]
+fn host_may_be_an_ipv4_address_or_a_name() {
+    let cases = [
+        (Some("203.0.113.10"), true),
+        (Some("arma.example.de"), true),
+        (Some("ARMA.Example.DE"), true),
+        (Some("server-1.example.org"), true),
+        (Some("localhost"), true),
+        (Some("xn--mnchen-3ya.de"), true),
+        (Some("1.2.3"), false),
+        (Some("256.1.1.1"), false),
+        (Some("-arma.example.de"), false),
+        (Some("arma-.example.de"), false),
+        (Some("arma..example.de"), false),
+        (Some("arma example.de"), false),
+        (Some("arma_server.de"), false),
+        (Some("münchen.de"), false),
+        (Some(&"a".repeat(64)), false),
+        (Some(""), false),
+        (None, false),
+    ];
+    for (host, valid) in cases {
+        assert_eq!(is_valid_host(host), valid, "{host:?}");
+    }
+}
+
+#[test]
+fn pasted_urls_are_reduced_to_name_and_port() {
+    let cases = [
+        ("https://Arma.Example.de:2001/", "arma.example.de:2001"),
+        ("http://arma.example.de/server?x=1", "arma.example.de"),
+        (" arma.example.de. ", "arma.example.de"),
+        ("203.0.113.10:2001", "203.0.113.10:2001"),
+        ("", ""),
+    ];
+    for (input, expected) in cases {
+        assert_eq!(normalize_address_input(input), expected, "{input:?}");
+    }
+    assert_eq!(split_server_address(Some("https://arma.example.de:2001/")), ("arma.example.de".into(), "2001".into()));
+    assert_eq!(combine_server_address(Some("Arma.Example.de"), Some("2001")).as_deref(), Some("arma.example.de:2001"));
+}
+
+#[test]
+fn resolving_keeps_an_ip_and_looks_up_a_name() {
+    assert_eq!(resolve_server_address("203.0.113.10:2001").as_deref(), Ok("203.0.113.10:2001"));
+    // localhost löst Windows ohne Netzwerk auf.
+    assert_eq!(resolve_server_address("localhost:2001").as_deref(), Ok("127.0.0.1:2001"));
+    assert!(resolve_server_address("arma.example.de").is_err());
+    let missing = resolve_server_address("gibt-es-nicht.invalid:2001").unwrap_err();
+    assert!(missing.contains("gibt-es-nicht.invalid"), "{missing}");
 }
 
 #[test]
@@ -314,7 +369,7 @@ fn combines_fields_to_the_stored_address() {
 #[test]
 fn split_and_combine_keep_a_saved_address_unchanged() {
     // Das Passwort hängt an diesem Wert. Ändert er sich beim Laden, ginge die Zuordnung verloren.
-    for address in ["203.0.113.10:2001", "1.1.1.1:65535"] {
+    for address in ["203.0.113.10:2001", "1.1.1.1:65535", "arma.example.de:2001"] {
         let (ip, port) = split_server_address(Some(address));
         assert_eq!(combine_server_address(Some(&ip), Some(&port)).as_deref(), Some(address));
     }

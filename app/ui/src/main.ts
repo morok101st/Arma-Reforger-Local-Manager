@@ -73,8 +73,19 @@ const ui = {
   settingsMessage: $("#settings-message"),
 };
 
+/** Wie `normalize_address_input` im Backend: Schema, Pfad und Punkt am Ende weg, Kleinbuchstaben. */
+function normalizeAddress(input: string): string {
+  let text = input.trim();
+  const scheme = text.indexOf("://");
+  if (scheme >= 0) {
+    text = text.slice(scheme + 3);
+  }
+  text = text.split(/[/?#]/)[0] ?? "";
+  return text.replace(/\.+$/, "").toLowerCase();
+}
+
 function splitAddress(address: string | null): [string, string] {
-  const text = (address ?? "").trim();
+  const text = normalizeAddress(address ?? "");
   const separator = text.lastIndexOf(":");
   return separator < 0 ? [text, ""] : [text.slice(0, separator).trim(), text.slice(separator + 1).trim()];
 }
@@ -135,7 +146,7 @@ const toInput = (profile: Profile): ProfileInput => ({ id: profile.id, ...profil
 
 /** Wie die Adresse gespeichert würde, damit ungespeicherte Änderungen erkennbar sind. */
 function combinedAddress(draft: Draft): string | null {
-  const ip = draft.ip.trim();
+  const ip = normalizeAddress(draft.ip);
   const port = draft.port.trim();
   if (!ip && !port) {
     return null;
@@ -557,18 +568,20 @@ function bindInputs() {
 
   ui.name.addEventListener("input", () => update((draft) => (draft.name = ui.name.value)));
 
-  // Wer aus Gewohnheit IP:Port tippt, landet mit dem Doppelpunkt im Portfeld. Eingefügtes IP:Port wird verteilt.
+  // Wer aus Gewohnheit Adresse:Port tippt, landet mit dem Doppelpunkt im Portfeld. Eingefügtes Adresse:Port
+  // oder eine ganze URL wird verteilt. Getippt werden dürfen nur Zeichen, die in Namen und IP-Adressen vorkommen.
   ui.ip.addEventListener("beforeinput", (event) => {
     if (event.data === ":") {
       event.preventDefault();
       ui.port.focus();
       ui.port.select();
-    } else if (event.inputType === "insertText" && event.data && !/^[\d.]+$/.test(event.data)) {
+    } else if (event.inputType === "insertText" && event.data && !/^[A-Za-z\d.-]+$/.test(event.data)) {
       event.preventDefault();
     }
   });
   ui.ip.addEventListener("input", () => {
-    const clean = ui.ip.value.replace(/\s+/g, "");
+    const raw = ui.ip.value.replace(/\s+/g, "");
+    const clean = /[:/?#]/.test(raw) ? normalizeAddress(raw) : raw.toLowerCase();
     if (clean.includes(":")) {
       const [ip, port] = splitAddress(clean);
       ui.ip.value = ip;

@@ -1,5 +1,6 @@
 //! Startparameter für den Spielclient und Prüfung der Server-Adresse. Das Passwort steht nie darin.
 
+use std::net::{IpAddr, ToSocketAddrs};
 use std::sync::LazyLock;
 
 use regex::Regex;
@@ -115,32 +116,83 @@ static IP: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$").unwrap()
 });
 
-/// Nur IP und Port: Ein Hostname wird im Backend nicht gefunden.
+static HOST_LABEL: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$").unwrap());
+
+/// Adresse (IPv4 oder Name) und Port. Ein Name wird erst beim Start aufgelöst, siehe [`resolve_server_address`].
 pub fn is_valid_server_address(address: Option<&str>) -> bool {
-    let (ip, port) = split_server_address(address);
-    is_valid_ip(Some(&ip)) && is_valid_port(Some(&port))
+    let (host, port) = split_server_address(address);
+    is_valid_host(Some(&host)) && is_valid_port(Some(&port))
 }
 
 pub fn is_valid_ip(ip: Option<&str>) -> bool {
     ip.is_some_and(|ip| IP.is_match(ip.trim()))
 }
 
+/// IPv4-Adresse oder Name wie `arma.example.de`. Besteht die Eingabe nur aus Ziffern und Punkten,
+/// muss sie eine gültige IPv4-Adresse sein, damit Tippfehler wie `203.0.113` auffallen.
+pub fn is_valid_host(host: Option<&str>) -> bool {
+    let Some(host) = host.map(|host| host.trim().to_ascii_lowercase()) else {
+        return false;
+    };
+    if is_valid_ip(Some(&host)) {
+        return true;
+    }
+    let labels: Vec<&str> = host.split('.').collect();
+    host.len() <= 253
+        && labels.iter().all(|label| HOST_LABEL.is_match(label))
+        && labels.last().is_some_and(|last| last.chars().any(|character| character.is_ascii_alphabetic()))
+}
+
+/// Macht aus einer eingefügten Adresse wie `https://arma.example.de:2001/` den Teil `arma.example.de:2001`.
+pub fn normalize_address_input(input: &str) -> String {
+    let text = input.trim();
+    let text = text.split_once("://").map_or(text, |(_, rest)| rest);
+    let text = text.split(['/', '?', '#']).next().unwrap_or_default();
+    text.trim_end_matches('.').to_ascii_lowercase()
+}
+
+/// Liefert die Adresse für den Spielclient als `IPv4:Port`. Ein Name wird per DNS aufgelöst, denn
+/// das Backend kennt den Server nur unter seiner IP. Die erste IPv4-Adresse gilt.
+pub fn resolve_server_address(address: &str) -> Result<String, String> {
+    let (host, port) = split_server_address(Some(address));
+    if !is_valid_host(Some(&host)) || !is_valid_port(Some(&port)) {
+        return Err("Es ist keine gültige Server-Adresse hinterlegt (Adresse und Port).".into());
+    }
+    if is_valid_ip(Some(&host)) {
+        return Ok(format!("{host}:{port}"));
+    }
+
+    let port_number: u16 = port.parse().map_err(|_| "Ungültiger Port.".to_string())?;
+    let found = (host.as_str(), port_number)
+        .to_socket_addrs()
+        .map_err(|_| format!("Der Name „{host}“ wurde nicht gefunden. Stimmt die Adresse, und besteht eine Internetverbindung?"))?;
+    found
+        .map(|socket| socket.ip())
+        .find_map(|ip| match ip {
+            IpAddr::V4(ip) => Some(format!("{ip}:{port_number}")),
+            IpAddr::V6(_) => None,
+        })
+        .ok_or_else(|| format!("Der Name „{host}“ hat keine IPv4-Adresse. Bitte die IP-Adresse des Servers eintragen."))
+}
+
 pub fn is_valid_port(port: Option<&str>) -> bool {
     port.and_then(|port| port.trim().parse::<i32>().ok()).is_some_and(|number| (1..=65535).contains(&number))
 }
 
-/// Zerlegt `IP:Port` für die Eingabefelder. Ohne Doppelpunkt ist der Port leer.
+/// Zerlegt `Adresse:Port` für die Eingabefelder. Ohne Doppelpunkt ist der Port leer.
 pub fn split_server_address(address: Option<&str>) -> (String, String) {
-    let text = address.unwrap_or_default().trim();
+    let text = normalize_address_input(address.unwrap_or_default());
+    let text = text.as_str();
     match text.rsplit_once(':') {
         Some((ip, port)) => (ip.trim().to_string(), port.trim().to_string()),
         None => (text.to_string(), String::new()),
     }
 }
 
-/// Gespeichert wird immer `IP:Port`, daran hängt auch das Passwort. `None`: beide Felder leer.
+/// Gespeichert wird `Adresse:Port` wie eingegeben, ein Name in Kleinbuchstaben. Daran hängt auch das
+/// Passwort. `None`: beide Felder leer.
 pub fn combine_server_address(ip: Option<&str>, port: Option<&str>) -> Option<String> {
-    let ip = ip.unwrap_or_default().trim();
+    let ip = normalize_address_input(ip.unwrap_or_default());
     let port = port.unwrap_or_default().trim();
     if ip.is_empty() && port.is_empty() {
         return None;

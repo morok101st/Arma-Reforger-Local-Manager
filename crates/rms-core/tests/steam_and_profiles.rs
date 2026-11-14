@@ -51,9 +51,17 @@ fn returns_none_without_client_or_library_file() {
 fn profile_input_is_checked_in_order() {
     let cases = [
         ("", "203.0.113.10", "2001", Some("Bitte einen Namen für diesen Server eintragen.")),
-        ("Training", "server.example", "2001", Some("Bitte die IP-Adresse des Servers eintragen, zum Beispiel 203.0.113.10.")),
+        ("Training", "203.0.113", "2001", Some("Bitte die Adresse des Servers eintragen, zum Beispiel arma.example.de oder 203.0.113.10.")),
+        (
+            "Training",
+            "arma server",
+            "2001",
+            Some("Bitte die Adresse des Servers eintragen, zum Beispiel arma.example.de oder 203.0.113.10."),
+        ),
         ("Training", "203.0.113.10", "70000", Some("Bitte den Port des Servers eintragen, eine Zahl von 1 bis 65535, zum Beispiel 2001.")),
         ("Training", "203.0.113.10", "2001", None),
+        ("Training", "arma.example.de", "2001", None),
+        ("Training", "https://arma.example.de/", "2001", None),
     ];
     for (name, ip, port, expected) in cases {
         assert_eq!(validate_profile_input(Some(name), Some(ip), Some(port)), expected, "{name} {ip} {port}");

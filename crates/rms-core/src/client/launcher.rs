@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use windows::Win32::UI::Shell::{SHELLEXECUTEINFOW, ShellExecuteExW};
 use windows::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
 
-use super::args::{build_join, to_command_line};
+use super::args::{build_join, resolve_server_address, to_command_line};
 use super::{password_file, precheck, retention};
 use crate::addons::helper_root;
 use crate::paths::AppPaths;
@@ -31,7 +31,8 @@ pub fn start_and_join(
 ) -> Result<JoinStart, String> {
     // Erst alles prüfen, dann die Passwortdatei schreiben: Sie soll nur existieren, wenn das Spiel auch startet.
     let exe = precheck::check(settings, profile)?;
-    let address = profile.server_address.as_deref().unwrap_or_default();
+    // Das Backend kennt den Server nur unter seiner IP, ein Name wird deshalb vorher aufgelöst.
+    let address = resolve_server_address(profile.server_address.as_deref().unwrap_or_default())?;
 
     let logs_dir = retention::create_run_folder(&paths.client_logs()).map_err(|error| error.to_string())?;
     let password_file = password_file::for_logs_folder(&logs_dir);
@@ -40,7 +41,7 @@ pub fn start_and_join(
     // Die Hilfs-Mod liest zur Not auch noch den früheren Ort. Dort darf nie ein altes Passwort liegen.
     password_file::try_delete(&password_file::legacy_player_profile());
 
-    let arguments = build_join(address, profile.download_dir.as_deref(), &helper_root().to_string_lossy(), &logs_dir.to_string_lossy());
+    let arguments = build_join(&address, profile.download_dir.as_deref(), &helper_root().to_string_lossy(), &logs_dir.to_string_lossy());
     if let Err(problem) = launch(&exe, &arguments) {
         password_file::try_delete(&password_file);
         return Err(problem);

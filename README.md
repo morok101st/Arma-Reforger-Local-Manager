@@ -22,7 +22,7 @@ Den Download übernimmt dein installierter Arma-Reforger-Client mit einer kleine
 - Windows 10 oder 11, 64 Bit
 - Microsoft Edge WebView2 Runtime (unter Windows 11 dabei, unter Windows 10 meist mit Edge installiert; fehlt sie, meldet die App das beim Start)
 - Steam läuft, Arma Reforger ist installiert
-- IP-Adresse, Port und gegebenenfalls Passwort des Servers
+- Adresse (Name oder IP), Port und gegebenenfalls Passwort des Servers
 - Zum Prüfen und Synchronisieren muss der Server laufen, sonst wird sein Eintrag bei Bohemia nicht gefunden
 
 ## Installation
@@ -52,7 +52,7 @@ Jeder Server wird im Reiter **Einstellungen** eingetragen. Weitere Server legst 
 | Feld | Bedeutung |
 |---|---|
 | **Name** | Frei wählbar, zum Beispiel „Training“ |
-| **IP-Adresse** | IP des Spielservers, zum Beispiel `203.0.113.10`. Fügst du `IP:Port` am Stück ein, füllt die App beide Felder |
+| **Adresse** | Name oder IP des Spielservers, zum Beispiel `arma.example.de` oder `203.0.113.10`. Fügst du `Adresse:Port` oder eine ganze URL ein, füllt die App beide Felder. Einen Namen löst die App bei jedem Prüfen, Synchronisieren und Beitreten neu in die IP auf, zieht der Server um, passt es also automatisch |
 | **Port** | Port des Spielservers, zum Beispiel `2001`. Das Feld nimmt nur Ziffern an |
 | **Server-Passwort** | Leer lassen, wenn der Server keines hat. Ein gespeichertes Passwort erscheint als Punkte mit „✓ Gespeichert“ und lässt sich über **Ändern** und **Löschen** bearbeiten |
 | **Zielordner** | Wohin die Mods geladen werden. Leer lassen, um den Standardordner des Spiels zu nutzen |
@@ -144,6 +144,7 @@ sequenceDiagram
 
     N->>A: Klick auf „Neu prüfen“
     A->>A: Vorprüfung: Adresse, Steam läuft,<br/>Spiel geschlossen, Client und Hilfs-Mod da
+    A->>A: Name per DNS in die IP auflösen<br/>(entfällt bei einer IP)
     A->>D: Passwort aus dem Windows-Speicher<br/>in die Passwortdatei schreiben
     A->>H: Prozess starten mit -rmsServer IP:Port
     Note over A,D: Ab jetzt liest die App die console.log<br/>alle 0,5 Sekunden, höchstens 2 Minuten
@@ -259,6 +260,7 @@ sequenceDiagram
         N->>A: Bestätigung
     end
     A->>A: Vorprüfung: Adresse, Steam läuft,<br/>Spiel geschlossen, Client und Hilfs-Mod da
+    A->>A: Name per DNS in die IP auflösen<br/>(entfällt bei einer IP)
     A->>D: Passwort in die Passwortdatei<br/>im Log-Ordner dieses Laufs schreiben
     A->>H: ArmaReforger_BE.exe starten mit -logsDir (Log-Ordner) -rmsJoin IP:Port
     A-->>N: „Das Spiel startet und tritt dem Server bei“
