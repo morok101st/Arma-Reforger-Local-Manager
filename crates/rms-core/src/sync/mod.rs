@@ -11,5 +11,5 @@ pub use cache::{CachedModList, ModListCache};
 pub use cleanup::{CleanupPlan, CleanupResult, SurplusMod, delete_surplus, format_size, plan_cleanup, select_surplus};
 pub use list_reader::{ServerListError, ServerListReader};
 pub use lock::{SYNC_LOCK_NAME, SyncLock};
-pub use orchestrator::{Precheck, Progress, SyncOrchestrator, SyncOutcome, SyncResult, SyncStatus};
+pub use orchestrator::{Precheck, Progress, SyncOrchestrator, SyncOutcome, SyncResult, SyncStatus, list_mismatch};
 pub use watcher::{DownloadWatch, DownloadWatcher, WatchEnd, folder_bytes};

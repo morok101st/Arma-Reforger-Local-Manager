@@ -366,8 +366,9 @@ pub async fn sync_profile(app: AppHandle, state: State<'_, AppState>, id: String
     let mut view = finish(&result, matches!(result.outcome, SyncOutcome::Completed | SyncOutcome::AlreadyCurrent));
 
     // Nur nach einem vollständigen Lauf: Sonst ist nicht sicher, dass die Liste und der Ordner stimmen.
-    // Der Lauf bleibt belegt, bis auch das Bereinigen durch ist.
-    if view.ok {
+    // Weicht die ARMM-Liste vom Server ab, bleibt alles liegen. Der Lauf bleibt belegt, bis auch das
+    // Bereinigen durch ist.
+    if view.ok && !result.keep_surplus {
         apply_cleanup_step(&state, &settings, &profile, &result, &mut view);
     }
     drop(run);

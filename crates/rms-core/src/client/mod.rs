@@ -3,6 +3,7 @@
 pub mod args;
 pub mod launcher;
 pub mod log;
+pub mod modset_file;
 pub mod password_file;
 pub mod precheck;
 pub mod retention;

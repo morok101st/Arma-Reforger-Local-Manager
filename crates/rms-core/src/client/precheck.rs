@@ -13,7 +13,8 @@ pub fn is_helper_installed() -> bool {
 
 /// Liefert den Spielclient, wenn er starten darf. Sonst eine Meldung für den Nutzer.
 pub fn check(settings: &AppSettings, profile: &ServerProfile) -> Result<PathBuf, String> {
-    if !is_valid_server_address(profile.server_address.as_deref()) {
+    // Ein aus ARMM importierter Server lädt ohne Server-Eintrag. Die Adresse braucht er nur für den Rückfall.
+    if profile.armm.is_none() && !is_valid_server_address(profile.server_address.as_deref()) {
         return Err("Es ist keine gültige Server-Adresse hinterlegt (Adresse und Port).".into());
     }
 

@@ -40,6 +40,20 @@ pub fn build_list_request(
     args
 }
 
+/// Startparameter für einen aus ARMM importierten Server: Die Hilfs-Mod lädt die Mods aus der Listendatei
+/// im Client-Profil, ohne Server-Eintrag (siehe [`super::modset_file`]).
+pub fn build_modset_download(
+    download_dir: Option<&str>,
+    window: &ClientWindowSettings,
+    logs_dir: &str,
+    profile_dir: &str,
+    helper_root: &str,
+) -> Vec<String> {
+    let mut args = build_common(download_dir, window, logs_dir, profile_dir, helper_root);
+    args.push("-rmsModset".into());
+    args
+}
+
 /// Startparameter für den direkten Beitritt: mit Hilfs-Mod und echtem Profil des Spielers. Beim Verbinden
 /// lädt das Spiel die Mods des Servers neu. `logs_dir` ist der Log-Ordner der App, dort liegt auch die
 /// Passwortdatei, nicht in „Dokumente“, das oft in OneDrive liegt.
