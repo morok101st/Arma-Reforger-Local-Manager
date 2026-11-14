@@ -415,3 +415,20 @@ async fn stopping_ends_a_process_without_window() {
 
     assert!(session.has_exited());
 }
+
+/// Der WebView2-Ordner der Vorschau wird entfernt, andere Ordner daneben bleiben.
+#[test]
+fn removes_legacy_webview_folder_only() {
+    let dir = common::temp_dir();
+    let legacy = dir.path().join(rms_core::paths::LEGACY_WEBVIEW_FOLDER).join("EBWebView");
+    let current = dir.path().join("de.morok.reforgersynclaunch").join("EBWebView");
+    std::fs::create_dir_all(&legacy).unwrap();
+    std::fs::create_dir_all(&current).unwrap();
+    std::fs::write(legacy.join("Local State"), "{}").unwrap();
+
+    rms_core::paths::remove_legacy_webview_data_in(dir.path());
+    rms_core::paths::remove_legacy_webview_data_in(dir.path());
+
+    assert!(!dir.path().join(rms_core::paths::LEGACY_WEBVIEW_FOLDER).exists());
+    assert!(current.is_dir());
+}

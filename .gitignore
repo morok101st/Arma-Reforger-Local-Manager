@@ -19,11 +19,11 @@ spike/
 # Laufzeitdaten, die nie eingecheckt werden dürfen
 *.log
 # Anonymisierte Beispiel-Logs für Tests (Beispiel-IPs, erfundene Mods und Server)
-!tauri/crates/rms-core/tests/samples/*.log
+!crates/rms-core/tests/samples/*.log
 rms_server_password.txt
 
 # Rust und Tauri
-/tauri/target/
-/tauri/app/node_modules/
-/tauri/app/ui/dist/
-/tauri/app/src-tauri/gen/
+/target/
+/app/node_modules/
+/app/ui/dist/
+/app/src-tauri/gen/

@@ -66,7 +66,7 @@ Bitte die Version nennen (steht in der
 Titelleiste und links unten in der App). Beschreiben, was du geklickt hast und was passiert
 ist, und diese beiden Ordner mitschicken. Darin steht kein Passwort, aber die Server-Adresse
 und dein Windows-Benutzername:
-  %LOCALAPPDATA%\ReforgerModSync\logs        (Dateien app-tauri.*.log)
+  %LOCALAPPDATA%\ReforgerModSync\logs        (Dateien app.*.log)
   %LOCALAPPDATA%\ReforgerModSync\clientlogs
 Aufgehoben werden die Protokolle der letzten 14 Tage und die Spiel-Logs der letzten 10 Läufe.
 
@@ -74,5 +74,5 @@ ENTFERNEN
 Ordner der App löschen, danach %APPDATA%\ReforgerModSync und
 %LOCALAPPDATA%\ReforgerModSync. Das Passwort entfernst du vorher in der App über
 "Server entfernen". Die geladenen Mods bleiben erhalten.
-WebView2 legt außerdem den Ordner %LOCALAPPDATA%\de.morok.reforgersynclaunch.tauri an,
+WebView2 legt außerdem den Ordner %LOCALAPPDATA%\de.morok.reforgersynclaunch an,
 der ebenfalls gelöscht werden kann.

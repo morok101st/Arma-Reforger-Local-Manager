@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: tauri/app/package-lock.json
+          cache-dependency-path: app/package-lock.json
 
       - name: Rust
         shell: powershell
@@ -33,13 +33,11 @@ jobs:
           rustup default stable
 
       - name: Tests und Clippy
-        working-directory: tauri
         run: |
           cargo clippy --workspace --all-targets --locked -- -D warnings
           cargo test --workspace --locked
 
       - name: Bekannte Sicherheitslücken in Abhängigkeiten
-        working-directory: tauri
         run: |
           cargo install cargo-audit --locked
           cargo audit

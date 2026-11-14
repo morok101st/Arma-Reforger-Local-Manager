@@ -113,7 +113,7 @@ Die App hebt die Protokolle der letzten 14 Tage und die Spiel-Logs der letzten 1
 
 1. In der App jeden Server mit **Server entfernen** löschen. Dabei werden auch die gespeicherten Passwörter gelöscht.
 2. Den Ordner der App löschen.
-3. Optional auch `%APPDATA%\ReforgerModSync` und `%LOCALAPPDATA%\ReforgerModSync` löschen, dazu den Ordner `%LOCALAPPDATA%\de.morok.reforgersynclaunch.tauri` von WebView2.
+3. Optional auch `%APPDATA%\ReforgerModSync` und `%LOCALAPPDATA%\ReforgerModSync` löschen, dazu den Ordner `%LOCALAPPDATA%\de.morok.reforgersynclaunch` von WebView2.
 
 Die geladenen Mods bleiben erhalten.
 
@@ -289,17 +289,17 @@ Gebaut mit Rust und Tauri 2, die Oberfläche mit TypeScript, HTML und CSS. Benö
 
 | Ordner | Inhalt |
 |---|---|
-| `tauri/crates/rms-core` | Die gesamte Logik: Abgleich, Startparameter, Logzeilen, Sync, Einstellungen, Passwörter |
-| `tauri/crates/rms-core/tests` | Tests, mit anonymisierten Beispiel-Logs unter `samples` |
-| `tauri/crates/rms-cli` | Konsole: `status`, `check` und `sync [--server <Name>]` |
-| `tauri/app/src-tauri` | Tauri-Backend, erzeugt `ReforgerSyncLaunch.exe` |
-| `tauri/app/ui` | Oberfläche (TypeScript, HTML, CSS) |
+| `crates/rms-core` | Die gesamte Logik: Abgleich, Startparameter, Logzeilen, Sync, Einstellungen, Passwörter |
+| `crates/rms-core/tests` | Tests, mit anonymisierten Beispiel-Logs unter `samples` |
+| `crates/rms-cli` | Konsole: `status`, `check` und `sync [--server <Name>]` |
+| `app/src-tauri` | Tauri-Backend, erzeugt `ReforgerSyncLaunch.exe` |
+| `app/ui` | Oberfläche (TypeScript, HTML, CSS) |
 | `helper/ReforgerModSyncHelper` | Die Hilfs-Mod, die der Spielclient ungepackt lädt |
 
 ```powershell
-cd tauri; cargo test --workspace                                                     # Tests
-cd tauri; cargo run -p rms-cli -- status                                             # Stand aller Server, ohne Spielstart
-cd tauri\app; npm ci; npx tauri dev                                                  # App mit Neuladen beim Ändern
+cargo test --workspace                                                               # Tests
+cargo run -p rms-cli -- status                                                       # Stand aller Server, ohne Spielstart
+cd app; npm ci; npx tauri dev                                                        # App mit Neuladen beim Ändern
 powershell -ExecutionPolicy Bypass -File scripts\build-package.ps1 -Version 0.5.0    # Paket nach publish
 ```
 

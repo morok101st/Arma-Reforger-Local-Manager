@@ -6,7 +6,7 @@ $ErrorActionPreference = 'Stop'
 if ($Version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') { throw "Ungueltige Version '$Version'" }
 
 $repo = Split-Path $PSScriptRoot -Parent
-$app = Join-Path $repo 'tauri\app'
+$app = Join-Path $repo 'app'
 $out = Join-Path $repo 'publish'
 $folder = Join-Path $out 'ReforgerSyncLaunch'
 $zip = Join-Path $out "Reforger-Sync-Launch-$Version.zip"
@@ -19,7 +19,7 @@ if (Test-Path $out) { Remove-Item $out -Recurse -Force }
 $numeric = ($Version -split '-')[0]
 $env:RMS_VERSION = $Version
 # Als Datei, weil PowerShell 5.1 Anfuehrungszeichen in Argumenten fuer externe Programme verschluckt.
-$versionConfig = Join-Path ([IO.Path]::GetTempPath()) "tauri-version-$PID.json"
+$versionConfig = Join-Path ([IO.Path]::GetTempPath()) "rms-version-$PID.json"
 [IO.File]::WriteAllText($versionConfig, "{`"version`":`"$numeric`"}")
 Push-Location $app
 try {
@@ -34,7 +34,7 @@ finally {
     Remove-Item $versionConfig -ErrorAction SilentlyContinue
 }
 
-$exe = Join-Path $repo 'tauri\target\release\ReforgerSyncLaunch.exe'
+$exe = Join-Path $repo 'target\release\ReforgerSyncLaunch.exe'
 $exeVersion = (Get-Item $exe).VersionInfo.ProductVersion
 if ($exeVersion -cne $numeric) { throw "Die EXE meldet Version '$exeVersion' statt '$numeric'" }
 # Die angezeigte Version steht als Text in der EXE. Ein Paket mit falscher Angabe darf nicht entstehen.

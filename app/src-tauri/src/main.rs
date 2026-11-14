@@ -31,6 +31,7 @@ fn main() {
     let _log_guard = start_logging(&paths);
     info!("Reforger Sync & Launch {} gestartet", rms_core::VERSION);
     password_file::clean_up_leftovers(&paths);
+    rms_core::paths::remove_legacy_webview_data();
 
     let state = AppState::new(SettingsStore::new(default_settings_file()), paths);
     let app = tauri::Builder::default()
@@ -113,11 +114,12 @@ fn main() {
     });
 }
 
-/// Tägliche Logdatei neben denen der C#-Vorgängerversion, mit eigenem Namen.
+/// Tägliche Logdatei `app.<Datum>.log`. Das Aufräumen erfasst alle Dateien `app*.log`, also auch die der
+/// Vorgängerversionen (`app-<Datum>.log`, `app-tauri.<Datum>.log`), und behält insgesamt die neuesten 14.
 fn start_logging(paths: &AppPaths) -> Option<tracing_appender::non_blocking::WorkerGuard> {
     let appender = tracing_appender::rolling::Builder::new()
         .rotation(tracing_appender::rolling::Rotation::DAILY)
-        .filename_prefix("app-tauri")
+        .filename_prefix("app")
         .filename_suffix("log")
         .max_log_files(LOG_FILES_KEPT)
         .build(paths.logs())

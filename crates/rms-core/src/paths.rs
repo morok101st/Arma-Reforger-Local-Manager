@@ -50,6 +50,23 @@ pub fn documents_dir() -> PathBuf {
     dirs::document_dir().unwrap_or_else(|| PathBuf::from("."))
 }
 
+/// WebView2-Ordner der Vorschau (bis 0.4), heute heißt er `de.morok.reforgersynclaunch`.
+pub const LEGACY_WEBVIEW_FOLDER: &str = "de.morok.reforgersynclaunch.tauri";
+
+/// Entfernt den WebView2-Ordner der Vorschau. Darin liegt nur der Zwischenspeicher der Oberfläche.
+pub fn remove_legacy_webview_data() {
+    remove_legacy_webview_data_in(&local_app_data());
+}
+
+/// Wie [`remove_legacy_webview_data`], mit eigenem Basisordner für Tests. Fehler werden ignoriert,
+/// etwa wenn die Vorschau gerade noch läuft. Dann klappt es beim nächsten Start.
+pub fn remove_legacy_webview_data_in(local_app_data: &Path) {
+    let folder = local_app_data.join(LEGACY_WEBVIEW_FOLDER);
+    if folder.is_dir() {
+        let _ = std::fs::remove_dir_all(folder);
+    }
+}
+
 fn local_app_data() -> PathBuf {
     dirs::data_local_dir().unwrap_or_else(|| PathBuf::from("."))
 }
