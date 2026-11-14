@@ -32,6 +32,15 @@ pub fn sanitize(mut settings: AppSettings) -> AppSettings {
 
     // Ohne ID hinge das Passwort an keinem eindeutigen Eintrag.
     settings.profiles.retain(|profile| !profile.id.trim().is_empty());
+    // Eine von Hand geänderte ARMM-Verbindung muss dieselben Regeln erfüllen wie beim Import. Sonst gilt der
+    // Server als manuell angelegt, statt Anfragen an eine unsichere Adresse zu schicken.
+    for profile in &mut settings.profiles {
+        if let Some(link) = profile.armm.take() {
+            profile.armm = crate::armm::normalize_base_url(&link.base_url)
+                .filter(|_| link.modset_id > 0)
+                .map(|base_url| crate::armm::ArmmLink { base_url, modset_id: link.modset_id });
+        }
+    }
     settings.cleanup_approved_folders.retain(|folder| !folder.trim().is_empty());
     settings.reforger_exe = settings.reforger_exe.as_deref().map(str::trim).filter(|exe| !exe.is_empty()).map(String::from);
 

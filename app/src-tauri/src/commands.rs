@@ -187,6 +187,8 @@ fn to_profile(input: &ProfileInput, previous: Option<&ServerProfile>) -> ServerP
         name: input.name.trim().to_string(),
         server_address: combine_server_address(Some(&input.ip), Some(&input.port)),
         download_dir: normalize_download_dir(Some(&input.download_dir)),
+        // Die ARMM-Verbindung ändert sich nur über Import oder „Verbindung trennen“, nie beim Speichern.
+        armm: previous.and_then(|profile| profile.armm.clone()),
         // Felder, die nur die C#-Vorgängerversion kennt, bleiben erhalten.
         extra: previous.map(|profile| profile.extra.clone()).unwrap_or_default(),
     }
@@ -254,7 +256,7 @@ pub fn save_profile(state: State<'_, AppState>, input: ProfileInput, password: S
     }
 }
 
-/// Löscht Profil, Passwort und gemerkte Liste. Heruntergeladene Mods bleiben auf der Festplatte.
+/// Löscht Profil, Passwort, ARMM-Schlüssel und gemerkte Liste. Heruntergeladene Mods bleiben auf der Festplatte.
 #[tauri::command]
 pub fn remove_profile(state: State<'_, AppState>, id: String) -> CommandResult<()> {
     if state.is_busy() {
@@ -263,6 +265,9 @@ pub fn remove_profile(state: State<'_, AppState>, id: String) -> CommandResult<(
     if let Some(profile) = state.profile(&id) {
         if let Some(address) = profile.server_address.as_deref() {
             let _ = state.credentials.delete_password(address, &id);
+        }
+        if profile.armm.is_some() {
+            let _ = state.credentials.delete_access_key(&id);
         }
         info!("Server entfernt: {}", profile.name);
     }

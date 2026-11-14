@@ -396,15 +396,15 @@ fn formats_sizes_with_a_german_comma() {
 struct NoPasswords;
 
 impl CredentialStore for NoPasswords {
-    fn read_password(&self, _: &str, _: &str) -> std::io::Result<Option<String>> {
+    fn read_secret(&self, _: &str) -> std::io::Result<Option<String>> {
         Ok(Some("geheim".into()))
     }
 
-    fn save_password(&self, _: &str, _: &str, _: &str) -> std::io::Result<()> {
+    fn save_secret(&self, _: &str, _: &str) -> std::io::Result<()> {
         Ok(())
     }
 
-    fn delete_password(&self, _: &str, _: &str) -> std::io::Result<bool> {
+    fn delete_secret(&self, _: &str) -> std::io::Result<bool> {
         Ok(false)
     }
 }

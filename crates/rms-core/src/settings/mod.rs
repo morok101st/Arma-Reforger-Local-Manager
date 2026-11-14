@@ -69,11 +69,16 @@ pub struct ServerProfile {
     #[serde(deserialize_with = "null_as_default")]
     pub name: String,
 
-    /// IP und Port, z. B. `203.0.113.10:2001`. Die Mod-Liste kommt von diesem Server.
+    /// Name oder IP und Port, z. B. `203.0.113.10:2001`. Ohne ARMM-Verbindung kommt die Mod-Liste von diesem Server.
     pub server_address: Option<String>,
 
     /// `None`: Standardordner des Clients nutzen.
     pub download_dir: Option<String>,
+
+    /// Nur bei aus ARMM importierten Servern: Die Mod-Liste kommt aus diesem Modset. Manuell angelegte
+    /// Server haben das Feld nicht, ihre Einträge in der Datei bleiben unverändert.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub armm: Option<crate::armm::ArmmLink>,
 
     #[serde(flatten)]
     pub extra: ExtraFields,

@@ -1,3 +1,5 @@
+//! Geheimnisse im Windows-Anmeldeinformationsspeicher: Server-Passwörter und ARMM-Zugangsschlüssel.
+//!
 //! Server-Passwörter gehören zu einem Profil und seiner Adresse: Sie werden nie für ein anderes Profil und
 //! ohne Zustimmung des Nutzers nie für eine andere Adresse verwendet. Gleiche Einträge wie die C#-Vorgängerversion.
 
@@ -13,11 +15,37 @@ use zeroize::Zeroize;
 use crate::win::{pcwstr, wide};
 
 pub trait CredentialStore: Send + Sync {
-    fn read_password(&self, server_address: &str, profile_id: &str) -> io::Result<Option<String>>;
-    fn save_password(&self, server_address: &str, profile_id: &str, password: &str) -> io::Result<()>;
+    fn read_secret(&self, target: &str) -> io::Result<Option<String>>;
+    fn save_secret(&self, target: &str, secret: &str) -> io::Result<()>;
 
     /// `true`, wenn ein Eintrag gelöscht wurde.
-    fn delete_password(&self, server_address: &str, profile_id: &str) -> io::Result<bool>;
+    fn delete_secret(&self, target: &str) -> io::Result<bool>;
+
+    fn read_password(&self, server_address: &str, profile_id: &str) -> io::Result<Option<String>> {
+        self.read_secret(&target_name(server_address, profile_id))
+    }
+
+    fn save_password(&self, server_address: &str, profile_id: &str, password: &str) -> io::Result<()> {
+        self.save_secret(&target_name(server_address, profile_id), password)
+    }
+
+    /// `true`, wenn ein Eintrag gelöscht wurde.
+    fn delete_password(&self, server_address: &str, profile_id: &str) -> io::Result<bool> {
+        self.delete_secret(&target_name(server_address, profile_id))
+    }
+
+    /// Zugangsschlüssel eines aus ARMM importierten Servers.
+    fn read_access_key(&self, profile_id: &str) -> io::Result<Option<String>> {
+        self.read_secret(&access_key_target(profile_id))
+    }
+
+    fn save_access_key(&self, profile_id: &str, key: &str) -> io::Result<()> {
+        self.save_secret(&access_key_target(profile_id), key)
+    }
+
+    fn delete_access_key(&self, profile_id: &str) -> io::Result<bool> {
+        self.delete_secret(&access_key_target(profile_id))
+    }
 }
 
 /// Windows-Anmeldeinformationsspeicher: vom Betriebssystem verschlüsselt, pro Benutzer.
@@ -26,6 +54,11 @@ pub struct WindowsCredentialStore;
 
 pub fn target_name(server_address: &str, profile_id: &str) -> String {
     format!("ReforgerModSync:Server:{}:{profile_id}", server_address.trim())
+}
+
+/// Eintrag des ARMM-Zugangsschlüssels. Er hängt am Profil, nicht an der Adresse des Spielservers.
+pub fn access_key_target(profile_id: &str) -> String {
+    format!("ReforgerModSync:Armm:{profile_id}")
 }
 
 fn is_not_found(error: &windows::core::Error) -> bool {
@@ -37,8 +70,8 @@ fn to_io(error: windows::core::Error) -> io::Error {
 }
 
 impl CredentialStore for WindowsCredentialStore {
-    fn read_password(&self, server_address: &str, profile_id: &str) -> io::Result<Option<String>> {
-        let target = wide(target_name(server_address, profile_id));
+    fn read_secret(&self, target: &str) -> io::Result<Option<String>> {
+        let target = wide(target);
         let mut credential: *mut CREDENTIALW = std::ptr::null_mut();
         // SAFETY: Ziel ist nullterminiert, das Ergebnis wird unten mit CredFree freigegeben.
         if let Err(error) = unsafe { CredReadW(pcwstr(&target), CRED_TYPE_GENERIC, None, &mut credential) } {
@@ -57,17 +90,17 @@ impl CredentialStore for WindowsCredentialStore {
         Ok(Some(password))
     }
 
-    fn save_password(&self, server_address: &str, profile_id: &str, password: &str) -> io::Result<()> {
-        let mut target = wide(target_name(server_address, profile_id));
+    fn save_secret(&self, target: &str, secret: &str) -> io::Result<()> {
+        let mut target = wide(target);
         let mut user = wide("ReforgerModSync");
-        let mut blob: Vec<u8> = password.encode_utf16().flat_map(u16::to_le_bytes).collect();
+        let mut blob: Vec<u8> = secret.encode_utf16().flat_map(u16::to_le_bytes).collect();
         let credential = CREDENTIALW {
             Flags: CRED_FLAGS(0),
             Type: CRED_TYPE_GENERIC,
             TargetName: PWSTR(target.as_mut_ptr()),
             Comment: PWSTR::null(),
             LastWritten: FILETIME::default(),
-            CredentialBlobSize: u32::try_from(blob.len()).map_err(|_| io::Error::other("Passwort zu lang"))?,
+            CredentialBlobSize: u32::try_from(blob.len()).map_err(|_| io::Error::other("Eintrag zu lang"))?,
             CredentialBlob: if blob.is_empty() { std::ptr::null_mut() } else { blob.as_mut_ptr() },
             Persist: CRED_PERSIST_LOCAL_MACHINE,
             AttributeCount: 0,
@@ -81,8 +114,8 @@ impl CredentialStore for WindowsCredentialStore {
         result.map_err(to_io)
     }
 
-    fn delete_password(&self, server_address: &str, profile_id: &str) -> io::Result<bool> {
-        let target = wide(target_name(server_address, profile_id));
+    fn delete_secret(&self, target: &str) -> io::Result<bool> {
+        let target = wide(target);
         // SAFETY: Ziel ist nullterminiert.
         match unsafe { CredDeleteW(pcwstr(&target), CRED_TYPE_GENERIC, None) } {
             Ok(()) => Ok(true),

@@ -279,21 +279,34 @@ fn target_name_matches_the_wpf_app() {
 // --- Regeln für Passwörter (Speicher im Arbeitsspeicher) ---
 
 #[derive(Default)]
-struct MemoryStore(Mutex<HashMap<(String, String), String>>);
+struct MemoryStore(Mutex<HashMap<String, String>>);
 
 impl CredentialStore for MemoryStore {
-    fn read_password(&self, address: &str, id: &str) -> io::Result<Option<String>> {
-        Ok(self.0.lock().unwrap().get(&(address.into(), id.into())).cloned())
+    fn read_secret(&self, target: &str) -> io::Result<Option<String>> {
+        Ok(self.0.lock().unwrap().get(target).cloned())
     }
 
-    fn save_password(&self, address: &str, id: &str, password: &str) -> io::Result<()> {
-        self.0.lock().unwrap().insert((address.into(), id.into()), password.into());
+    fn save_secret(&self, target: &str, secret: &str) -> io::Result<()> {
+        self.0.lock().unwrap().insert(target.into(), secret.into());
         Ok(())
     }
 
-    fn delete_password(&self, address: &str, id: &str) -> io::Result<bool> {
-        Ok(self.0.lock().unwrap().remove(&(address.into(), id.into())).is_some())
+    fn delete_secret(&self, target: &str) -> io::Result<bool> {
+        Ok(self.0.lock().unwrap().remove(target).is_some())
     }
+}
+
+#[test]
+fn access_key_is_kept_apart_from_the_password() {
+    let store = MemoryStore::default();
+    store.save_password(OLD, "p1", "passwort").unwrap();
+    store.save_access_key("p1", "schluessel").unwrap();
+
+    assert_eq!(rms_core::credentials::access_key_target("p1"), "ReforgerModSync:Armm:p1");
+    assert_eq!(store.read_access_key("p1").unwrap().as_deref(), Some("schluessel"));
+    assert_eq!(store.read_password(OLD, "p1").unwrap().as_deref(), Some("passwort"));
+    assert!(store.delete_access_key("p1").unwrap());
+    assert_eq!(store.read_password(OLD, "p1").unwrap().as_deref(), Some("passwort"));
 }
 
 const OLD: &str = "203.0.113.10:2001";

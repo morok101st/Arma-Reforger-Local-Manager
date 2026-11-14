@@ -3,7 +3,7 @@
 
 mod import;
 
-pub use import::{ArmmImport, ImportError, ImportedGameServer, MAX_IMPORT_BYTES, parse_sync_file};
+pub use import::{ArmmImport, ImportError, ImportedGameServer, MAX_IMPORT_BYTES, normalize_base_url, parse_sync_file};
 
 use serde::{Deserialize, Serialize};
 

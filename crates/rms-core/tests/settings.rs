@@ -395,3 +395,43 @@ fn writes_the_cache_in_the_format_of_the_wpf_app() {
     let time = written["FetchedAt"].as_str().unwrap();
     assert!(chrono::DateTime::parse_from_rfc3339(time).is_ok(), "{time}");
 }
+
+/// Ein importierter Server speichert seine ARMM-Verbindung, ein manueller schreibt das Feld gar nicht.
+#[test]
+fn armm_link_is_written_only_for_imported_servers() {
+    let temp = common::temp_dir();
+    let path = temp.path().join("settings.json");
+    let store = SettingsStore::new(&path);
+    let imported = ServerProfile {
+        armm: Some(rms_core::armm::ArmmLink { base_url: "https://armm.example.com".into(), modset_id: 42 }),
+        ..profile("b", "Community", Some("gameserver.example.com:2001"))
+    };
+    let settings =
+        AppSettings { profiles: vec![profile("a", "Training", Some("203.0.113.10:2001")), imported.clone()], ..AppSettings::default() };
+
+    store.save(&settings).unwrap();
+
+    let written: serde_json::Value = serde_json::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
+    assert!(written["profiles"][0].get("armm").is_none());
+    assert_eq!(written["profiles"][1]["armm"], serde_json::json!({ "baseUrl": "https://armm.example.com", "modsetId": 42 }));
+    assert_eq!(store.load().unwrap().profiles[1], imported);
+}
+
+#[test]
+fn an_unsafe_armm_link_is_dropped_when_loading() {
+    let link = |base_url: &str, modset_id| Some(rms_core::armm::ArmmLink { base_url: base_url.into(), modset_id });
+    let settings = AppSettings {
+        profiles: vec![
+            ServerProfile { armm: link("http://armm.example.com", 42), ..profile("a", "A", None) },
+            ServerProfile { armm: link("https://armm.example.com", 0), ..profile("b", "B", None) },
+            ServerProfile { armm: link("https://ARMM.example.com/", 7), ..profile("c", "C", None) },
+        ],
+        ..AppSettings::default()
+    };
+
+    let cleaned = rms_core::settings::sanitize(settings);
+
+    assert_eq!(cleaned.profiles[0].armm, None);
+    assert_eq!(cleaned.profiles[1].armm, None);
+    assert_eq!(cleaned.profiles[2].armm, link("https://armm.example.com", 7));
+}

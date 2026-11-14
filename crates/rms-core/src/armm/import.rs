@@ -149,7 +149,7 @@ fn parse_game_server(raw: RawGameServer) -> Result<ImportedGameServer, ImportErr
 
 /// `https://host` oder `https://host:port`, Schema und Host klein, ohne `/` am Ende. Pfade, Parameter
 /// und Zugangsdaten in der Adresse sind nicht erlaubt.
-fn normalize_base_url(input: &str) -> Option<String> {
+pub fn normalize_base_url(input: &str) -> Option<String> {
     let text = input.trim();
     let scheme = text.get(..8)?;
     if !scheme.eq_ignore_ascii_case("https://") {
