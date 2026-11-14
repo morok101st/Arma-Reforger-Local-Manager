@@ -59,6 +59,8 @@ jobs:
           $hashFile = "$($zip.FullName).sha256"
           [IO.File]::WriteAllText($hashFile, "$hash  $($zip.Name)`n")
           $notes = "Installation: ZIP nach %LOCALAPPDATA%\Programs\ReforgerSyncLaunch entpacken und ReforgerSyncLaunch.exe starten. Einstellungen und Passwörter früherer Versionen bleiben erhalten. Alles Weitere steht in LIES-MICH.txt im Paket. Voraussetzungen: Windows 10 oder 11 (64 Bit), WebView2, Steam und Arma Reforger.`n`nSHA-256 von $($zip.Name):`n``$hash``"
-          $prerelease = if ($tag -match '^v0\.') { @('--prerelease') } else { @() }
-          & gh release create $tag $zip.FullName $hashFile --verify-tag @prerelease --title "Reforger Sync & Launch $tag" --notes $notes
+          # Liste ausdrücklich aufbauen: Ein if-Ausdruck mit nur einem Element liefert in PowerShell 5.1 einen Text.
+          $flags = @()
+          if ($tag -match '^v0\.') { $flags += '--prerelease' }
+          & gh release create $tag $zip.FullName $hashFile --verify-tag $flags --title "Reforger Sync & Launch $tag" --notes $notes
           if ($LASTEXITCODE -ne 0) { throw 'Release konnte nicht erstellt werden' }
