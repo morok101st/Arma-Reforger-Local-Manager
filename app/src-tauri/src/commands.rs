@@ -661,7 +661,20 @@ pub fn apply_armm_import(state: State<'_, AppState>) -> CommandResult<ImportResu
     let import = state.pending_import.lock().unwrap().take().ok_or("Es wartet keine Importdatei.")?;
 
     let (profile, created) = match find_same_link(&state.settings(), &import) {
-        Some(profile) => (profile, false),
+        Some(mut profile) => {
+            // ARMM kann den Pfad ändern. Er wandert mit, alles andere bleibt, wie der Nutzer es eingestellt hat.
+            if profile.armm.as_ref() != Some(&import.link) {
+                let link = import.link.clone();
+                let id = profile.id.clone();
+                state.persist(|settings| {
+                    if let Some(stored) = settings.profiles.iter_mut().find(|candidate| candidate.id == id) {
+                        stored.armm = Some(link);
+                    }
+                })?;
+                profile.armm = Some(import.link.clone());
+            }
+            (profile, false)
+        }
         None => {
             let profile = ServerProfile {
                 id: new_profile_id(),

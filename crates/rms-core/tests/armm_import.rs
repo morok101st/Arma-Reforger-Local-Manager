@@ -9,6 +9,7 @@ const VALID: &str = r#"{
   "armm": {
     "baseUrl": "https://armm.example.com",
     "modsetId": 42,
+    "exportPath": "/api/sync/modsets/42/export",
     "accessKey": "armm_sync_BEISPIELSCHLUESSEL"
   },
   "gameServer": {
@@ -32,7 +33,10 @@ fn reads_the_example_from_armm() {
     let import = parse_sync_file(VALID.as_bytes()).unwrap();
 
     assert_eq!(import.name, "Community Server");
-    assert_eq!(import.link, ArmmLink { base_url: "https://armm.example.com".into(), modset_id: 42 });
+    assert_eq!(
+        import.link,
+        ArmmLink { base_url: "https://armm.example.com".into(), modset_id: 42, export_path: "/api/sync/modsets/42/export".into() }
+    );
     assert_eq!(import.access_key.as_str(), "armm_sync_BEISPIELSCHLUESSEL");
     let server = import.game_server.unwrap();
     assert_eq!(server.address(), "gameserver.example.com:2001");
@@ -41,7 +45,8 @@ fn reads_the_example_from_armm() {
 
 #[test]
 fn modset_url_follows_the_agreed_endpoint() {
-    let link = ArmmLink { base_url: "https://armm.example.com:8443".into(), modset_id: 42 };
+    let link =
+        ArmmLink { base_url: "https://armm.example.com:8443".into(), modset_id: 42, export_path: "/api/sync/modsets/42/export".into() };
 
     assert_eq!(link.modset_url(), "https://armm.example.com:8443/api/sync/modsets/42/export");
     assert_eq!(link.host(), "armm.example.com:8443");
@@ -76,6 +81,37 @@ fn base_url_must_be_plain_https() {
         let text = with("https://armm.example.com", input);
         assert!(matches!(error_of(&text), ImportError::Invalid(field) if field.starts_with("armm.baseUrl")), "{input}");
     }
+}
+
+#[test]
+fn export_path_is_required_and_stays_on_the_armm_host() {
+    let text = with(
+        "
+    \"exportPath\": \"/api/sync/modsets/42/export\",",
+        "",
+    );
+    assert_eq!(error_of(&text), ImportError::Invalid("armm.exportPath (/…)"));
+
+    for input in [
+        "",
+        "api/sync/modsets/42/export",
+        "//evil.example/x",
+        "https://evil.example/x",
+        "/api/../admin",
+        "/api/./x",
+        "/api/x?key=1",
+        "/api/x#a",
+        "/api/x y",
+        r"\\api\\x",
+        "/api/@evil",
+    ] {
+        let text = with("/api/sync/modsets/42/export", input);
+        assert_eq!(error_of(&text), ImportError::Invalid("armm.exportPath (/…)"), "{input}");
+    }
+
+    let text = with("/api/sync/modsets/42/export", " /api/sync/v1/modsets/42/export ");
+    let link = parse_sync_file(text.as_bytes()).unwrap().link;
+    assert_eq!(link.modset_url(), "https://armm.example.com/api/sync/v1/modsets/42/export");
 }
 
 #[test]
@@ -156,8 +192,16 @@ fn debug_output_hides_the_access_key() {
 
 #[test]
 fn same_connection_is_recognized_on_reimport() {
-    let a = ArmmLink { base_url: "https://armm.example.com".into(), modset_id: 42 };
+    let a = ArmmLink { base_url: "https://armm.example.com".into(), modset_id: 42, export_path: "/api/sync/modsets/42/export".into() };
 
-    assert!(a.same_as(&ArmmLink { base_url: "https://ARMM.example.com".into(), modset_id: 42 }));
-    assert!(!a.same_as(&ArmmLink { base_url: "https://armm.example.com".into(), modset_id: 43 }));
+    assert!(a.same_as(&ArmmLink {
+        base_url: "https://ARMM.example.com".into(),
+        modset_id: 42,
+        export_path: "/api/sync/modsets/42/export".into()
+    }));
+    assert!(!a.same_as(&ArmmLink {
+        base_url: "https://armm.example.com".into(),
+        modset_id: 43,
+        export_path: "/api/sync/modsets/43/export".into()
+    }));
 }

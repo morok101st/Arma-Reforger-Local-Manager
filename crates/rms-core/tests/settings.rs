@@ -403,7 +403,11 @@ fn armm_link_is_written_only_for_imported_servers() {
     let path = temp.path().join("settings.json");
     let store = SettingsStore::new(&path);
     let imported = ServerProfile {
-        armm: Some(rms_core::armm::ArmmLink { base_url: "https://armm.example.com".into(), modset_id: 42 }),
+        armm: Some(rms_core::armm::ArmmLink {
+            base_url: "https://armm.example.com".into(),
+            modset_id: 42,
+            export_path: "/api/sync/modsets/42/export".into(),
+        }),
         ..profile("b", "Community", Some("gameserver.example.com:2001"))
     };
     let settings =
@@ -413,13 +417,18 @@ fn armm_link_is_written_only_for_imported_servers() {
 
     let written: serde_json::Value = serde_json::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
     assert!(written["profiles"][0].get("armm").is_none());
-    assert_eq!(written["profiles"][1]["armm"], serde_json::json!({ "baseUrl": "https://armm.example.com", "modsetId": 42 }));
+    assert_eq!(
+        written["profiles"][1]["armm"],
+        serde_json::json!({ "baseUrl": "https://armm.example.com", "modsetId": 42, "exportPath": "/api/sync/modsets/42/export" })
+    );
     assert_eq!(store.load().unwrap().profiles[1], imported);
 }
 
 #[test]
 fn an_unsafe_armm_link_is_dropped_when_loading() {
-    let link = |base_url: &str, modset_id| Some(rms_core::armm::ArmmLink { base_url: base_url.into(), modset_id });
+    let link = |base_url: &str, modset_id| {
+        Some(rms_core::armm::ArmmLink { base_url: base_url.into(), modset_id, export_path: "/api/sync/modsets/42/export".into() })
+    };
     let settings = AppSettings {
         profiles: vec![
             ServerProfile { armm: link("http://armm.example.com", 42), ..profile("a", "A", None) },
@@ -434,4 +443,23 @@ fn an_unsafe_armm_link_is_dropped_when_loading() {
     assert_eq!(cleaned.profiles[0].armm, None);
     assert_eq!(cleaned.profiles[1].armm, None);
     assert_eq!(cleaned.profiles[2].armm, link("https://armm.example.com", 7));
+}
+
+#[test]
+fn an_armm_link_without_valid_export_path_is_dropped_when_loading() {
+    let link = |export_path: &str| {
+        Some(rms_core::armm::ArmmLink { base_url: "https://armm.example.com".into(), modset_id: 42, export_path: export_path.into() })
+    };
+    let settings = AppSettings {
+        profiles: vec![
+            ServerProfile { armm: link(""), ..profile("a", "A", None) },
+            ServerProfile { armm: link("https://evil.example/x"), ..profile("b", "B", None) },
+        ],
+        ..AppSettings::default()
+    };
+
+    let cleaned = rms_core::settings::sanitize(settings);
+
+    assert_eq!(cleaned.profiles[0].armm, None);
+    assert_eq!(cleaned.profiles[1].armm, None);
 }

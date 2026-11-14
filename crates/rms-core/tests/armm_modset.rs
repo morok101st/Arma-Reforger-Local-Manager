@@ -74,10 +74,11 @@ fn http_status_becomes_a_clear_message() {
 
 #[test]
 fn request_goes_to_host_port_and_endpoint() {
-    let link = ArmmLink { base_url: "https://armm.example.com:8443".into(), modset_id: 42 };
+    let link =
+        ArmmLink { base_url: "https://armm.example.com:8443".into(), modset_id: 42, export_path: "/api/sync/modsets/42/export".into() };
     assert_eq!(host_and_port(&link), ("armm.example.com".into(), 8443));
     assert_eq!(request_path(&link), "/api/sync/modsets/42/export");
-    let link = ArmmLink { base_url: "https://armm.example.com".into(), modset_id: 7 };
+    let link = ArmmLink { base_url: "https://armm.example.com".into(), modset_id: 7, export_path: "/api/sync/modsets/7/export".into() };
     assert_eq!(host_and_port(&link), ("armm.example.com".into(), 443));
 }
 
@@ -92,7 +93,7 @@ fn messages_never_contain_the_key() {
 #[test]
 #[ignore = "braucht Internet"]
 fn winhttp_reaches_a_real_https_server() {
-    let link = ArmmLink { base_url: "https://example.com".into(), modset_id: 1 };
+    let link = ArmmLink { base_url: "https://example.com".into(), modset_id: 1, export_path: "/api/sync/modsets/1/export".into() };
 
     let result = WinHttpModsetSource.fetch(&link, "kein-echter-schluessel");
 

@@ -36,9 +36,11 @@ pub fn sanitize(mut settings: AppSettings) -> AppSettings {
     // Server als manuell angelegt, statt Anfragen an eine unsichere Adresse zu schicken.
     for profile in &mut settings.profiles {
         if let Some(link) = profile.armm.take() {
+            let export_path = crate::armm::normalize_export_path(&link.export_path);
             profile.armm = crate::armm::normalize_base_url(&link.base_url)
                 .filter(|_| link.modset_id > 0)
-                .map(|base_url| crate::armm::ArmmLink { base_url, modset_id: link.modset_id });
+                .zip(export_path)
+                .map(|(base_url, export_path)| crate::armm::ArmmLink { base_url, modset_id: link.modset_id, export_path });
         }
     }
     settings.cleanup_approved_folders.retain(|folder| !folder.trim().is_empty());

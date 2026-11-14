@@ -62,9 +62,9 @@ pub fn host_and_port(link: &ArmmLink) -> (String, u16) {
     }
 }
 
-/// Pfad der Anfrage, ohne Host.
+/// Pfad der Anfrage, ohne Host. Kommt aus der Importdatei.
 pub fn request_path(link: &ArmmLink) -> String {
-    format!("/api/sync/modsets/{}/export", link.modset_id)
+    link.export_path.clone()
 }
 
 #[derive(Debug, Default, Clone, Copy)]

@@ -77,6 +77,7 @@ struct RawFile {
 struct RawArmm {
     base_url: Option<String>,
     modset_id: Option<Value>,
+    export_path: Option<String>,
     access_key: Option<String>,
 }
 
@@ -114,6 +115,8 @@ pub fn parse_sync_file(bytes: &[u8]) -> Result<ArmmImport, ImportError> {
     let base_url =
         normalize_base_url(armm.base_url.as_deref().unwrap_or_default()).ok_or(ImportError::Invalid("armm.baseUrl (https://…)"))?;
     let modset_id = armm.modset_id.as_ref().and_then(Value::as_u64).filter(|id| *id > 0).ok_or(ImportError::Invalid("armm.modsetId"))?;
+    let export_path =
+        normalize_export_path(armm.export_path.as_deref().unwrap_or_default()).ok_or(ImportError::Invalid("armm.exportPath (/…)"))?;
     let access_key = Zeroizing::new(armm.access_key.take().unwrap_or_default());
     if access_key.trim().is_empty() || access_key.chars().any(char::is_control) {
         return Err(ImportError::Invalid("armm.accessKey"));
@@ -121,7 +124,7 @@ pub fn parse_sync_file(bytes: &[u8]) -> Result<ArmmImport, ImportError> {
 
     let game_server = raw.game_server.map(parse_game_server).transpose()?;
 
-    Ok(ArmmImport { name, link: ArmmLink { base_url, modset_id }, access_key, game_server })
+    Ok(ArmmImport { name, link: ArmmLink { base_url, modset_id, export_path }, access_key, game_server })
 }
 
 fn parse_game_server(raw: RawGameServer) -> Result<ImportedGameServer, ImportError> {
@@ -145,6 +148,19 @@ fn parse_game_server(raw: RawGameServer) -> Result<ImportedGameServer, ImportErr
         .ok_or(ImportError::Invalid("gameServer.port"))?;
 
     Ok(ImportedGameServer { host, port, password_required: raw.password_required })
+}
+
+/// Pfad auf dem ARMM-Host: beginnt mit `/`, kein Host, keine Parameter, kein `..`. So geht der Schlüssel
+/// immer nur an den Host aus `baseUrl`.
+pub fn normalize_export_path(input: &str) -> Option<String> {
+    let path = input.trim();
+    let allowed = |character: char| character.is_ascii_alphanumeric() || "-._~/".contains(character);
+    let valid = path.starts_with('/')
+        && !path.starts_with("//")
+        && path.len() <= 512
+        && path.chars().all(allowed)
+        && !path.split('/').any(|segment| segment == ".." || segment == ".");
+    valid.then(|| path.to_string())
 }
 
 /// `https://host` oder `https://host:port`, Schema und Host klein, ohne `/` am Ende. Pfade, Parameter

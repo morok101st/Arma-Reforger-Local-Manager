@@ -174,7 +174,11 @@ impl Setup {
         let profile = ServerProfile {
             server_address: address.map(String::from),
             download_dir: Some(root.join("mods").to_string_lossy().into_owned()),
-            armm: Some(ArmmLink { base_url: "https://armm.example.com".into(), modset_id: 42 }),
+            armm: Some(ArmmLink {
+                base_url: "https://armm.example.com".into(),
+                modset_id: 42,
+                export_path: "/api/sync/modsets/42/export".into(),
+            }),
             ..ServerProfile::new("a", "Community")
         };
         let settings = AppSettings { profiles: vec![profile.clone()], ..AppSettings::default() };

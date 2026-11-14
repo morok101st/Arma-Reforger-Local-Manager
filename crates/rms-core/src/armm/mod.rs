@@ -6,7 +6,9 @@ mod import;
 mod modset;
 
 pub use fetch::{FetchError, ModsetSource, SharedModsetSource, WinHttpModsetSource, host_and_port, request_path, status_error};
-pub use import::{ArmmImport, ImportError, ImportedGameServer, MAX_IMPORT_BYTES, normalize_base_url, parse_sync_file};
+pub use import::{
+    ArmmImport, ImportError, ImportedGameServer, MAX_IMPORT_BYTES, normalize_base_url, normalize_export_path, parse_sync_file,
+};
 pub use modset::{MAX_MODSET_BYTES, ModsetError, parse_modset};
 
 use serde::{Deserialize, Serialize};
@@ -25,12 +27,16 @@ pub struct ArmmLink {
     /// `https://host` oder `https://host:port`, ohne `/` am Ende.
     pub base_url: String,
     pub modset_id: u64,
+    /// Pfad der Mod-Liste auf diesem Host, z. B. `/api/sync/modsets/42/export`. ARMM gibt ihn in der
+    /// Importdatei vor, damit die App bei einer Änderung der Schnittstelle nicht neu ausgeliefert werden muss.
+    #[serde(default)]
+    pub export_path: String,
 }
 
 impl ArmmLink {
     /// Adresse, unter der ARMM die Mod-Liste des Modsets liefert.
     pub fn modset_url(&self) -> String {
-        format!("{}/api/sync/modsets/{}/export", self.base_url, self.modset_id)
+        format!("{}{}", self.base_url, self.export_path)
     }
 
     /// Nur der Host mit Port, für Anzeige und Logs.
@@ -38,7 +44,7 @@ impl ArmmLink {
         self.base_url.strip_prefix("https://").unwrap_or(&self.base_url)
     }
 
-    /// Dieselbe Verbindung, etwa bei einem erneuten Import.
+    /// Dieselbe Verbindung, etwa bei einem erneuten Import. Der Pfad zählt nicht dazu, er darf sich ändern.
     pub fn same_as(&self, other: &Self) -> bool {
         self.base_url.eq_ignore_ascii_case(&other.base_url) && self.modset_id == other.modset_id
     }
