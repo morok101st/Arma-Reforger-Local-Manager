@@ -14,6 +14,8 @@ UMSTIEG VON VERSION 0.4 ODER ÄLTER
 - Server, Passwörter und Zielordner werden übernommen, nichts muss neu eingetragen werden.
 - Die neue Version einfach in denselben Ordner entpacken. Die alte, deutlich größere
   ReforgerSyncLaunch.exe wird dabei ersetzt.
+- Wer die Vorschau (tauri-v0.1.0) genutzt hat, kann deren Ordner
+  %LOCALAPPDATA%\Programs\ReforgerSyncLaunchTauri löschen, die Einstellungen bleiben.
 
 INSTALLATION
 1. ZIP in einen festen Ordner entpacken, am besten nach

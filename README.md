@@ -35,7 +35,7 @@ Den Download übernimmt dein installierter Arma-Reforger-Client mit einer kleine
 
 **Prüfsumme (optional):** Jedes Release nennt die SHA-256-Prüfsumme der ZIP-Datei. In PowerShell zeigt `Get-FileHash .\Reforger-Sync-Launch-<Version>.zip` den Wert deiner Datei, beide müssen übereinstimmen.
 
-Die Testversion ist nicht signiert, deshalb warnt Windows eventuell beim ersten Start. Klicke dann auf „Weitere Informationen“ und „Trotzdem ausführen“.
+Die App ist nicht signiert, deshalb warnt Windows eventuell beim ersten Start. Klicke dann auf „Weitere Informationen“ und „Trotzdem ausführen“.
 
 **Aktualisieren:** Deine Version steht in der Titelleiste und links unten in der App, der Link **Alle Versionen** führt zu den Releases. Schließe die App und entpacke die neue ZIP-Datei in denselben Ordner. Einstellungen, Passwörter und Mods bleiben erhalten.
 
@@ -92,7 +92,7 @@ Beim Schließen des Fensters wird die App beendet. Ein laufender Sync bricht dab
     - Fehlt für einen Server mit demselben Ordner die Mod-Liste, wird nichts gelöscht. Klicke dort einmal auf **Neu prüfen**. Es gilt die zuletzt geholte Liste jedes Servers.
     - Liegen im Ordner Mods von Servern, die nicht in der App eingetragen sind, gelten sie als überzählig. Nimm für solche Server einen eigenen Ordner oder trage sie ein.
     - Ordner ohne lesbare Mod-Angaben bleiben liegen.
-- **Passwort:** Es liegt verschlüsselt im Windows-Anmeldeinformationsspeicher. Für den Abruf beim Server steht es kurz in einer Datei im App-Ordner unter `%LOCALAPPDATA%`, nie in „Dokumente“ oder OneDrive. Die Hilfs-Mod löscht sie beim Lesen und gibt das Passwort nur an den Server mit genau der eingetragenen Adresse weiter. Änderst du die Server-Adresse, fragt die App, ob das Passwort auch für die neue Adresse gelten soll.
+- **Passwort:** Es liegt verschlüsselt im Windows-Anmeldeinformationsspeicher. Für den Abruf beim Server steht es kurz in einer Datei im App-Ordner unter `%LOCALAPPDATA%`, nie in „Dokumente“ oder OneDrive. Die Hilfs-Mod löscht sie beim Lesen und gibt das Passwort nur an den Server mit genau der eingetragenen Adresse weiter, bei einem Namen an die IP, auf die er beim Start zeigt. Änderst du die Server-Adresse, fragt die App, ob das Passwort auch für die neue Adresse gelten soll.
 - **BattlEye:** Beim Spielstart kann Windows nach Administratorrechten fragen.
 - **Lizenzen:** Die Mods stammen aus dem Arma Reforger Workshop. Für jede Mod gelten ihre Lizenz und die [Workshop-Bedingungen](https://reforger.armaplatform.com/workshop-terms) von Bohemia Interactive.
 

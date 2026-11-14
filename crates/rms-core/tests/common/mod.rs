@@ -1,4 +1,4 @@
-//! Gemeinsame Hilfen der Tests. Die Beispiel-Logs sind dieselben wie bei den C#-Tests.
+//! Gemeinsame Hilfen der Tests. Die Beispiel-Logs liegen anonymisiert unter `tests/samples`.
 #![allow(dead_code)]
 
 use std::fs;
