@@ -83,11 +83,12 @@ fn summary_counts_every_kind_of_open_mod() {
         comparison("C", ModState::Missing),
         comparison("D", ModState::Outdated),
         comparison("E", ModState::Damaged),
+        comparison("F", ModState::Incomplete),
     ]);
 
-    assert_eq!((summary.total, summary.current, summary.open()), (5, 2, 3));
-    assert_eq!(summary.list_status, "3 von 5 offen");
-    assert_eq!(summary.text, "2 von 5 Mods aktuell · 1 fehlt · 1 veraltet · 1 beschädigt");
+    assert_eq!((summary.total, summary.current, summary.open()), (6, 2, 4));
+    assert_eq!(summary.list_status, "4 von 6 offen");
+    assert_eq!(summary.text, "2 von 6 Mods aktuell · 1 fehlt · 1 veraltet · 1 unvollständig · 1 beschädigt");
 }
 
 #[test]

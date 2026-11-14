@@ -37,6 +37,7 @@ impl ModSummary {
             part(count(ModState::Outdated), "veraltet"),
             part(count(ModState::Newer), "neuer als Server"),
             part(count(ModState::Different), "andere Version"),
+            part(count(ModState::Incomplete), "unvollständig"),
             part(count(ModState::Damaged), "beschädigt"),
         ];
         Self {
@@ -69,6 +70,7 @@ pub fn state_text(state: ModState) -> &'static str {
         ModState::Outdated => "veraltet",
         ModState::Newer => "neuer als Server",
         ModState::Different => "andere Version",
+        ModState::Incomplete => "unvollständig",
         ModState::Damaged => "beschädigt",
     }
 }

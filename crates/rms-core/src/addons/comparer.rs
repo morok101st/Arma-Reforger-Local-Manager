@@ -19,6 +19,11 @@ pub enum ModState {
     /// Lokal eine andere Version, die sich nicht einordnen lässt.
     Different,
 
+    /// Dateien fehlen noch oder haben noch nicht ihre volle Größe, etwa während oder nach einem
+    /// abgebrochenen Download. Der nächste Sync lädt sie fertig.
+    Incomplete,
+
+    /// Das Spiel hat die Mod als beschädigt markiert, oder ihre Angaben sind unlesbar.
     Damaged,
 }
 
@@ -57,8 +62,10 @@ fn state_of(mod_entry: &ModEntry, addon: Option<&InstalledAddon>) -> ModState {
         return ModState::Missing;
     };
 
-    if addon.health != AddonHealth::Ok {
-        return ModState::Damaged;
+    match addon.health {
+        AddonHealth::Ok => {}
+        AddonHealth::Incomplete => return ModState::Incomplete,
+        AddonHealth::Corrupted | AddonHealth::UnknownMetadata => return ModState::Damaged,
     }
 
     let Some(required) = mod_entry.version.as_deref() else {

@@ -63,9 +63,16 @@ fn modset_without_version_accepts_any_healthy_version() {
 
 #[test]
 fn unhealthy_addon_is_damaged_even_with_matching_version() {
-    for health in [AddonHealth::Incomplete, AddonHealth::Corrupted, AddonHealth::UnknownMetadata] {
+    for health in [AddonHealth::Corrupted, AddonHealth::UnknownMetadata] {
         assert_eq!(state(Some("1.0.0"), Some(addon("1.0.0", health))), ModState::Damaged, "{health:?}");
     }
+}
+
+/// Während des Downloads sind Dateien noch zu klein. Das ist kein Schaden, sondern noch nicht fertig.
+#[test]
+fn partly_downloaded_addon_is_incomplete_not_damaged() {
+    assert_eq!(state(Some("1.0.0"), Some(addon("1.0.0", AddonHealth::Incomplete))), ModState::Incomplete);
+    assert_eq!(state(None, Some(addon("1.0.0", AddonHealth::Incomplete))), ModState::Incomplete);
 }
 
 #[test]
