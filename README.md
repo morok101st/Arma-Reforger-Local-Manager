@@ -338,10 +338,10 @@ Gebaut mit Rust und Tauri 2, die Oberfläche mit TypeScript, HTML und CSS. Benö
 cargo test --workspace                                                               # Tests
 cargo run -p rms-cli -- status                                                       # Stand aller Server, ohne Spielstart
 cd app; npm ci; npx tauri dev                                                        # App mit Neuladen beim Ändern
-powershell -ExecutionPolicy Bypass -File scripts\build-package.ps1 -Version 0.6.0    # Paket nach publish
+powershell -ExecutionPolicy Bypass -File scripts\build-package.ps1 -Version 0.5.1    # Paket nach publish
 ```
 
-Ein Tag wie `v0.6.0` baut das Paket über GitHub Actions und veröffentlicht es als Release. Versionen unter 1.0 erscheinen als Vorabversion. Die Oberfläche darf nur die eigenen Befehle der App aufrufen, keine Datei-, Shell- oder Netzwerk-Plugins.
+Ein Tag wie `v0.5.1` baut das Paket über GitHub Actions und veröffentlicht es als Release. Versionen unter 1.0 erscheinen als Vorabversion. Die Oberfläche darf nur die eigenen Befehle der App aufrufen, keine Datei-, Shell- oder Netzwerk-Plugins.
 
 ### Schnittstelle zu ARMM
 
