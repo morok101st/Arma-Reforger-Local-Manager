@@ -33,3 +33,14 @@ FunctionEnd
   ; Rest einer ZIP-Installation. Die Anleitung steht im Installer nicht mehr bei.
   Delete "$INSTDIR\LIES-MICH.txt"
 !macroend
+
+; "Anwendungsdaten loeschen" beim Deinstallieren: Tauri entfernt nur den WebView2-Ordner. Die App loescht
+; dazu ihre Passwoerter und ARMM-Schluessel im Anmeldeinformationsspeicher sowie die Ordner ReforgerModSync
+; unter %APPDATA% und %LOCALAPPDATA%. Die geladenen Mods bleiben. Nie bei einem Update.
+!macro NSIS_HOOK_PREUNINSTALL
+  ${If} $DeleteAppDataCheckboxState = 1
+  ${AndIf} $UpdateMode <> 1
+    !insertmacro CheckIfAppIsRunning "$INSTDIR\${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
+    ExecWait '"$INSTDIR\${MAINBINARYNAME}.exe" --remove-user-data'
+  ${EndIf}
+!macroend

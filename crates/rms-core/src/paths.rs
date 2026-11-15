@@ -72,6 +72,26 @@ pub fn remove_legacy_webview_data_in(local_app_data: &Path) {
     }
 }
 
+/// Löscht alle Daten der App: Einstellungen unter `%APPDATA%\ReforgerModSync` und Mod-Listen, Logs und
+/// Profil des Clients unter `%LOCALAPPDATA%\ReforgerModSync`. Die geladenen Mods bleiben. Für die Deinstallation.
+pub fn remove_user_data() -> Vec<String> {
+    let config = dirs::config_dir().unwrap_or_else(|| PathBuf::from("."));
+    remove_user_data_in(&config, &local_app_data())
+}
+
+/// Wie [`remove_user_data`], mit eigenen Basisordnern für Tests. Liefert, was nicht gelöscht werden konnte.
+pub fn remove_user_data_in(config: &Path, local_app_data: &Path) -> Vec<String> {
+    let mut problems = Vec::new();
+    for folder in [config.join(DATA_FOLDER), local_app_data.join(DATA_FOLDER)] {
+        if folder.is_dir()
+            && let Err(error) = std::fs::remove_dir_all(&folder)
+        {
+            problems.push(format!("{}: {error}", folder.display()));
+        }
+    }
+    problems
+}
+
 fn local_app_data() -> PathBuf {
     dirs::data_local_dir().unwrap_or_else(|| PathBuf::from("."))
 }

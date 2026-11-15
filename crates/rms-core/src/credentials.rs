@@ -7,7 +7,8 @@ use std::io;
 
 use windows::Win32::Foundation::{ERROR_NOT_FOUND, FILETIME};
 use windows::Win32::Security::Credentials::{
-    CRED_FLAGS, CRED_PERSIST_LOCAL_MACHINE, CRED_TYPE_GENERIC, CREDENTIALW, CredDeleteW, CredFree, CredReadW, CredWriteW,
+    CRED_ENUMERATE_FLAGS, CRED_FLAGS, CRED_PERSIST_LOCAL_MACHINE, CRED_TYPE_GENERIC, CREDENTIALW, CredDeleteW, CredEnumerateW, CredFree,
+    CredReadW, CredWriteW,
 };
 use windows::core::PWSTR;
 use zeroize::Zeroize;
@@ -123,6 +124,46 @@ impl CredentialStore for WindowsCredentialStore {
             Err(error) => Err(to_io(error)),
         }
     }
+}
+
+/// Präfix aller Einträge der App im Anmeldeinformationsspeicher.
+pub const TARGET_PREFIX: &str = "ReforgerModSync:";
+
+/// Löscht alle Einträge der App, auch die von Servern, die es nicht mehr gibt. Für die Deinstallation.
+pub fn delete_all_secrets() -> io::Result<usize> {
+    delete_secrets_with_prefix(TARGET_PREFIX)
+}
+
+/// Löscht alle allgemeinen Einträge, deren Name mit `prefix` beginnt. Liefert ihre Anzahl.
+pub fn delete_secrets_with_prefix(prefix: &str) -> io::Result<usize> {
+    let filter = wide(format!("{prefix}*"));
+    let mut count = 0u32;
+    let mut list: *mut *mut CREDENTIALW = std::ptr::null_mut();
+    // SAFETY: Filter ist nullterminiert, die Liste wird unten mit CredFree freigegeben.
+    if let Err(error) = unsafe { CredEnumerateW(pcwstr(&filter), Some(CRED_ENUMERATE_FLAGS(0)), &mut count, &mut list) } {
+        return if is_not_found(&error) { Ok(0) } else { Err(to_io(error)) };
+    }
+
+    // SAFETY: CredEnumerateW hat `count` gültige Einträge geliefert. Nur die Namen werden kopiert.
+    let targets: Vec<String> = unsafe {
+        let entries = std::slice::from_raw_parts(list, count as usize);
+        let targets = entries
+            .iter()
+            .filter(|entry| (***entry).Type == CRED_TYPE_GENERIC)
+            .filter_map(|entry| (**entry).TargetName.to_string().ok())
+            .filter(|target| target.starts_with(prefix))
+            .collect();
+        CredFree(list.cast());
+        targets
+    };
+
+    let mut deleted = 0;
+    for target in targets {
+        if WindowsCredentialStore.delete_secret(&target)? {
+            deleted += 1;
+        }
+    }
+    Ok(deleted)
 }
 
 /// Regeln für das Passwort eines Servers. Es gilt nur für seine Adresse: Für eine andere darf es nur mit

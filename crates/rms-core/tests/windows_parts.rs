@@ -445,3 +445,44 @@ fn removes_legacy_webview_folder_only() {
     assert!(!dir.path().join(rms_core::paths::LEGACY_WEBVIEW_FOLDER).exists());
     assert!(current.is_dir());
 }
+
+// --- Deinstallation ---
+
+/// Eigener Präfix, damit der Test keine echten Einträge der App anfasst.
+#[test]
+fn secrets_with_a_prefix_are_all_deleted() {
+    let prefix = format!("ReforgerModSyncTest{}:", std::process::id());
+    let store = WindowsCredentialStore;
+    store.save_secret(&format!("{prefix}Server:203.0.113.10:2001:a"), "geheim").unwrap();
+    store.save_secret(&format!("{prefix}Armm:a"), "schluessel").unwrap();
+    store.save_secret(&format!("{prefix}x-anderes"), "bleibt nicht").unwrap();
+    let other = format!("Other{prefix}keep");
+    store.save_secret(&other, "bleibt").unwrap();
+
+    assert_eq!(rms_core::credentials::delete_secrets_with_prefix(&prefix).unwrap(), 3);
+
+    assert_eq!(store.read_secret(&format!("{prefix}Armm:a")).unwrap(), None);
+    assert_eq!(store.read_secret(&other).unwrap().as_deref(), Some("bleibt"));
+    assert_eq!(rms_core::credentials::delete_secrets_with_prefix(&prefix).unwrap(), 0);
+    store.delete_secret(&other).unwrap();
+}
+
+#[test]
+fn removing_user_data_deletes_both_data_folders_only() {
+    let base = tempfile::tempdir().unwrap();
+    let config = base.path().join("Roaming");
+    let local = base.path().join("Local");
+    fs::create_dir_all(config.join("ReforgerModSync")).unwrap();
+    fs::write(config.join("ReforgerModSync").join("settings.json"), "{}").unwrap();
+    fs::create_dir_all(local.join("ReforgerModSync").join("logs")).unwrap();
+    fs::write(local.join("ReforgerModSync").join("logs").join("app.log"), "x").unwrap();
+    fs::create_dir_all(local.join("Andere App")).unwrap();
+
+    let problems = rms_core::paths::remove_user_data_in(&config, &local);
+
+    assert!(problems.is_empty(), "{problems:?}");
+    assert!(!config.join("ReforgerModSync").exists());
+    assert!(!local.join("ReforgerModSync").exists());
+    assert!(local.join("Andere App").is_dir());
+    assert!(rms_core::paths::remove_user_data_in(&config, &local).is_empty());
+}

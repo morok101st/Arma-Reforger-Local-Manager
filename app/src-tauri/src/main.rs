@@ -17,7 +17,14 @@ use crate::commands::AppState;
 
 const LOG_FILES_KEPT: usize = 14;
 
+/// Startparameter, mit dem das Deinstallationsprogramm alle Daten der App löscht („Anwendungsdaten löschen“).
+const REMOVE_USER_DATA: &str = "--remove-user-data";
+
 fn main() {
+    if std::env::args().skip(1).any(|argument| argument == REMOVE_USER_DATA) {
+        std::process::exit(remove_user_data());
+    }
+
     // Ohne WebView2 kann die Oberfläche nicht starten. Lieber eine klare Meldung als ein stilles Ende.
     if tauri::webview_version().is_err() {
         show_error(
@@ -114,6 +121,14 @@ fn main() {
             info!("Beendet");
         }
     });
+}
+
+/// Passwörter, ARMM-Schlüssel, Einstellungen, Mod-Listen und Logs. Die geladenen Mods bleiben. Ohne Fenster
+/// und ohne Log, dessen Ordner gerade verschwindet. Liefert den Exit-Code für das Deinstallationsprogramm.
+fn remove_user_data() -> i32 {
+    let secrets = rms_core::credentials::delete_all_secrets();
+    let folders = rms_core::paths::remove_user_data();
+    i32::from(secrets.is_err() || !folders.is_empty())
 }
 
 /// Beim App-Ende und vor dem Installer eines Updates.

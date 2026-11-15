@@ -130,11 +130,14 @@ Die App hebt die Protokolle der letzten 14 Tage und die Spiel-Logs der letzten 1
 
 ## Entfernen
 
+**Installiert:** Windows-Einstellungen › Apps › Installierte Apps › Reforger Sync & Launch › Deinstallieren. Mit dem Haken **Lösche die Anwendungsdaten** entfernt das Deinstallationsprogramm auch alles, was die App gespeichert hat: Server und Einstellungen, gespeicherte Passwörter und ARMM-Schlüssel, Mod-Listen und Protokolle. Ohne Haken bleibt das erhalten, etwa für eine spätere Neuinstallation.
+
+**ZIP:**
 1. In der App jeden Server mit **Server entfernen** löschen. Dabei werden auch die gespeicherten Passwörter gelöscht.
-2. Die App deinstallieren: Windows-Einstellungen › Apps › Installierte Apps › Reforger Sync & Launch. Beim ZIP den Ordner der App löschen.
+2. Den Ordner der App löschen.
 3. Optional auch `%APPDATA%\ReforgerModSync` und `%LOCALAPPDATA%\ReforgerModSync` löschen, dazu den Ordner `%LOCALAPPDATA%\de.morok.reforgersynclaunch` von WebView2.
 
-Die geladenen Mods bleiben erhalten.
+Die geladenen Mods bleiben in beiden Fällen erhalten.
 
 ## Abläufe und Schnittstellen
 
