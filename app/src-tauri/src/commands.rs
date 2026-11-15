@@ -141,7 +141,7 @@ impl AppState {
     }
 
     /// Markiert den Beginn eines Laufs. `None`, wenn schon einer läuft.
-    fn begin_run(&self) -> Option<RunGuard<'_>> {
+    pub(crate) fn begin_run(&self) -> Option<RunGuard<'_>> {
         if self.busy.swap(true, Ordering::SeqCst) {
             return None;
         }
@@ -152,7 +152,7 @@ impl AppState {
 }
 
 /// Gibt den Lauf beim Verlassen wieder frei.
-struct RunGuard<'a> {
+pub(crate) struct RunGuard<'a> {
     state: &'a AppState,
     cancel: CancellationToken,
 }

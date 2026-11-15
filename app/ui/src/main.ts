@@ -1,6 +1,15 @@
 // Oberfläche der App. Gespeicherte Einstellungen liegen im Backend, hier nur Entwürfe und die Anzeige.
 import { listen } from "@tauri-apps/api/event";
-import { api, type Overview, type ProfileInput, type ProfileView, type RunResult, type RunStatus } from "./api";
+import {
+  api,
+  type Overview,
+  type ProfileInput,
+  type ProfileView,
+  type RunResult,
+  type RunStatus,
+  type UpdateProgress,
+  type UpdateView,
+} from "./api";
 import { basicSettingsDialog, confirmDialog, informDialog } from "./dialogs";
 
 interface Draft {
@@ -831,6 +840,79 @@ function bindSidebar() {
   ui.join.addEventListener("click", () => void join());
 }
 
+// --- Updates ---
+
+let foundUpdate: UpdateView | null = null;
+
+function showUpdate(update: UpdateView) {
+  foundUpdate = update;
+  $("#update").hidden = false;
+  $("#update-text").textContent = update.canInstall
+    ? `Version ${update.version} ist verfügbar.`
+    : `Version ${update.version} ist verfügbar. Mit dem Installer von der Download-Seite aktualisiert sich die App künftig selbst.`;
+  const button = $<HTMLButtonElement>("#update-button");
+  button.textContent = update.canInstall ? "Jetzt aktualisieren" : "Zur Download-Seite";
+  button.disabled = false;
+}
+
+/** Beim Start still, nur ein gefundenes Update zeigt sich. Von Hand mit Antwort in jedem Fall. */
+async function checkForUpdate(manual: boolean) {
+  try {
+    const update = await api.checkUpdate();
+    if (update) {
+      showUpdate(update);
+    } else if (manual) {
+      await informDialog("Kein Update", "Die App ist auf dem neuesten Stand.");
+    }
+  } catch (problem) {
+    if (manual) {
+      await informDialog("Suche nach Updates fehlgeschlagen", String(problem));
+    }
+  }
+}
+
+async function installUpdate() {
+  const update = foundUpdate;
+  if (!update) {
+    return;
+  }
+  if (!update.canInstall) {
+    await api.openLink("releases").catch((problem) => informDialog("Browser konnte nicht geöffnet werden", String(problem)));
+    return;
+  }
+  const confirmed = await confirmDialog(
+    `Auf Version ${update.version} aktualisieren?`,
+    "Die App lädt das Update, beendet sich und startet danach neu. Einstellungen, Passwörter und Mods bleiben erhalten.",
+    "Aktualisieren",
+  );
+  if (!confirmed) {
+    return;
+  }
+  const button = $<HTMLButtonElement>("#update-button");
+  button.disabled = true;
+  button.textContent = "Wird geladen …";
+  try {
+    // Kehrt nur bei einem Fehler zurück, sonst übernimmt der Installer.
+    await api.installUpdate();
+  } catch (problem) {
+    await informDialog("Update fehlgeschlagen", String(problem));
+    showUpdate(update);
+  }
+}
+
+function onUpdateProgress(progress: UpdateProgress) {
+  const percent = progress.total ? Math.min(100, Math.round((progress.downloaded / progress.total) * 100)) : null;
+  $("#update-button").textContent = percent === null ? "Wird geladen …" : `Wird geladen … ${percent} %`;
+}
+
+function bindUpdate() {
+  $("#update-button").addEventListener("click", () => void installUpdate());
+  $("#update-check").addEventListener("click", (event) => {
+    event.preventDefault();
+    void checkForUpdate(true);
+  });
+}
+
 /** Kein Kontextmenü des Browsers und kein Neuladen der Seite, das wirkt in einer App fremd. */
 function disableBrowserBehaviour() {
   document.addEventListener("contextmenu", (event) => {
@@ -849,6 +931,7 @@ async function start() {
   disableBrowserBehaviour();
   bindSidebar();
   bindInputs();
+  bindUpdate();
 
   const app = await api.loadApp();
   ui.version.textContent = `Version ${app.version}`;
@@ -869,6 +952,7 @@ async function start() {
   state.tab = configured ? 0 : 1;
 
   await listen<RunStatus>("run-status", (event) => onRunStatus(event.payload));
+  await listen<UpdateProgress>("update-progress", (event) => onUpdateProgress(event.payload));
   await listen("close-requested", async () => {
     const quit = await confirmDialog(
       "Vorgang läuft noch",
@@ -883,6 +967,7 @@ async function start() {
   fillForm();
   await refreshSteamOptions();
   render();
+  void checkForUpdate(false);
 }
 
 start().catch((problem) => informDialog("Unerwarteter Fehler", String(problem)));

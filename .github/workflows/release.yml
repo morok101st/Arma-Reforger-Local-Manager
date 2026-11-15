@@ -1,4 +1,6 @@
-# Baut bei einem Tag wie v0.5.0 das Paket und veröffentlicht es. Versionen unter 1.0 erscheinen als Vorabversion.
+# Baut bei einem Tag wie v0.5.0 Installer, Update-Beschreibung und ZIP und veröffentlicht sie.
+# Kein Vorabversion-Kennzeichen: Die installierten Apps finden Updates über releases/latest, und das zeigt nur
+# reguläre Releases. Der Signaturschlüssel kommt aus dem Secret TAURI_SIGNING_PRIVATE_KEY.
 # Actions sind per Commit-SHA eingebunden, damit ein verschobener Tag nichts Fremdes ausführt.
 name: Release
 
@@ -44,7 +46,10 @@ jobs:
 
       - name: Paket bauen
         shell: powershell
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         run: |
+          if (-not $env:TAURI_SIGNING_PRIVATE_KEY) { throw 'Secret TAURI_SIGNING_PRIVATE_KEY fehlt' }
           $version = $env:GITHUB_REF_NAME.Substring(1)
           & scripts\build-package.ps1 -Version $version
 
@@ -55,13 +60,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $tag = $env:GITHUB_REF_NAME
+          $setup = Get-Item publish\*-Setup.exe
           $zip = Get-Item publish\*.zip
-          $hash = (Get-FileHash $zip.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-          $hashFile = "$($zip.FullName).sha256"
-          [IO.File]::WriteAllText($hashFile, "$hash  $($zip.Name)`n")
-          $notes = "Installation: ZIP nach %LOCALAPPDATA%\Programs\ReforgerSyncLaunch entpacken und ReforgerSyncLaunch.exe starten. Einstellungen und Passwörter früherer Versionen bleiben erhalten. Alles Weitere steht in LIES-MICH.txt im Paket. Voraussetzungen: Windows 10 oder 11 (64 Bit), WebView2, Steam und Arma Reforger.`n`nSHA-256 von $($zip.Name):`n``$hash``"
-          # Liste ausdrücklich aufbauen: Ein if-Ausdruck mit nur einem Element liefert in PowerShell 5.1 einen Text.
-          $flags = @()
-          if ($tag -match '^v0\.') { $flags += '--prerelease' }
-          & gh release create $tag $zip.FullName $hashFile --verify-tag $flags --title "Reforger Sync & Launch $tag" --notes $notes
+          $latest = Get-Item publish\latest.json
+          $hashes = foreach ($file in $setup, $zip) {
+            "$((Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($file.Name)"
+          }
+          $hashFile = Join-Path publish 'SHA256SUMS.txt'
+          [IO.File]::WriteAllText($hashFile, ($hashes -join "`n") + "`n")
+          $fence = '```'
+          $notes = "Installation: $($setup.Name) herunterladen und starten. Die App landet in %LOCALAPPDATA%\Programs\ReforgerSyncLaunch, ohne Administratorrechte, und meldet künftige Updates selbst. Eine bisher entpackte Version im selben Ordner wird ersetzt. Einstellungen, Passwörter und Mods bleiben erhalten.`n`nOhne Installation: $($zip.Name) entpacken. Diese Variante aktualisiert sich nicht selbst.`n`nVoraussetzungen: Windows 10 oder 11 (64 Bit), WebView2, Steam und Arma Reforger.`n`nSHA-256:`n$fence`n$($hashes -join "`n")`n$fence"
+          & gh release create $tag $setup.FullName $zip.FullName $latest.FullName $hashFile --verify-tag --title "Reforger Sync & Launch $tag" --notes $notes
           if ($LASTEXITCODE -ne 0) { throw 'Release konnte nicht erstellt werden' }

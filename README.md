@@ -28,17 +28,20 @@ Den Download übernimmt dein installierter Arma-Reforger-Client mit einer kleine
 
 ## Installation
 
-1. Die ZIP-Datei von der Seite [Releases](../../releases) herunterladen.
-2. In einen festen Ordner entpacken, am besten `%LOCALAPPDATA%\Programs\ReforgerSyncLaunch` (in die Adresszeile des Explorers eingeben). Der Ordner `helper` muss neben der EXE bleiben.
+1. `Reforger-Sync-Launch-<Version>-Setup.exe` von der Seite [Releases](../../releases) herunterladen.
+2. Starten und dem Assistenten folgen. Administratorrechte braucht er nicht. Die App landet in `%LOCALAPPDATA%\Programs\ReforgerSyncLaunch` und im Startmenü.
 
-   Nimm keinen Ordner direkt unter `C:\`, etwa `C:\Spiele`. Dort dürfen alle Benutzer des PCs Dateien ändern und könnten die App oder die Hilfs-Mod austauschen. Dein Benutzerordner ist nur für dich beschreibbar.
-3. `ReforgerSyncLaunch.exe` starten.
+Hast du bisher das ZIP in diesen Ordner entpackt, ersetzt der Installer diese Version. Einstellungen, Passwörter und Mods bleiben erhalten.
 
-**Prüfsumme (optional):** Jedes Release nennt die SHA-256-Prüfsumme der ZIP-Datei. In PowerShell zeigt `Get-FileHash .\Reforger-Sync-Launch-<Version>.zip` den Wert deiner Datei, beide müssen übereinstimmen.
+Die App ist nicht mit einem Zertifikat signiert, deshalb warnt Windows eventuell beim Start des Installers. Klicke dann auf „Weitere Informationen“ und „Trotzdem ausführen“.
 
-Die App ist nicht signiert, deshalb warnt Windows eventuell beim ersten Start. Klicke dann auf „Weitere Informationen“ und „Trotzdem ausführen“.
+**Aktualisieren:** Die App sucht beim Start nach einer neuen Version. Gibt es eine, steht links unten ein Hinweis. **Jetzt aktualisieren** lädt sie, installiert sie und startet die App neu, Einstellungen, Passwörter und Mods bleiben erhalten. Von Hand geht das über **Nach Updates suchen**. Ein Update wird nur installiert, wenn seine Signatur passt, ein verändertes Paket lehnt die App ab.
 
-**Aktualisieren:** Deine Version steht in der Titelleiste und links unten in der App, der Link **Alle Versionen** führt zu den Releases. Schließe die App und entpacke die neue ZIP-Datei in denselben Ordner. Einstellungen, Passwörter und Mods bleiben erhalten.
+**Ohne Installation (ZIP):** Die ZIP-Datei in einen festen Ordner entpacken, am besten `%LOCALAPPDATA%\Programs\ReforgerSyncLaunch` (in die Adresszeile des Explorers eingeben), und `ReforgerSyncLaunch.exe` starten. Der Ordner `helper` muss neben der EXE bleiben. Nimm keinen Ordner direkt unter `C:\`, etwa `C:\Spiele`: Dort dürfen alle Benutzer des PCs Dateien ändern und könnten die App oder die Hilfs-Mod austauschen. Diese Variante meldet neue Versionen, aktualisiert sich aber nicht selbst. Zum Aktualisieren die App schließen und die neue ZIP-Datei in denselben Ordner entpacken.
+
+**Prüfsumme (optional):** Jedes Release nennt die SHA-256-Prüfsummen von Installer und ZIP. In PowerShell zeigt `Get-FileHash .\<Dateiname>` den Wert deiner Datei, beide müssen übereinstimmen.
+
+Deine Version steht in der Titelleiste und links unten in der App, der Link **Alle Versionen** führt zu den Releases.
 
 ## Was muss ich einstellen?
 
@@ -128,19 +131,20 @@ Die App hebt die Protokolle der letzten 14 Tage und die Spiel-Logs der letzten 1
 ## Entfernen
 
 1. In der App jeden Server mit **Server entfernen** löschen. Dabei werden auch die gespeicherten Passwörter gelöscht.
-2. Den Ordner der App löschen.
+2. Die App deinstallieren: Windows-Einstellungen › Apps › Installierte Apps › Reforger Sync & Launch. Beim ZIP den Ordner der App löschen.
 3. Optional auch `%APPDATA%\ReforgerModSync` und `%LOCALAPPDATA%\ReforgerModSync` löschen, dazu den Ordner `%LOCALAPPDATA%\de.morok.reforgersynclaunch` von WebView2.
 
 Die geladenen Mods bleiben erhalten.
 
 ## Abläufe und Schnittstellen
 
-Die App spricht weder mit Bohemia noch mit dem Spielserver. Sie startet den Spielclient, und die Hilfs-Mod in diesem Client erledigt den Rest. Einzige Ausnahme: Bei einem aus ARMM importierten Server ruft die App die Mod-Liste per HTTPS aus ARMM ab, sonst stellt sie keine Anfragen ins Netz. App und Hilfs-Mod verständigen sich nur über Startparameter und Dateien:
+Die App spricht weder mit Bohemia noch mit dem Spielserver. Sie startet den Spielclient, und die Hilfs-Mod in diesem Client erledigt den Rest. Ausnahmen: Bei einem aus ARMM importierten Server ruft die App die Mod-Liste per HTTPS aus ARMM ab, und für Updates fragt sie die Release-Seite auf GitHub. Sonst stellt sie keine Anfragen ins Netz. App und Hilfs-Mod verständigen sich nur über Startparameter und Dateien:
 
 | Richtung | Schnittstelle | Inhalt |
 |---|---|---|
 | App → Hilfs-Mod | Startparameter | `-rmsServer`, `-rmsMods`, `-rmsModset` oder `-rmsJoin` sagen ihr, was zu tun ist. Ohne sie macht sie nichts |
 | App → Hilfs-Mod | Datei `rms_modset.txt` im Profil des Clients (nur ARMM-Server) | Die Mods aus ARMM, je Zeile ID, Version, Name und ob sie zu laden ist. Nichts Geheimes, die App löscht sie nach dem Lauf |
+| App → GitHub | HTTPS `GET …/releases/latest/download/latest.json` beim Start und über „Nach Updates suchen“, bei einem Update dann der darin genannte Installer | Versionsnummer, Signatur und Adresse des Installers. Installiert wird nur mit gültiger Signatur |
 | App → ARMM | HTTPS `GET {baseUrl}{exportPath}` (beides aus der Importdatei) mit `Authorization: Bearer <Schlüssel>` (nur ARMM-Server) | Die Mod-Liste des Modsets. Nur `https`, keine Umleitung auf `http`, Zeitlimit 15 s |
 | App → Hilfs-Mod | Datei `rms_server_password.txt` im Profil des Clients (Prüfen, Sync) oder im Log-Ordner des Laufs (Beitritt), beides unter `%LOCALAPPDATA%\ReforgerModSync` | Das Passwort. Die Hilfs-Mod löscht die Datei beim Lesen. Eine alte Datei ersetzt die App vor jedem Start |
 | Hilfs-Mod → App | `[RMS]`-Zeilen in der `console.log` des Clients | Fortschritt, Mod-Liste und Fehler |

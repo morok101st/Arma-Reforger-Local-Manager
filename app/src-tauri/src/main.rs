@@ -3,11 +3,12 @@
 
 mod commands;
 mod dto;
+mod update;
 
 use rms_core::client::password_file;
 use rms_core::paths::{AppPaths, default_settings_file};
 use rms_core::settings::SettingsStore;
-use tauri::{Emitter, Manager, RunEvent, WindowEvent};
+use tauri::{AppHandle, Emitter, Manager, RunEvent, WindowEvent};
 use tracing::{error, info};
 use windows::Win32::UI::WindowsAndMessaging::{MB_ICONERROR, MB_OK, MessageBoxW};
 use windows::core::PCWSTR;
@@ -44,7 +45,9 @@ fn main() {
             }
         }))
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(state)
+        .manage(update::UpdateState::default())
         .setup(|app| {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.set_title(&format!("Reforger Sync & Launch {}", rms_core::VERSION));
@@ -82,6 +85,8 @@ fn main() {
             commands::disconnect_armm,
             commands::open_link,
             commands::quit_app,
+            update::check_update,
+            update::install_update,
         ])
         .on_window_event(|window, event| {
             // Läuft ein Vorgang, fragt die Oberfläche vorher nach, weil er sonst abbricht.
@@ -105,17 +110,22 @@ fn main() {
 
     app.run(|app, event| {
         if let RunEvent::Exit = event {
-            let state = app.state::<AppState>();
-            // Das Job Object beendet einen laufenden Client mit, spätestens wenn dieser Prozess endet.
-            state.request_cancel();
-            // Direkt nach dem Beitritt geschlossen: Das Spiel braucht die Datei noch, liegen bleiben darf sie aber nicht.
-            if let Some((file, wait)) = state.pending_join_password() {
-                password_file::wait_until_removed(&file, wait);
-                password_file::try_delete(&file);
-            }
+            clean_up_before_exit(app);
             info!("Beendet");
         }
     });
+}
+
+/// Beim App-Ende und vor dem Installer eines Updates.
+pub(crate) fn clean_up_before_exit(app: &AppHandle) {
+    let state = app.state::<AppState>();
+    // Das Job Object beendet einen laufenden Client mit, spätestens wenn dieser Prozess endet.
+    state.request_cancel();
+    // Direkt nach dem Beitritt geschlossen: Das Spiel braucht die Datei noch, liegen bleiben darf sie aber nicht.
+    if let Some((file, wait)) = state.pending_join_password() {
+        password_file::wait_until_removed(&file, wait);
+        password_file::try_delete(&file);
+    }
 }
 
 /// Tägliche Logdatei `app.<Datum>.log`. Das Aufräumen erfasst alle Dateien `app*.log`, also auch die der

@@ -250,6 +250,16 @@ body.running .sidebar-actions {
   margin-top: 4px;
 }
 
+.update {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding: 8px;
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+}
+
 /* Hauptbereich */
 
 .main {

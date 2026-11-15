@@ -17,7 +17,13 @@ UMSTIEG VON VERSION 0.4 ODER ÄLTER
 - Wer die Vorschau (tauri-v0.1.0) genutzt hat, kann deren Ordner
   %LOCALAPPDATA%\Programs\ReforgerSyncLaunchTauri löschen, die Einstellungen bleiben.
 
-INSTALLATION
+INSTALLER STATT ZIP
+Bequemer ist der Installer (Reforger-Sync-Launch-<Version>-Setup.exe auf der Release-Seite).
+Die damit installierte App meldet neue Versionen selbst und aktualisiert sich per Klick.
+Er installiert in denselben Ordner wie unten empfohlen und ersetzt dort diese entpackte Version.
+Einstellungen, Passwörter und Mods bleiben erhalten.
+
+INSTALLATION (ZIP)
 1. ZIP in einen festen Ordner entpacken, am besten nach
    %LOCALAPPDATA%\Programs\ReforgerSyncLaunch (in die Adresszeile des Explorers eingeben).
    Keinen Ordner direkt unter C:\ wie C:\Spiele nehmen: Dort dürfen alle Benutzer des PCs

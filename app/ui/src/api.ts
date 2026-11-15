@@ -120,6 +120,16 @@ export interface BasicSettingsSaveResult {
   message: string;
 }
 
+export interface UpdateView {
+  version: string;
+  canInstall: boolean;
+}
+
+export interface UpdateProgress {
+  downloaded: number;
+  total: number | null;
+}
+
 export const api = {
   loadApp: () => invoke<AppView>("load_app"),
   selectProfile: (id: string | null) => invoke<void>("select_profile", { id }),
@@ -145,4 +155,6 @@ export const api = {
   applyArmmImport: () => invoke<ImportResult>("apply_armm_import"),
   disconnectArmm: (id: string) => invoke<ProfileView>("disconnect_armm", { id }),
   quitApp: () => invoke<void>("quit_app"),
+  checkUpdate: () => invoke<UpdateView | null>("check_update"),
+  installUpdate: () => invoke<void>("install_update"),
 };
