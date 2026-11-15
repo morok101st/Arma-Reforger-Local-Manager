@@ -345,10 +345,10 @@ Gebaut mit Rust und Tauri 2, die Oberfläche mit TypeScript, HTML und CSS. Benö
 cargo test --workspace                                                               # Tests
 cargo run -p rms-cli -- status                                                       # Stand aller Server, ohne Spielstart
 cd app; npm ci; npx tauri dev                                                        # App mit Neuladen beim Ändern
-powershell -ExecutionPolicy Bypass -File scripts\build-package.ps1 -Version 0.5.1    # Paket nach publish
+powershell -ExecutionPolicy Bypass -File scripts\build-package.ps1 -Version 0.6.0    # Installer, latest.json und ZIP nach publish
 ```
 
-Ein Tag wie `v0.5.1` baut das Paket über GitHub Actions und veröffentlicht es als Release. Versionen unter 1.0 erscheinen als Vorabversion. Die Oberfläche darf nur die eigenen Befehle der App aufrufen, keine Datei-, Shell- oder Netzwerk-Plugins.
+Ein Tag wie `v0.6.0` baut Installer und ZIP über GitHub Actions und veröffentlicht sie als Release, ohne Vorabversion-Kennzeichen, damit die installierten Apps das Update finden. Der Signaturschlüssel für Updates kommt aus dem Secret `TAURI_SIGNING_PRIVATE_KEY`. Die Oberfläche darf nur die eigenen Befehle der App aufrufen, keine Datei-, Shell- oder Netzwerk-Plugins.
 
 ### Schnittstelle zu ARMM
 
