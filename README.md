@@ -15,6 +15,7 @@ Beim Beitritt zu einem Server lädt Arma Reforger fehlende Mods erst dann, und d
 - **Direkt beitreten:** Startet das Spiel und verbindet dich mit dem Server.
 - **Mehrere Server verwalten:** Jeder Server hat seine eigene Adresse, sein Passwort und seinen Zielordner. Weitere Server legst du links mit **Server hinzufügen** an.
 - **Server aus ARMM importieren:** Mit einer Datei `armm-sync.json` aus ARMM legst du einen Server per Klick an. Seine Mod-Liste kommt dann direkt aus ARMM: Prüfen geht in Sekunden ohne Spielstart, und laden kannst du auch, wenn der Spielserver gerade aus ist.
+- **Updates per Klick:** Die installierte App meldet neue Versionen selbst und aktualisiert sich nach Rückfrage.
 
 Den Download übernimmt dein installierter Arma-Reforger-Client mit einer kleinen Hilfs-Mod, die dem Paket beiliegt. Das Tool spricht nicht selbst mit dem Bohemia Workshop.
 
@@ -36,6 +37,8 @@ Hast du bisher das ZIP in diesen Ordner entpackt, ersetzt der Installer diese Ve
 Die App ist nicht mit einem Zertifikat signiert, deshalb warnt Windows eventuell beim Start des Installers. Klicke dann auf „Weitere Informationen“ und „Trotzdem ausführen“.
 
 **Aktualisieren:** Die App sucht beim Start nach einer neuen Version. Gibt es eine, steht links unten ein Hinweis. **Jetzt aktualisieren** lädt sie, installiert sie und startet die App neu, Einstellungen, Passwörter und Mods bleiben erhalten. Von Hand geht das über **Nach Updates suchen**. Ein Update wird nur installiert, wenn seine Signatur passt, ein verändertes Paket lehnt die App ab.
+
+![Hinweis auf eine neue Version links unten](.github/screenshots/update.png)
 
 **Ohne Installation (ZIP):** Die ZIP-Datei in einen festen Ordner entpacken, am besten `%LOCALAPPDATA%\Programs\ReforgerSyncLaunch` (in die Adresszeile des Explorers eingeben), und `ReforgerSyncLaunch.exe` starten. Der Ordner `helper` muss neben der EXE bleiben. Nimm keinen Ordner direkt unter `C:\`, etwa `C:\Spiele`: Dort dürfen alle Benutzer des PCs Dateien ändern und könnten die App oder die Hilfs-Mod austauschen. Diese Variante meldet neue Versionen, aktualisiert sich aber nicht selbst. Zum Aktualisieren die App schließen und die neue ZIP-Datei in denselben Ordner entpacken.
 

@@ -252,7 +252,8 @@ function renderOverview() {
   ui.title.textContent = displayName(profile);
   const address = combinedAddress(profile.draft) ?? "";
   const dir = profile.draft.downloadDir.trim() || "Standardordner des Spiels";
-  ui.hint.textContent = `Adresse: ${address}  ·  Zielordner: ${dir}  ·  ${profile.stand}`;
+  // Ohne geholte Liste gibt es keinen Stand, dann auch keinen Trenner am Ende.
+  ui.hint.textContent = [`Adresse: ${address}`, `Zielordner: ${dir}`, profile.stand].filter((part) => part.trim()).join("  ·  ");
   ui.summary.textContent = profile.summary;
   ui.sync.classList.toggle("attention", (profile.overview?.open ?? 0) > 0);
   ui.progress.style.width = `${Math.min(100, (profile.progressDone / profile.progressTotal) * 100)}%`;
