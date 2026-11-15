@@ -260,6 +260,10 @@ body.running .sidebar-actions {
   border-radius: 6px;
 }
 
+.update[hidden] {
+  display: none;
+}
+
 /* Hauptbereich */
 
 .main {
