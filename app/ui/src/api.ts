@@ -145,6 +145,7 @@ export const api = {
   answerCleanup: (id: string, approved: boolean) => invoke<Message>("answer_cleanup", { id, approved }),
   cancelRun: () => invoke<void>("cancel_run"),
   joinServer: (id: string) => invoke<Message>("join_server", { id }),
+  gameRunning: () => invoke<boolean>("game_running"),
   basicSettings: () => invoke<BasicSettingsView>("basic_settings"),
   saveBasicSettings: (input: BasicSettingsInput) => invoke<BasicSettingsSaveResult>("save_basic_settings", { input }),
   browseFolder: (current: string) => invoke<string | null>("browse_folder", { current }),

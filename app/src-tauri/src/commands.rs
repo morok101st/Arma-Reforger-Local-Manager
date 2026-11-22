@@ -31,6 +31,10 @@ use crate::dto::{
 };
 
 const PASSWORD_CLEANUP_DELAY: Duration = Duration::from_secs(120);
+/// So lange nach „Direkt beitreten“ gilt das Spiel als startend, solange sein Prozess noch fehlt. Über den
+/// BattlEye-Starter erscheint er erst nach einigen Sekunden, ein zweiter Klick startete sonst ein zweites Spiel.
+const JOIN_STARTUP: Duration = Duration::from_secs(90);
+const JOIN_STARTING: &str = "Arma Reforger startet gerade. Bitte warten, bis das Spielfenster erscheint.";
 
 /// Zustand der App. Gespeicherte Einstellungen liegen nur hier, die Oberfläche hält Entwürfe.
 pub struct AppState {
@@ -44,6 +48,8 @@ pub struct AppState {
     cancel: Mutex<Option<CancellationToken>>,
     pending_cleanup: Mutex<Option<PendingCleanup>>,
     join_password: Mutex<Option<(PathBuf, Instant)>>,
+    /// Zeitpunkt des letzten Beitritts, bis der Spielprozess da ist.
+    join_started: Mutex<Option<Instant>>,
     load_problem: Mutex<Option<String>>,
     /// Geprüfte Importdatei bis zur Bestätigung. Der Schlüssel darin wird beim Verwerfen überschrieben.
     pending_import: Mutex<Option<ArmmImport>>,
@@ -73,6 +79,7 @@ impl AppState {
             cancel: Mutex::new(None),
             pending_cleanup: Mutex::new(None),
             join_password: Mutex::new(None),
+            join_started: Mutex::new(None),
             load_problem: Mutex::new(load_problem),
             pending_import: Mutex::new(None),
         }
@@ -86,6 +93,16 @@ impl AppState {
         if let Some(cancel) = self.cancel.lock().unwrap().as_ref() {
             cancel.cancel();
         }
+    }
+
+    /// Das Spiel wurde eben gestartet, sein Prozess ist aber noch nicht da.
+    fn join_starting(&self) -> bool {
+        let mut started = self.join_started.lock().unwrap();
+        if started.is_some_and(|at| at.elapsed() < JOIN_STARTUP) && !is_game_running() {
+            return true;
+        }
+        *started = None;
+        false
     }
 
     /// Passwortdatei des letzten Beitritts und wie lange noch auf sie zu achten ist.
@@ -361,6 +378,10 @@ fn finish(result: &SyncResult, ok_outcome: bool, profile: &ServerProfile) -> Run
 #[tauri::command]
 pub async fn check_profile(app: AppHandle, state: State<'_, AppState>, id: String) -> CommandResult<RunResult> {
     let profile = state.profile(&id).ok_or("Bitte den Server zuerst in den Einstellungen speichern.")?;
+    // Ein ARMM-Server prüft ohne Spiel.
+    if profile.armm.is_none() && state.join_starting() {
+        return Err(JOIN_STARTING.into());
+    }
     let run = state.begin_run().ok_or_else(busy_error)?;
     let settings = state.settings();
     let result = state.orchestrator.check(&settings, &profile, &emit_status(&app, &profile), &run.cancel).await;
@@ -374,6 +395,9 @@ pub async fn check_profile(app: AppHandle, state: State<'_, AppState>, id: Strin
 #[tauri::command]
 pub async fn sync_profile(app: AppHandle, state: State<'_, AppState>, id: String) -> CommandResult<RunResult> {
     let profile = state.profile(&id).ok_or("Bitte den Server zuerst in den Einstellungen speichern.")?;
+    if state.join_starting() {
+        return Err(JOIN_STARTING.into());
+    }
     let run = state.begin_run().ok_or_else(busy_error)?;
     let settings = state.settings();
     let result = state.orchestrator.run(&settings, &profile, &emit_status(&app, &profile), &run.cancel).await;
@@ -486,6 +510,10 @@ pub async fn join_server(state: State<'_, AppState>, id: String) -> CommandResul
     if state.is_busy() {
         return Err(busy_error());
     }
+    // Ein wiederholter Klick, während das Spiel noch hochfährt, ist kein Fehler.
+    if state.join_starting() {
+        return Ok(Message::info(JOIN_STARTING));
+    }
     let profile = state.profile(&id).ok_or("Bitte den Server zuerst in den Einstellungen speichern.")?;
     if !is_valid_server_address(profile.server_address.as_deref()) {
         return Ok(Message::error("Es ist keine gültige Server-Adresse hinterlegt (Adresse und Port)."));
@@ -501,6 +529,7 @@ pub async fn join_server(state: State<'_, AppState>, id: String) -> CommandResul
     };
 
     info!("Direkter Beitritt gestartet für Server {}", profile.name);
+    *state.join_started.lock().unwrap() = Some(Instant::now());
     if let Some(file) = start.password_file {
         // Die Hilfs-Mod löscht die Passwortdatei beim Start. Das ist die Absicherung, falls sie nicht dazu kommt.
         // Wird die App vorher geschlossen, übernimmt das App-Ende diese Aufgabe.
@@ -513,6 +542,12 @@ pub async fn join_server(state: State<'_, AppState>, id: String) -> CommandResul
     Ok(Message::info(
         "Das Spiel startet und tritt dem Server bei. Klappt das nicht, bleibt es im Hauptmenü, und du kannst selbst beitreten.",
     ))
+}
+
+/// Für die Anzeige nach „Direkt beitreten“: Läuft das Spiel schon?
+#[tauri::command]
+pub fn game_running() -> bool {
+    is_game_running()
 }
 
 #[tauri::command]

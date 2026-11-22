@@ -381,6 +381,52 @@ body.running .sidebar-actions {
   font-weight: 600;
 }
 
+/* Hinweis nach „Direkt beitreten“: deutlich, damit niemand mehrfach klickt. */
+.join-notice {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--surface-raised);
+  border: 1px solid var(--gold);
+  border-left-width: 4px;
+  border-radius: var(--radius);
+}
+
+.join-notice[hidden] {
+  display: none;
+}
+
+.join-notice p {
+  margin: 0;
+}
+
+.join-notice-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.join-notice .busy {
+  display: inline-flex;
+  flex: none;
+}
+
+.join-done {
+  display: none;
+  flex: none;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.join-notice.running .busy {
+  display: none;
+}
+
+.join-notice.running .join-done {
+  display: inline;
+}
+
 /* Ladeanzeige: drei Balken, wie bei der C#-Vorgängerversion. */
 .busy {
   display: none;

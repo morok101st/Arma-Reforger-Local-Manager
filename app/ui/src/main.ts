@@ -46,6 +46,10 @@ const state = {
   busy: false,
   /** Während des Bereinigens gibt es nichts mehr abzubrechen. */
   cancellable: false,
+  /** Nach „Direkt beitreten“: Das Spiel startet oder läuft. Solange sind Beitritt und Sync gesperrt. */
+  game: "idle" as "idle" | "starting" | "running",
+  /** Name des Servers, dem gerade beigetreten wird. */
+  joinName: "",
 };
 
 const $ = <T extends HTMLElement = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
@@ -62,6 +66,9 @@ const ui = {
   sync: $<HTMLButtonElement>("#sync"),
   refresh: $<HTMLButtonElement>("#refresh"),
   join: $<HTMLButtonElement>("#join"),
+  joinNotice: $("#join-notice"),
+  joinNoticeTitle: $("#join-notice-title"),
+  joinNoticeText: $("#join-notice-text"),
   progress: $("#ov-progress"),
   status: $("#ov-status"),
   rows: $<HTMLTableSectionElement>("#ov-rows"),
@@ -236,9 +243,11 @@ function renderTabs() {
 function renderBusy() {
   document.body.classList.toggle("running", state.busy);
   ui.sync.textContent = state.busy ? "Abbrechen" : "Jetzt synchronisieren";
-  ui.sync.disabled = state.busy && !state.cancellable;
-  ui.refresh.disabled = state.busy;
-  ui.join.disabled = state.busy;
+  const gameActive = state.game !== "idle";
+  ui.sync.disabled = (state.busy && !state.cancellable) || (!state.busy && gameActive);
+  ui.refresh.disabled = state.busy || gameActive;
+  ui.join.disabled = state.busy || gameActive;
+  ui.join.textContent = { idle: "Direkt beitreten", starting: "Spiel startet …", running: "Spiel läuft" }[state.game];
   ui.save.disabled = state.busy;
   $<HTMLButtonElement>("#import-server").disabled = state.busy;
   $<HTMLButtonElement>("#armm-disconnect").disabled = state.busy;
@@ -328,11 +337,27 @@ function renderSettingsState() {
   ui.settingsMessage.classList.toggle("error", profile.settingsIsError);
 }
 
+function renderJoinNotice() {
+  ui.joinNotice.hidden = state.game === "idle";
+  ui.joinNotice.classList.toggle("running", state.game === "running");
+  const server = state.joinName ? `„${state.joinName}“` : "dem Server";
+  if (state.game === "starting") {
+    ui.joinNoticeTitle.textContent = "Arma Reforger wird gestartet …";
+    ui.joinNoticeText.textContent = `Das Spiel tritt danach ${server} bei. Bis das Fenster erscheint, kann es bis zu einer Minute dauern. Bitte nicht erneut klicken.`;
+  } else if (state.game === "running") {
+    ui.joinNoticeTitle.textContent = "Arma Reforger läuft";
+    ui.joinNoticeText.textContent = state.joinName
+      ? `Das Spiel tritt ${server} bei. Klappt das nicht, bleibt es im Hauptmenü, und du kannst selbst beitreten.`
+      : "Beitreten und Synchronisieren gehen erst wieder, wenn das Spiel geschlossen ist.";
+  }
+}
+
 function render() {
   renderList();
   renderTabs();
   renderBusy();
   renderOverview();
+  renderJoinNotice();
   renderSettingsState();
 }
 
@@ -657,13 +682,53 @@ async function join() {
       return;
     }
   }
+  // Sofort sperren: Bis das Backend antwortet, darf kein zweiter Klick durchkommen.
+  state.game = "starting";
+  state.joinName = displayName(profile);
+  render();
   try {
     const result = await api.joinServer(profile.id);
     setStatus(profile, result.message, result.isError);
+    if (result.isError) {
+      state.game = "idle";
+      state.joinName = "";
+    } else {
+      watchGame();
+    }
   } catch (problem) {
     setStatus(profile, String(problem), true);
+    state.game = "idle";
+    state.joinName = "";
   }
-  renderOverview();
+  render();
+}
+
+const GAME_START_LIMIT_MS = 90_000;
+let gameWatch: number | undefined;
+
+/** Verfolgt nach dem Beitritt, ob das Spiel startet und wann es wieder geschlossen ist. */
+function watchGame() {
+  window.clearTimeout(gameWatch);
+  const startedAt = Date.now();
+  const tick = async () => {
+    const running = await api.gameRunning().catch(() => false);
+    if (running) {
+      state.game = "running";
+    } else if (state.game === "running" || Date.now() - startedAt > GAME_START_LIMIT_MS) {
+      const timedOut = state.game === "starting";
+      state.game = "idle";
+      state.joinName = "";
+      const profile = selected();
+      if (timedOut && profile) {
+        setStatus(profile, "Das Spiel ist nach 90 Sekunden noch nicht gestartet. Bitte Steam prüfen und erneut beitreten.", true);
+      }
+    }
+    render();
+    if (state.game !== "idle") {
+      gameWatch = window.setTimeout(() => void tick(), state.game === "running" ? 5000 : 2000);
+    }
+  };
+  gameWatch = window.setTimeout(() => void tick(), 2000);
 }
 
 function onRunStatus(status: RunStatus) {
@@ -969,6 +1034,12 @@ async function start() {
   await refreshSteamOptions();
   render();
   void checkForUpdate(false);
+  // Läuft das Spiel schon beim Start der App, sind Beitritt und Sync gleich gesperrt.
+  if (await api.gameRunning().catch(() => false)) {
+    state.game = "running";
+    render();
+    watchGame();
+  }
 }
 
 start().catch((problem) => informDialog("Unerwarteter Fehler", String(problem)));

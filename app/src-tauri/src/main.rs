@@ -82,6 +82,7 @@ fn main() {
             commands::answer_cleanup,
             commands::cancel_run,
             commands::join_server,
+            commands::game_running,
             commands::basic_settings,
             commands::save_basic_settings,
             commands::browse_folder,
