@@ -14,7 +14,7 @@ Beim Beitritt zu einem Server lädt Arma Reforger fehlende Mods erst dann, und d
 - **Mods laden:** Bringt alle Mods auf die Version des Servers. Das Spielfenster bleibt dabei ausgeblendet.
 - **Direkt beitreten:** Startet das Spiel und verbindet dich mit dem Server.
 - **Mehrere Server verwalten:** Jeder Server hat seine eigene Adresse, sein Passwort und seinen Zielordner. Weitere Server legst du links mit **Server hinzufügen** an.
-- **Server aus ARMM importieren:** Mit einer Datei `armm-sync.json` aus ARMM legst du einen Server per Klick an. Seine Mod-Liste kommt dann direkt aus ARMM: Prüfen geht in Sekunden ohne Spielstart, und laden kannst du auch, wenn der Spielserver gerade aus ist.
+- **Server aus ARMM importieren:** Mit einer Importdatei (`.json`) aus ARMM legst du einen Server per Klick an. Seine Mod-Liste kommt dann direkt aus ARMM: Prüfen geht in Sekunden ohne Spielstart, und laden kannst du auch, wenn der Spielserver gerade aus ist.
 - **Updates per Klick:** Die installierte App meldet neue Versionen selbst und aktualisiert sich nach Rückfrage.
 
 Den Download übernimmt dein installierter Arma-Reforger-Client mit einer kleinen Hilfs-Mod, die dem Paket beiliegt. Das Tool spricht nicht selbst mit dem Bohemia Workshop.
@@ -72,7 +72,7 @@ Klicke danach auf **Speichern**. Dabei wird noch nicht geprüft, ob Adresse und 
 
 ### Server aus ARMM importieren
 
-Betreibt ihr ARMM, bekommst du dort eine Datei `armm-sync.json`. Klicke links auf **Aus ARMM importieren** und wähle die Datei. Die App zeigt dir, was sie anlegt: Name, ARMM-Adresse, Modset und Spielserver. Mit **Importieren** entsteht ein neuer Server, danach öffnen sich seine Einstellungen.
+Betreibt ihr ARMM, bekommst du dort eine Importdatei, eine `.json`-Datei, zum Beispiel `armm-sync.json`. Der Name ist egal. Klicke links auf **Aus ARMM importieren** und wähle die Datei. Die App zeigt dir, was sie anlegt: Name, ARMM-Adresse, Modset und Spielserver. Mit **Importieren** entsteht ein neuer Server, danach öffnen sich seine Einstellungen.
 
 ![Vorschau beim Import aus ARMM](.github/screenshots/armm-import.png)
 
@@ -355,7 +355,7 @@ Ein Tag wie `v0.6.1` baut Installer und ZIP über GitHub Actions und veröffentl
 
 ### Schnittstelle zu ARMM
 
-**Importdatei `armm-sync.json`**, erzeugt von ARMM:
+**Importdatei** (`.json`, Name beliebig, z. B. `armm-sync.json`), erzeugt von ARMM:
 
 ```json
 {
