@@ -46,8 +46,8 @@ EINRICHTUNG
    des Syncs. Die Standardwerte passen in den meisten Fällen.
 
 SERVER AUS ARMM IMPORTIEREN (OPTIONAL)
-1. Aus ARMM die Datei armm-sync.json holen.
-2. Links auf "Server importieren" klicken, die Datei wählen und "Importieren" bestätigen.
+1. Aus ARMM die Importdatei holen (eine .json-Datei, z. B. armm-sync.json, der Name ist egal).
+2. Links auf "Aus ARMM importieren" klicken, die Datei wählen und "Importieren" bestätigen.
 3. In den Einstellungen des neuen Servers Zielordner wählen und, falls nötig, das
    Server-Passwort eingeben. Das Passwort steht nie in der Datei.
 4. Die Datei danach löschen: Sie enthält deinen persönlichen Zugangsschlüssel für ARMM.
@@ -58,7 +58,9 @@ Spiel, und "Jetzt synchronisieren" klappt auch, wenn der Spielserver gerade aus 
 BENUTZUNG
 - "Jetzt synchronisieren" lädt fehlende Mods und bringt alle auf die Version des Servers.
   Das Spielfenster bleibt dabei ausgeblendet. Das erste Mal kann das lange dauern.
-- "Direkt beitreten" startet das Spiel und verbindet mit dem Server.
+- "Direkt beitreten" gleicht die Mods vorher noch einmal ab, startet das Spiel und verbindet
+  mit dem Server. Bis das Spielfenster erscheint, kann es eine Minute dauern. Die App zeigt das
+  an und sperrt Beitreten und Sync, bis das Spiel wieder geschlossen ist.
 - Das Spiel muss für den Sync geschlossen sein.
 - Beim Schließen des Fensters wird die App beendet. Ein laufender Sync bricht dabei ab,
   vorher fragt die App nach. Das Spiel läuft nach "Direkt beitreten" auch ohne die App weiter.

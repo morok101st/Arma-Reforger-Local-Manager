@@ -12,7 +12,7 @@ Beim Beitritt zu einem Server lädt Arma Reforger fehlende Mods erst dann, und d
 
 - **Mods abgleichen:** Holt die Mod-Liste aus dem Eintrag des Servers bei Bohemia und zeigt, welche Mods fehlen, veraltet oder aktuell sind.
 - **Mods laden:** Bringt alle Mods auf die Version des Servers. Das Spielfenster bleibt dabei ausgeblendet.
-- **Direkt beitreten:** Startet das Spiel und verbindet dich mit dem Server.
+- **Direkt beitreten:** Gleicht die Mods vorher noch einmal ab, startet das Spiel und verbindet dich mit dem Server. Bis das Spiel läuft, zeigt die App das deutlich an und nimmt keinen zweiten Klick an.
 - **Mehrere Server verwalten:** Jeder Server hat seine eigene Adresse, sein Passwort und seinen Zielordner. Weitere Server legst du links mit **Server hinzufügen** an.
 - **Server aus ARMM importieren:** Mit einer Importdatei (`.json`) aus ARMM legst du einen Server per Klick an. Seine Mod-Liste kommt dann direkt aus ARMM: Prüfen geht in Sekunden ohne Spielstart, und laden kannst du auch, wenn der Spielserver gerade aus ist.
 - **Updates per Klick:** Die installierte App meldet neue Versionen selbst und aktualisiert sich nach Rückfrage.
@@ -102,7 +102,9 @@ Der Button **Grundeinstellungen** links unten gilt für alle Server. Die Standar
 1. Das Spiel schließen.
 2. Optional in der **Übersicht** auf **Neu prüfen** klicken. Das holt nur die Mod-Liste und zeigt, was fehlt, ohne etwas herunterzuladen.
 3. Auf **Jetzt synchronisieren** klicken. Das erste Mal kann das lange dauern. Während des Laufs wird daraus **Abbrechen**, bereits geladene Mods bleiben dabei erhalten.
-4. Auf **Direkt beitreten** klicken, sobald alles aktuell ist.
+4. Auf **Direkt beitreten** klicken, sobald alles aktuell ist. Die App gleicht vorher noch einmal ab: Ein aus ARMM importierter Server holt dafür seine Mod-Liste frisch aus ARMM, bei anderen Servern wird der Zielordner neu mit der zuletzt geholten Liste verglichen. Passt etwas nicht, fragt sie nach. Danach startet das Spiel. Das kann eine Minute dauern, die App zeigt es deutlich an. Solange das Spiel startet oder läuft, sind Beitreten, Synchronisieren und Prüfen gesperrt.
+
+![Hinweis, solange das Spiel läuft](.github/screenshots/beitreten.png)
 
 Beim Schließen des Fensters wird die App beendet. Ein laufender Sync bricht dabei ab, vorher fragt die App nach. Das Spiel läuft nach „Direkt beitreten“ auch ohne die App weiter.
 
@@ -289,7 +291,7 @@ sequenceDiagram
 
 ### Direkt beitreten
 
-Hier läuft das Spiel normal: über den BattlEye-Starter, mit deinem echten Profil und sichtbar. Nur die Logs dieser Sitzung landen unter `%LOCALAPPDATA%\ReforgerModSync\clientlogs`, dort liegt auch kurz die Passwortdatei. Die App bekommt danach keine Rückmeldung mehr, sie liest bei diesem Ablauf keine Logzeilen.
+Hier läuft das Spiel normal: über den BattlEye-Starter, mit deinem echten Profil und sichtbar. Nur die Logs dieser Sitzung landen unter `%LOCALAPPDATA%\ReforgerModSync\clientlogs`, dort liegt auch kurz die Passwortdatei. Die App bekommt danach keine Rückmeldung mehr, sie liest bei diesem Ablauf keine Logzeilen. Sie sieht nur nach, ob der Spielprozess läuft, und sperrt bis zu seinem Ende Beitreten und Sync.
 
 ```mermaid
 sequenceDiagram
@@ -301,7 +303,13 @@ sequenceDiagram
     participant S as Spielserver
 
     N->>A: Klick auf „Direkt beitreten“
-    opt Mods passen laut letztem Abgleich nicht
+    alt Server aus ARMM importiert
+        A->>A: Mod-Liste frisch aus ARMM holen<br/>(nicht erreichbar: gespeicherte Liste)
+    else Server manuell angelegt
+        A->>A: Gespeicherte Liste nehmen
+    end
+    A->>D: Zielordner neu einlesen und vergleichen
+    opt Mods passen nicht
         A-->>N: Rückfrage „Trotzdem beitreten“
         N->>A: Bestätigung
     end
@@ -309,7 +317,8 @@ sequenceDiagram
     A->>A: Name per DNS in die IP auflösen<br/>(entfällt bei einer IP)
     A->>D: Passwort in die Passwortdatei<br/>im Log-Ordner dieses Laufs schreiben
     A->>H: ArmaReforger_BE.exe starten mit -logsDir (Log-Ordner) -rmsJoin IP:Port
-    A-->>N: „Das Spiel startet und tritt dem Server bei“
+    A-->>N: Hinweis „Arma Reforger wird gestartet …“,<br/>Beitritt und Sync gesperrt
+    Note over A: Prüft alle paar Sekunden, ob das Spiel läuft,<br/>gibt nach dem Schließen alles wieder frei
     Note over A,H: Ab hier keine Verbindung mehr zwischen App und Spiel
     Note over H: Wartet bis zum Hauptmenü
     H->>B: Server suchen
