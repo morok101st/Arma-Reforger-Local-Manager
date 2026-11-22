@@ -72,7 +72,7 @@ Klicke danach auf **Speichern**. Dabei wird noch nicht geprüft, ob Adresse und 
 
 ### Server aus ARMM importieren
 
-Betreibt ihr ARMM, bekommst du dort eine Datei `armm-sync.json`. Klicke links auf **Server importieren** und wähle die Datei. Die App zeigt dir, was sie anlegt: Name, ARMM-Adresse, Modset und Spielserver. Mit **Importieren** entsteht ein neuer Server, danach öffnen sich seine Einstellungen.
+Betreibt ihr ARMM, bekommst du dort eine Datei `armm-sync.json`. Klicke links auf **Aus ARMM importieren** und wähle die Datei. Die App zeigt dir, was sie anlegt: Name, ARMM-Adresse, Modset und Spielserver. Mit **Importieren** entsteht ein neuer Server, danach öffnen sich seine Einstellungen.
 
 ![Vorschau beim Import aus ARMM](.github/screenshots/armm-import.png)
 
