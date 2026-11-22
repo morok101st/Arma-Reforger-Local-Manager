@@ -672,9 +672,26 @@ async function syncOrCancel() {
 
 async function join() {
   const profile = selected();
-  if (!profile || state.busy || !readyToRun(profile)) {
+  if (!profile || state.busy || state.game !== "idle" || !readyToRun(profile)) {
     return;
   }
+
+  // Erst frisch abgleichen: Seit dem letzten Prüfen kann sich das Modset oder der Zielordner geändert haben.
+  setStatus(profile, profile.saved?.armm ? "Mod-Liste wird vor dem Beitritt aus ARMM geholt …" : "Mods werden vor dem Beitritt geprüft …", false);
+  beginRun(false);
+  let checked: RunResult | null = null;
+  try {
+    checked = await api.prepareJoin(profile.id);
+    applyRunResult(profile, checked);
+  } catch (problem) {
+    setStatus(profile, String(problem), true);
+  } finally {
+    endRun();
+  }
+  if (!checked || checked.cancelled) {
+    return;
+  }
+
   const open = profile.overview?.open ?? 0;
   if (open > 0) {
     const title = open === 1 ? "1 Mod passt nicht zum Server" : `${open} Mods passen nicht zum Server`;

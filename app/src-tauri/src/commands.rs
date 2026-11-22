@@ -392,6 +392,45 @@ pub async fn check_profile(app: AppHandle, state: State<'_, AppState>, id: Strin
     Ok(view)
 }
 
+/// Frischer Abgleich direkt vor „Direkt beitreten“. Ein ARMM-Server holt dafür seine Liste neu, das braucht kein
+/// Spiel. Bei einem manuell angelegten Server wird nur der Zielordner neu mit der gemerkten Liste verglichen, eine
+/// frische Liste vom Server bräuchte einen eigenen Spielstart.
+#[tauri::command]
+pub async fn prepare_join(app: AppHandle, state: State<'_, AppState>, id: String) -> CommandResult<RunResult> {
+    let profile = state.profile(&id).ok_or("Bitte den Server zuerst in den Einstellungen speichern.")?;
+    if state.join_starting() {
+        return Err(JOIN_STARTING.into());
+    }
+    let mut note = String::new();
+    if profile.armm.is_some() {
+        let run = state.begin_run().ok_or_else(busy_error)?;
+        let settings = state.settings();
+        let result = state.orchestrator.check(&settings, &profile, &emit_status(&app, &profile), &run.cancel).await;
+        drop(run);
+        if result.outcome == SyncOutcome::Checked {
+            let mut view = finish(&result, true, &profile);
+            view.message = String::new();
+            return Ok(view);
+        }
+        if result.outcome == SyncOutcome::Cancelled {
+            return Ok(finish(&result, false, &profile));
+        }
+        warn!("[{}] Liste vor dem Beitritt nicht geholt: {}", profile.name, result.message);
+        note = format!("ARMM war nicht erreichbar ({}), verglichen wurde mit der gespeicherten Liste.", result.message.trim_end_matches('.'));
+    }
+
+    let overview = state.cached_overview(&profile);
+    Ok(RunResult {
+        ok: true,
+        cancelled: false,
+        message: note,
+        is_error: false,
+        list_status: overview.as_ref().map(|overview| overview.summary.list_status.clone()).unwrap_or_default(),
+        overview,
+        cleanup_question: None,
+    })
+}
+
 #[tauri::command]
 pub async fn sync_profile(app: AppHandle, state: State<'_, AppState>, id: String) -> CommandResult<RunResult> {
     let profile = state.profile(&id).ok_or("Bitte den Server zuerst in den Einstellungen speichern.")?;

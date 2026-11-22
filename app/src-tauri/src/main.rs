@@ -81,6 +81,7 @@ fn main() {
             commands::sync_profile,
             commands::answer_cleanup,
             commands::cancel_run,
+            commands::prepare_join,
             commands::join_server,
             commands::game_running,
             commands::basic_settings,

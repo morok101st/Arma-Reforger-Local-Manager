@@ -144,6 +144,7 @@ export const api = {
   syncProfile: (id: string) => invoke<RunResult>("sync_profile", { id }),
   answerCleanup: (id: string, approved: boolean) => invoke<Message>("answer_cleanup", { id, approved }),
   cancelRun: () => invoke<void>("cancel_run"),
+  prepareJoin: (id: string) => invoke<RunResult>("prepare_join", { id }),
   joinServer: (id: string) => invoke<Message>("join_server", { id }),
   gameRunning: () => invoke<boolean>("game_running"),
   basicSettings: () => invoke<BasicSettingsView>("basic_settings"),
